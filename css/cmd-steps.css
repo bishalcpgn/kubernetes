@@ -1,0 +1,31 @@
+.sec2-indented { margin-left: 1.25rem; }
+.cmd-step { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 0.5rem; }
+.cmd-label { width: 3rem; flex: 0 0 3rem; display:flex; align-items:flex-start; justify-content:flex-end; padding-top: 0.35rem; }
+.cmd-roman { font-weight: 700; color: var(--text-muted); font-family: var(--font-display); }
+.cmd-title { color: var(--text-muted); font-style: italic; font-size: 0.95rem; margin-bottom: 0.25rem; }
+.cmd-step > pre, .cmd-step .code-block { flex: 1 1 auto; }
+@media (max-width: 700px) { .cmd-label { display: none; } }
+
+/* Terminal background and border using theme tokens (high-specificity to override existing rules) */
+.code-block, .code-block pre, .cmd-step > pre {
+  background: var(--bg-code) !important;
+  border: 1px solid var(--bg-code-border) !important;
+  border-radius: 12px !important;
+  padding: 1rem !important;
+  box-shadow: var(--shadow-sm) !important;
+  color: var(--text) !important;
+}
+
+/* Ensure inner code and highlighted tokens inherit the color */
+.code-block code, .cmd-step pre code, .code-block .tok-cmt, .code-block .tok-kw, .code-block .tok-str, .code-block .tok-fn, .code-block .tok-num {
+  color: inherit !important;
+}
+
+/* If a pre element has its own inline background, force it to the theme as well */
+pre.codehilite, pre.codehilite > code {
+  background: var(--bg-code) !important;
+  color: var(--text) !important;
+}
+
+/* Small tweak for the copy button area inside code-block header if present */
+.code-block-header { background: transparent; }

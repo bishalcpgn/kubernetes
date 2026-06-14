@@ -1,0 +1,1868 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Kubernetes DevSecOps Training Lab Guide">
+  <title>Kubernetes · Section 2: Production Operations</title>
+
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d1117'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23ffb627'/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Oxanium:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/app.css">
+
+</head>
+
+<body>
+
+  <div class="sidebar-backdrop"></div>
+
+  <a class="icon-btn corner-btn github-corner-btn" id="githubLink" href="https://github.com/bishalcpgn/Kubernetes"
+    target="_blank" rel="noopener noreferrer" aria-label="View this project on GitHub"
+    title="View on GitHub (open source, contributions welcome)">
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+      <path
+        d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.29-.01-1.04-.02-2.05-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.39 1.24-3.23-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6.01 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.23 0 4.62-2.81 5.64-5.49 5.94.43.37.81 1.1.81 2.22 0 1.6-.01 2.89-.01 3.29 0 .32.22.7.83.58A12 12 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z" />
+    </svg>
+  </a>
+
+  <button class="icon-btn corner-btn theme-corner-btn" id="themeToggle" aria-label="Toggle theme"></button>
+
+  <div class="app">
+
+    <!-- Reuse the existing sidebar from index.html for consistent navigation -->
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+      <div class="brand">
+        <div class="brand-title">
+          <span class="accent-dot"></span>
+          <span>DevSecOps<span class="italic-serif text-accent">·</span>Training</span>
+        </div>
+        <div class="brand-subtitle">Kubernetes Labs</div>
+        <span class="brand-edition">Trainer · 2026 Edition</span>
+      </div>
+      <div class="sidebar-search">
+        <input type="search" id="navSearch" placeholder="Search…  press /" aria-label="Filter navigation"
+          autocomplete="off">
+      </div>
+      <nav aria-label="Sidebar navigation">
+        <div class="nav-section">
+          <div class="nav-section-label">Contents</div>
+          <ul class="nav-list">
+            <!-- Links will be populated by the rendered Markdown headings if present -->
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <div class="content-inner">
+        <article id="md-root" class="md-content page-markdown">
+          <h1 id="section-2-production-operations">Section 2: Production Operations</h1>
+
+          <p>
+            Section 1 taught you the built-in Kubernetes primitives: Pods, Deployments, Services, ConfigMaps, Secrets,
+            Volumes,
+            and the workload controllers from Lab 6. Those objects are enough to run a simple application, but real
+            production
+            clusters require more: controlled HTTP routing, standardised packaging, visibility into what the cluster is
+            doing,
+            and a reliable way to ensure that what runs in production matches what the team agreed on in code review.
+            Section 2
+            covers the <strong>ecosystem tools</strong> that sit on top of Kubernetes to solve those problems. Each lab
+            starts
+            by explaining the tool conceptually before you use it, because knowing <em>why</em> a tool exists is more
+            durable
+            knowledge than any sequence of commands.
+          </p>
+          <ul>
+            <li><strong>Lab 7:</strong> Route external HTTP traffic into the cluster with the Gateway API.</li>
+            <li><strong>Lab 8:</strong> Package, version, and template your application with Helm charts.</li>
+            <li><strong>Lab 9:</strong> Add observability with Prometheus and Grafana for metrics and dashboards.</li>
+            <li><strong>Lab 10:</strong> Adopt GitOps so the running cluster continuously matches Git, using Argo CD.</li>
+          </ul>
+
+          <blockquote><strong>INFO: Custom Resource Definitions (CRDs)</strong>
+
+            Kubernetes ships with a fixed set of built-in object types: Pod, Deployment, Service, ConfigMap, and so on.
+            A <strong>Custom Resource Definition (CRD)</strong> is a mechanism that lets any tool teach the cluster a
+            brand-new object type. Once a CRD is installed, you manage its objects with the exact same commands you
+            already know: <code>kubectl apply</code>, <code>kubectl get</code>, <code>kubectl describe</code>,
+            <code>kubectl delete</code>. The Gateway API (Lab 7) adds the <code>Gateway</code> and
+            <code>HTTPRoute</code>
+            types. Argo CD (Lab 10) adds the <code>Application</code> type. Kyverno (Lab 15) adds
+            <code>ClusterPolicy</code>.
+            All of these are CRDs. When you see an unfamiliar <code>kind:</code> in a YAML file, it is almost always a
+            custom
+            resource. A piece of software called a <strong>controller</strong> watches those objects and continuously
+            drives
+            the cluster toward the state they describe. You already saw this watch-and-reconcile pattern with
+            Deployments
+            in Section 1; everything in Section 2 is the same idea applied to new, richer object types.
+          </blockquote>
+
+          <hr />
+          <h2 id="10-lab-7-http-routing-with-the-gateway-api">10. Lab 7: HTTP Routing with the Gateway API</h2>
+
+          <p>
+            A <strong>Service</strong> (Section 1) gives a stable virtual IP to a group of pods and distributes TCP
+            connections
+            across them. That is all it does. Real HTTP applications need more: send <code>/api</code> requests to one
+            microservice and <code>/web</code> requests to another; route traffic by hostname (app.example.com vs
+            admin.example.com); terminate TLS so pods do not need certificates; redirect HTTP to HTTPS. This is called
+            <strong>Layer 7 (L7) routing</strong>, and it requires a proxy that understands the HTTP protocol, not just
+            TCP.
+          </p>
+
+          <h3 id="lab7-history">History: From Ingress to Gateway API</h3>
+          <p>
+            The first Kubernetes answer to L7 routing was the <code>Ingress</code> object, introduced around 2016.
+            <code>Ingress</code> was always a partial solution: its specification was too minimal, so every controller
+            (nginx, Traefik, HAProxy) interpreted it slightly differently and added proprietary annotations.
+            The most widely used implementation, <strong>community ingress-nginx</strong>, reached
+            <strong>end of life in March 2026</strong> and receives no further releases, bug fixes, or CVE patches.
+            The Kubernetes Security Response Committee has stated plainly that running it past EOL leaves clusters
+            exposed. The <code>Ingress</code> API itself is effectively frozen.
+          </p>
+          <p>
+            The modern, actively developed replacement is the <strong>Gateway API</strong>: a set of CRDs maintained by
+            the Kubernetes SIG-Network team that provides a richer, role-separated, standardised model for L7 routing.
+            This lab teaches the Gateway API directly.
+          </p>
+
+          <blockquote class="danger"><strong>WARNING: ingress-nginx is End of Life</strong>
+
+            The community <strong>ingress-nginx</strong> controller reached end of life in March 2026. It receives no
+            further releases, no bug fixes, and no CVE patches. Do not use it in new setups. If you have inherited
+            Ingress resources, use the <strong>ingress2gateway</strong> CLI to migrate them to Gateway API
+            automatically.
+            If you must keep the legacy Ingress API temporarily, choose a maintained controller: Traefik, HAProxy
+            Ingress,
+            or the F5/NGINX-Inc <code>kubernetes-ingress</code> (different from community ingress-nginx).
+          </blockquote>
+
+          <h3 id="lab7-object-model">Gateway API Object Model</h3>
+
+          <p>The Gateway API splits the responsibilities that Ingress crammed into one object across three distinct
+            CRDs:</p>
+
+          <figure class="k8s-figure" id="fig2-1" aria-labelledby="fig2-1-cap">
+            <svg viewBox="0 0 680 310" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig2-1-cap" font-family="'Caveat',cursive" font-size="14">
+              <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#888"/>
+        </marker>
+      </defs>
+              <!-- Infra column label -->
+              <text x="185" y="22" text-anchor="middle" font-size="14" font-weight="700" class="kf-muted">Infrastructure Team</text>
+              <!-- App column label -->
+              <text x="535" y="22" text-anchor="middle" font-size="14" font-weight="700" class="kf-muted">Application Team</text>
+
+              <!-- GatewayClass -->
+              <rect x="70" y="30" width="230" height="48" rx="8" class="kf-group-api"/>
+              <text x="185" y="51" text-anchor="middle" font-size="15" font-weight="700" class="kf-net-t">GatewayClass</text>
+              <text x="185" y="70" text-anchor="middle" font-size="12" class="kf-muted">which controller handles this?</text>
+
+              <!-- HTTPRoute (right column) -->
+              <rect x="420" y="30" width="230" height="48" rx="8" class="kf-group-api"/>
+              <text x="535" y="51" text-anchor="middle" font-size="15" font-weight="700" class="kf-net-t">HTTPRoute</text>
+              <text x="535" y="70" text-anchor="middle" font-size="12" class="kf-muted">this path → this Service</text>
+
+              <!-- Arrow GatewayClass → Gateway -->
+              <line x1="185" y1="78" x2="185" y2="112" stroke="#888" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+
+              <!-- Gateway box -->
+              <rect x="70" y="116" width="230" height="58" rx="8" class="kf-group-node"/>
+              <text x="185" y="138" text-anchor="middle" font-size="15" font-weight="700" class="kf-net-t">Gateway</text>
+              <text x="185" y="156" text-anchor="middle" font-size="12" class="kf-muted">open port 80/443</text>
+              <text x="185" y="172" text-anchor="middle" font-size="12" class="kf-muted">allow routes from namespace</text>
+
+              <!-- HTTPRoute connects to Gateway -->
+              <line x1="420" y1="78" x2="308" y2="140" stroke="#888" stroke-width="1.5" stroke-dasharray="6 3" fill="none" marker-end="url(#arr)"/>
+
+              <!-- Arrow Gateway → Traefik -->
+              <line x1="185" y1="174" x2="185" y2="208" stroke="#888" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+
+              <!-- Traefik -->
+              <rect x="70" y="212" width="230" height="40" rx="8" class="kf-group-net"/>
+              <text x="185" y="237" text-anchor="middle" font-size="15" font-weight="700" class="kf-net-t">Traefik  (proxy in cluster)</text>
+
+              <!-- Traefik forks to two services -->
+              <line x1="185" y1="252" x2="90"  y2="272" stroke="#888" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+              <line x1="185" y1="252" x2="280" y2="272" stroke="#888" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+
+              <!-- Service: app1 -->
+              <rect x="30"  y="272" width="130" height="26" rx="8" class="kf-group-node"/>
+              <text x="95"  y="290" text-anchor="middle" font-size="12" font-weight="700" class="kf-net-t">Service: app1 → Pods</text>
+              <!-- Service: app2 -->
+              <rect x="230" y="272" width="130" height="26" rx="8" class="kf-group-node"/>
+              <text x="295" y="290" text-anchor="middle" font-size="12" font-weight="700" class="kf-net-t">Service: app2 → Pods</text>
+            </svg>
+            <figcaption id="fig2-1-cap">Figure 2.1: Gateway API object model showing GatewayClass and Gateway owned by infra team, HTTPRoute by the application team.</figcaption>
+          </figure>
+
+
+          <ol class="sec2-indented">
+            <li><strong>GatewayClass:</strong> declares which controller implementation handles gateways of this class.
+              Think of it like selecting a printer driver: it says "use Traefik" or "use Istio" without coupling the
+              Gateway or Route objects to the specific product. The platform team creates one GatewayClass per
+              controller.</li>
+            <li><strong>Gateway:</strong> the actual entry point, owned by the platform or infrastructure team. It
+              defines
+              which port to listen on, which protocol (HTTP, HTTPS, TCP), and which namespaces are allowed to attach
+              HTTPRoutes. One Gateway can serve traffic for many applications.</li>
+            <li><strong>HTTPRoute:</strong> owned by the application team. It says "requests to this hostname and this
+              URL path should go to this backend Service." Application teams can create and modify HTTPRoutes without
+              touching the Gateway, and without needing cluster-admin access.</li>
+          </ol>
+
+          <p>
+            This role separation is the main reason the Gateway API replaced Ingress. Platform teams control the entry
+            point; development teams control their own routing rules. Neither group needs to modify the other's objects.
+          </p>
+
+          <h3 id="lab7-traefik">Traefik as the Gateway Controller</h3>
+          <p>
+            <strong>Traefik</strong> is a modern, actively maintained reverse proxy and load balancer with native
+            Gateway
+            API support. It is deployed inside the cluster as a Deployment (managed via its own Helm chart), watches
+            GatewayClass, Gateway, and HTTPRoute objects, and configures itself accordingly. When you apply an
+            HTTPRoute,
+            Traefik detects it within seconds and begins routing traffic as specified. Unlike the old ingress-nginx,
+            Traefik is under active development with regular security updates.
+          </p>
+
+          <h3 id="lab7-step1">Step 1: Install Gateway API CRDs</h3>
+          <p>These commands install the Gateway API custom resource definitions and confirm they are registered with the
+            cluster.</p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Check https://github.com/kubernetes-sigs/gateway-api/releases for the latest stable tag and substitute it below. The &quot;standard&quot; channel includes Gateway, HTTPRoute, and related CRDs.</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Verify the CRDs were registered with the cluster</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get crd | grep gateway.networking.k8s.io
+</code></pre>
+          </div>
+
+          <h3 id="lab7-step2">Step 2: Install Traefik via Helm</h3>
+
+          <blockquote>This step requires Helm, which is installed in Lab 8. If you are doing labs in order, install Helm
+            first
+            (Lab 8, Step 1) and then return here. If you are doing this lab standalone, install Helm with:
+            <code>curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash</code>
+          </blockquote>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Add the Traefik Helm chart repository</span></div>
+            <pre class="codehilite"><code class="language-bash">helm repo add traefik https://traefik.github.io/charts
+helm repo update
+# Install Traefik with Gateway API mode enabled.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Providers.kubernetesGateway.enabled=true tells Traefik to watch Gateway API objects instead of (or in addition to) Ingress objects.</span></div>
+            <pre class="codehilite"><code class="language-bash">helm install traefik traefik/traefik \
+  --namespace traefik \
+  --create-namespace \
+  --set providers.kubernetesGateway.enabled=true \
+  --version 34.4.0   # pin a specific chart version for reproducibility
+# Wait until the Traefik pod is Running
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Watch the Traefik pods until they are Running</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get pods -n traefik -w
+# Check that Traefik registered its GatewayClass (the class name is &quot;traefik&quot;)
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Confirm the Traefik GatewayClass is registered</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get gatewayclass
+</code></pre>
+          </div>
+
+          <h3 id="lab7-step3">Step 3: Deploy Two Backend Services</h3>
+          <p>These commands deploy two simple echo apps and expose each behind a ClusterIP Service to act as routing
+            targets.</p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Hashicorp/http-echo is a minimal web server that echoes a configurable message. It is perfect for testing routing without a real application.</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl create deployment app1 \
+  --image=hashicorp/http-echo:1.0 \
+  -- /http-echo -text=&quot;Hello from APP 1&quot;
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Create a second demo app (app2)</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl create deployment app2 \
+  --image=hashicorp/http-echo:1.0 \
+  -- /http-echo -text=&quot;Hello from APP 2&quot;
+# http-echo listens on port 5678 by default
+# kubectl expose creates a ClusterIP Service that routes to the deployment&#x27;s pods
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Expose app1 as a Service</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl expose deployment app1 --port=5678 --target-port=5678
+kubectl expose deployment app2 --port=5678 --target-port=5678
+# Verify both pods are Running
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Confirm both demo apps are Running</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get pods
+kubectl get services
+</code></pre>
+          </div>
+
+          <h3 id="lab7-step4">Step 4: Create the Gateway and HTTPRoutes</h3>
+          <p>Save as <code>demo-gateway.yaml</code>:</p>
+
+          <pre class="codehilite"><code class="language-yaml">
+# Gateway: the entry point, owned by the platform team.
+# This tells Traefik to open a listener on port 80 and accept HTTP traffic.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: demo-gateway                # referenced by HTTPRoutes in their parentRefs field
+  namespace: default
+spec:
+  gatewayClassName: traefik         # which controller handles this gateway ("traefik" GatewayClass)
+  listeners:
+  - name: http                      # listener name, referenced in HTTPRoute parentRefs
+    protocol: HTTP                  # this listener handles plain HTTP (not HTTPS)
+    port: 80                        # listen on port 80 inside the cluster
+    allowedRoutes:
+      namespaces:
+        from: Same                  # only HTTPRoutes in the same namespace can attach here
+                                    # use "All" to allow routes from any namespace
+---
+# HTTPRoute for app1: send /app1 requests to the app1 Service.
+# This object is owned by the app1 team; they do not need to modify the Gateway.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: app1-route
+  namespace: default
+spec:
+  parentRefs:
+  - name: demo-gateway              # attach to the Gateway defined above
+    namespace: default
+    sectionName: http               # attach specifically to the "http" listener
+  hostnames:
+  - "demo.local"                    # this route only matches requests with Host: demo.local
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix            # match any URL path that starts with /app1
+        value: /app1
+    backendRefs:
+    - name: app1                    # forward matching requests to the "app1" Service
+      port: 5678                    # the port on the Service (not the container port directly)
+---
+# HTTPRoute for app2: send /app2 requests to the app2 Service.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: app2-route
+  namespace: default
+spec:
+  parentRefs:
+  - name: demo-gateway
+    namespace: default
+    sectionName: http
+  hostnames:
+  - "demo.local"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /app2
+    backendRefs:
+    - name: app2
+      port: 5678
+</code></pre>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Apply the demo Gateway and its HTTPRoute</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl apply -f demo-gateway.yaml
+# Check Gateway status. PROGRAMMED=True means Traefik has picked it up and configured the listener.
+# If it shows False or Unknown, check that Traefik is running and the GatewayClass is correct.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Check the Gateway was accepted and has an address</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get gateway demo-gateway
+# Check HTTPRoute status. Both should show ATTACHED=True.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">If not, verify the parentRefs name matches the Gateway name exactly.</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get httproute
+# Detailed status for debugging:
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Inspect the Gateway's status and listeners</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl describe gateway demo-gateway
+kubectl describe httproute app1-route
+</code></pre>
+          </div>
+
+          <h3 id="lab7-step5">Step 5: Test Path-Based Routing</h3>
+          <p>These commands send requests through the Gateway and confirm each path is routed to the correct backend.
+          </p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Traefik&#x27;s Service in the &quot;traefik&quot; namespace serves traffic on port 80.</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl port-forward -n traefik svc/traefik 8080:80 &amp;
+# Test app1 routing: the -H flag sends the Host header that the HTTPRoute matches on
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Send request to demo.local&quot;</span></div>
+            <pre class="codehilite"><code class="language-bash">curl -H &quot;Host: demo.local&quot; http://localhost:8080/app1
+# Expected output: Hello from APP 1
+# Test app2 routing
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Send request to demo.local&quot;</span></div>
+            <pre class="codehilite"><code class="language-bash">curl -H &quot;Host: demo.local&quot; http://localhost:8080/app2
+# Expected output: Hello from APP 2
+# Without the correct Host header, or with a path that no HTTPRoute matches, you get a 404
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Send request to localhost:8080/app1</span></div>
+            <pre class="codehilite"><code class="language-bash">curl http://localhost:8080/app1
+# Expected: 404 Not Found (Host header missing)
+</code></pre>
+          </div>
+
+          <h3 id="lab7-advanced">Advanced Features to Know About</h3>
+          <ol class="sec2-indented">
+            <li><strong>Header-based routing:</strong> HTTPRoute rules can match on specific HTTP headers, not just
+              paths.
+              Useful for A/B testing or routing mobile vs desktop traffic.</li>
+            <li><strong>Traffic weighting (canary deployments):</strong> a single HTTPRoute rule can split traffic
+              across
+              multiple <code>backendRefs</code> with a <code>weight</code> field. For example, 90% to stable and 10% to
+              canary. This is how progressive delivery works without a dedicated service mesh.</li>
+            <li><strong>TLS termination:</strong> add a <code>https</code> listener to the Gateway referencing a
+              Kubernetes
+              Secret containing a TLS certificate and key. Combine with <strong>cert-manager</strong> to provision and
+              renew Let's Encrypt certificates automatically.</li>
+            <li><strong>Redirects and rewrites:</strong> HTTPRoute supports <code>filters</code> to redirect HTTP to
+              HTTPS,
+              rewrite URL paths before forwarding to the backend, or add/remove headers.</li>
+          </ol>
+
+          <h3 id="lab7-troubleshooting">Troubleshooting</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Symptom</th>
+                  <th>Cause</th>
+                  <th>Fix</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>PROGRAMMED=False</code> on Gateway</td>
+                  <td>Traefik not running, or <code>gatewayClassName</code> does not match any GatewayClass</td>
+                  <td><code>kubectl get pods -n traefik</code> and <code>kubectl get gatewayclass</code></td>
+                </tr>
+                <tr>
+                  <td><code>ATTACHED=False</code> on HTTPRoute</td>
+                  <td><code>parentRefs.name</code> does not match the Gateway name, or namespace mismatch</td>
+                  <td><code>kubectl describe httproute &lt;name&gt;</code> to read the status conditions</td>
+                </tr>
+                <tr>
+                  <td>curl returns 404</td>
+                  <td>Wrong path prefix, missing <code>Host</code> header, or backend Service name wrong</td>
+                  <td>Verify path in HTTPRoute matches the path in curl; add <code>-H "Host: demo.local"</code></td>
+                </tr>
+                <tr>
+                  <td>curl returns connection refused</td>
+                  <td>port-forward not running, or wrong port number</td>
+                  <td>Check <code>kubectl get svc -n traefik</code> to confirm Service port, restart port-forward</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 id="lab7-cleanup">Cleanup</h3>
+          <p>These commands stop the port-forward and remove the Gateway, routes, apps, and Traefik install.</p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Stop the background port-forward</span></div>
+            <pre class="codehilite"><code class="language-bash">kill %1 2&gt;/dev/null || pkill -f &quot;port-forward.*traefik&quot;
+# Remove application resources
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Delete the demo Gateway and routes</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl delete -f demo-gateway.yaml
+kubectl delete deployment app1 app2
+kubectl delete service app1 app2
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Uninstall Traefik (if you want to remove it; Lab 8 also uses Traefik)</span></div>
+            <pre class="codehilite"><code class="language-bash">helm uninstall traefik -n traefik
+kubectl delete namespace traefik
+# Remove the Gateway API CRDs (optional; keep them if you plan to keep using the Gateway API)
+# kubectl delete -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+</code></pre>
+          </div>
+
+          <blockquote class="success">
+            <ul>
+              <li>A <strong>Service</strong> does L4 (TCP) routing. L7 (HTTP) routing requires a Gateway controller.
+              </li>
+              <li>The <strong>Gateway API</strong> replaced the deprecated Ingress API. The ingress-nginx community
+                controller reached EOL in March 2026 and should not be used in new setups.</li>
+              <li>The three objects: <strong>GatewayClass</strong> (which controller), <strong>Gateway</strong> (which
+                port, which namespaces), <strong>HTTPRoute</strong> (which path goes where).</li>
+              <li>Role separation is intentional: the platform team owns GatewayClass and Gateway; application teams own
+                HTTPRoutes without needing cluster-admin privileges.</li>
+              <li>Traffic weighting, header routing, TLS termination, and redirects are all built into the Gateway API
+                specification without vendor-specific annotations.</li>
+            </ul>
+          </blockquote>
+
+          <hr />
+          <h2 id="11-lab-8-packaging-with-helm">11. Lab 8: Packaging with Helm</h2>
+
+          <p>
+            A real application deployed to Kubernetes is rarely a single YAML file. A typical microservice might need a
+            Deployment, a Service, a ConfigMap, a Secret, a ServiceAccount, an RBAC Role, a PodDisruptionBudget, and an
+            HorizontalPodAutoscaler. That is already eight files, and the values inside them differ between dev,
+            staging,
+            and production. Maintaining eight environment-specific YAML files per service, across dozens of services,
+            leads
+            to copy-paste drift, configuration errors, and manual rollbacks.
+          </p>
+          <p>
+            <strong>Helm</strong> is the standard package manager for Kubernetes. It solves these problems by packaging
+            all
+            the YAML templates for an application into a single versioned unit called a <strong>chart</strong>, with all
+            the
+            environment-specific values extracted into a separate configuration file. One command installs the whole
+            application; one command upgrades it; one command rolls it back.
+          </p>
+
+          <h3 id="lab8-concepts">Helm Concepts</h3>
+          <ol class="sec2-indented">
+            <li><strong>Chart:</strong> the package. A directory (or a <code>.tgz</code> archive) containing templated
+              Kubernetes manifests, a <code>Chart.yaml</code> with metadata, a <code>values.yaml</code> with default
+              configuration, and optionally a <code>NOTES.txt</code> with post-install instructions.</li>
+            <li><strong>Repository:</strong> a server hosting charts. You add a repository with
+              <code>helm repo add</code>,
+              like adding an apt or npm source. Charts can also be stored in OCI registries (ghcr.io, ECR).
+            </li>
+            <li><strong>Values:</strong> the configuration that customises a chart. A <code>values.yaml</code> file
+              provides
+              defaults; you override specific values with a <code>-f my-values.yaml</code> file or
+              <code>--set key=value</code>
+              on the command line. The same chart produces dev, staging, and prod deployments from different value
+              files.
+            </li>
+            <li><strong>Release:</strong> one installed instance of a chart in a cluster. Each release has a unique name
+              and
+              a revision history. You can install the same chart multiple times with different names and values.</li>
+            <li><strong>Template:</strong> a Kubernetes manifest with Go template placeholders.
+              <code>{{ .Values.replicaCount }}</code>
+              becomes the actual value from your values file at render time. <code>{{ .Release.Name }}</code> is the
+              release
+              name. <code>{{ .Chart.Version }}</code> is the chart version.
+            </li>
+          </ol>
+
+          <h3 id="lab8-chart-structure">Chart Directory Structure</h3>
+          <p>The layout below shows the standard files and folders that make up a Helm chart.</p>
+          <pre class="codehilite"><code class="language-text">
+mychart/
+  Chart.yaml          # chart metadata: name, version, appVersion, description
+  values.yaml         # default configuration values for all templates
+  charts/             # dependency charts (subcharts) are placed here
+  templates/          # the actual Kubernetes YAML templates
+    deployment.yaml   # typical Deployment template using {{ .Values.* }} placeholders
+    service.yaml      # Service template
+    _helpers.tpl      # reusable template fragments (labels, names, selectors)
+    NOTES.txt         # printed to stdout after helm install completes
+  .helmignore         # files to exclude when packaging (like .gitignore)
+</code></pre>
+
+          <h3 id="lab8-how-templates-work">How Templates Work</h3>
+          <p>A template uses Go template syntax with values injected from your values file. For example:</p>
+          <pre class="codehilite"><code class="language-yaml">
+# In templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-app          # becomes "my-nginx-app" if release is named "my-nginx"
+  labels:
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}   # e.g. "nginx-1.2.3"
+spec:
+  replicas: {{ .Values.replicaCount }}   # pulled from values.yaml or --set flag
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    spec:
+      containers:
+      - name: app
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+</code></pre>
+
+          <pre class="codehilite"><code class="language-yaml">
+# In values.yaml (defaults that get substituted into the template above)
+replicaCount: 1
+
+image:
+  repository: nginx
+  tag: "1.27-alpine"
+</code></pre>
+
+          <p>
+            <code>helm template my-release ./mychart</code> renders the final YAML locally without applying it to the
+            cluster.
+            This is the foundation of shift-left scanning: pipe the rendered output to Trivy (Lab 11) in CI before any
+            manifest reaches the cluster.
+          </p>
+
+          <h3 id="lab8-step1">Step 1: Install Helm</h3>
+          <p>These commands download and install the Helm CLI and verify the version.</p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Send request to https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4</span></div>
+            <pre class="codehilite"><code class="language-bash">curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 -o get_helm.sh
+chmod 700 get_helm.sh
+./get_helm.sh
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm version (should be v4.x)</span></div>
+            <pre class="codehilite"><code class="language-bash">helm version
+# Clean up the installer
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Clean up the Helm installer script</span></div>
+            <pre class="codehilite"><code class="language-bash">rm get_helm.sh
+</code></pre>
+          </div>
+
+          <h3 id="lab8-step2">Step 2: Add a Repository and Install a Chart</h3>
+
+          <blockquote class="warning"><strong>WARNING: Bitnami Charts</strong>
+
+            As of late 2025, Broadcom moved the free Bitnami catalog (<code>docker.io/bitnami/*</code>) to an
+            unmaintained
+            legacy repository or behind a paid subscription. Charts referencing those images fail with
+            <code>ImagePullBackOff</code> and receive no security patches. Many older tutorials still reference
+            <code>bitnami/nginx</code>; do not follow them. Use the Traefik chart (actively maintained, CNCF graduated
+            project) as shown below instead.
+          </blockquote>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Add the Traefik Helm chart repository</span></div>
+            <pre class="codehilite"><code class="language-bash">helm repo add traefik https://traefik.github.io/charts
+helm repo update
+# Search for available chart versions
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">List the available Traefik chart versions</span></div>
+            <pre class="codehilite"><code class="language-bash">helm search repo traefik/traefik --versions | head -10
+# Inspect what values the chart exposes (this is a long output; pipe to less)
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Browse the chart's default values</span></div>
+            <pre class="codehilite"><code class="language-bash">helm show values traefik/traefik | less
+# Install the chart. Always pin --version for reproducibility.
+# The release name &quot;my-proxy&quot; is used to name all resources this chart creates.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Install Traefik (pinned to chart version 34.4.0)</span></div>
+            <pre class="codehilite"><code class="language-bash">helm install my-proxy traefik/traefik --version 34.4.0
+# List installed releases in the default namespace
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Confirm the release is deployed</span></div>
+            <pre class="codehilite"><code class="language-bash">helm list
+# See the Kubernetes resources the chart created
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">vi</span><span class="cmd-step-title">Inspect the resources Helm created</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get pods,svc,deployment
+</code></pre>
+          </div>
+
+          <blockquote><strong>INFO: Always Pin --version</strong>
+
+            An unpinned <code>helm install</code> installs the latest chart version, making deployments
+            non-reproducible.
+            Next week a new chart version may install with a different default configuration. Pin the version in your
+            scripts and GitOps configs so every install is identical. Use
+            <code>helm search repo traefik/traefik --versions</code> to see available versions.
+          </blockquote>
+
+          <h3 id="lab8-step3">Step 3: Customize with Values</h3>
+          <p>These commands override chart values to customize a release without editing the chart itself.</p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Dump the chart&#x27;s default values to a file for reference</span></div>
+            <pre class="codehilite"><code class="language-bash">helm show values traefik/traefik &gt; default-values.yaml
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Override a specific value at upgrade time using --set (increases the Traefik deployment to 2 replicas)</span></div>
+            <pre class="codehilite"><code class="language-bash">helm upgrade my-proxy traefik/traefik \
+  --version 34.4.0 \
+  --set deployment.replicas=2
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the upgrade scaled Traefik to two pods</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get pods   # now two Traefik pods are running
+</code></pre>
+          </div>
+
+          <p>For more complex customisation, create a values override file:</p>
+          <pre class="codehilite"><code class="language-yaml">
+# my-values.yaml: only include the values you want to OVERRIDE from defaults
+deployment:
+  replicas: 1                  # scale back to 1 for the lab environment
+
+resources:
+  requests:
+    cpu: "100m"                # lower CPU request for Minikube
+    memory: "128Mi"
+  limits:
+    memory: "256Mi"
+</code></pre>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Upgrade the release to change a value</span></div>
+            <pre class="codehilite"><code class="language-bash">helm upgrade my-proxy traefik/traefik \
+  --version 34.4.0 \
+  -f my-values.yaml
+# View the effective values for this release (merged defaults + your overrides)
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Show the values currently applied to the release</span></div>
+            <pre class="codehilite"><code class="language-bash">helm get values my-proxy
+</code></pre>
+          </div>
+
+          <h3 id="lab8-step4">Step 4: View History and Rollback</h3>
+          <p>These commands show a release's revision history and roll it back to an earlier revision.</p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">View the release's revision history</span></div>
+            <pre class="codehilite"><code class="language-bash">helm history my-proxy
+# Roll back to revision 1 (the original install)
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Roll back to revision 1</span></div>
+            <pre class="codehilite"><code class="language-bash">helm rollback my-proxy 1
+# Confirm the rollback: helm history will show a new revision with DESCRIPTION &quot;Rollback to 1&quot;
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the rollback added a new revision</span></div>
+            <pre class="codehilite"><code class="language-bash">helm history my-proxy
+# Uninstall the release entirely (removes all Kubernetes resources the chart created)
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Uninstall the release</span></div>
+            <pre class="codehilite"><code class="language-bash">helm uninstall my-proxy
+</code></pre>
+          </div>
+
+          <h3 id="lab8-step5">Step 5: Create Your Own Chart</h3>
+          <p>These commands scaffold a brand-new chart and install it to see the generated templates in action.</p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Scaffold a new chart with the standard directory structure</span></div>
+            <pre class="codehilite"><code class="language-bash">helm create my-app
+# Explore the generated structure
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Inspect the generated chart structure</span></div>
+            <pre class="codehilite"><code class="language-bash">ls -R my-app/
+# Validate the chart (checks for syntax errors and missing required fields)
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Lint the chart for errors</span></div>
+            <pre class="codehilite"><code class="language-bash">helm lint my-app
+# Render the templates locally WITHOUT applying to the cluster
+# This is the shift-left scanning hook: pipe output to Trivy in CI
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Render the chart locally to preview the manifests</span></div>
+            <pre class="codehilite"><code class="language-bash">helm template my-release my-app
+# Pipe rendered templates to Trivy for security scanning (Lab 11)
+# helm template my-release my-app | trivy config --exit-code 1 -
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Package the chart into a versioned archive</span></div>
+            <pre class="codehilite"><code class="language-bash">helm package my-app
+ls *.tgz   # e.g. my-app-0.1.0.tgz
+</code></pre>
+          </div>
+
+          <h4 id="lab8-modify-chart">Modify the Generated Chart</h4>
+          <p>The scaffolded <code>my-app/templates/deployment.yaml</code> uses the nginx image by default. Override it
+            in values:</p>
+          <pre class="codehilite"><code class="language-yaml">
+# Edit my-app/values.yaml and change the image section:
+image:
+  repository: hashicorp/http-echo      # use the http-echo image from Lab 7
+  pullPolicy: IfNotPresent
+  tag: "1.0"                           # pinned image tag
+
+service:
+  type: ClusterIP
+  port: 5678                           # http-echo listens on 5678
+
+# Remove the default livenessProbe and readinessProbe sections, or adjust the path
+livenessProbe: {}
+readinessProbe: {}
+</code></pre>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Preview the rendered manifests before installing</span></div>
+            <pre class="codehilite"><code class="language-bash">helm template my-release my-app
+# Install the customised chart
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Install the custom chart</span></div>
+            <pre class="codehilite"><code class="language-bash">helm install my-release my-app
+# Verify it works
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the app pods are Running</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get pods
+kubectl port-forward svc/my-release-my-app 8080:5678 &amp;
+curl http://localhost:8080
+kill %1
+</code></pre>
+          </div>
+
+          <h3 id="lab8-oci">OCI Registries for Helm Charts</h3>
+          <p>
+            Helm 3.8+ supports storing and retrieving charts from OCI-compatible container registries (GitHub Container
+            Registry, AWS ECR, Google Artifact Registry). This eliminates the need to run a separate Helm chart server
+            and lets you apply the same access controls, vulnerability scanning, and signing used for container images.
+          </p>
+          <pre class="codehilite"><code class="language-bash">
+# Pull a chart from an OCI registry (example: Argo CD chart from ghcr.io)
+helm pull oci://ghcr.io/argoproj/argo-helm/argo-cd --version 7.3.11
+# Push your own chart to an OCI registry
+# helm push my-app-0.1.0.tgz oci://ghcr.io/your-org/charts
+</code></pre>
+
+          <h3 id="lab8-secrets">Secrets and Helm</h3>
+
+          <blockquote class="danger"><strong>WARNING: Never Put Secrets in values.yaml</strong>
+
+            Helm values files are stored in Kubernetes as Secrets in the release namespace, but they are base64-encoded,
+            not encrypted. Anyone with <code>kubectl get secret</code> access in that namespace can decode them. Never
+            put
+            passwords, API keys, or TLS private keys in <code>values.yaml</code> or in <code>--set</code> flags that
+            appear
+            in shell history. Use <strong>sealed-secrets</strong> (encrypts secrets in Git) or
+            <strong>external-secrets-operator</strong> (fetches secrets from Vault, AWS Secrets Manager, GCP Secret
+            Manager)
+            alongside Helm instead.
+          </blockquote>
+
+          <h3 id="lab8-troubleshooting">Troubleshooting</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Symptom</th>
+                  <th>Cause</th>
+                  <th>Fix</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Template render error</td>
+                  <td>Go template syntax error in a template file</td>
+                  <td><code>helm template &lt;name&gt; ./chart</code> to see the exact error with line number</td>
+                </tr>
+                <tr>
+                  <td>"release already exists" error</td>
+                  <td>A release with that name is already installed</td>
+                  <td>Use <code>helm upgrade --install</code> which installs if not present, upgrades if it is</td>
+                </tr>
+                <tr>
+                  <td>Wrong values applied</td>
+                  <td>Values file not picked up, or --set flag syntax wrong</td>
+                  <td><code>helm get values &lt;release&gt;</code> to see what values are actually in use</td>
+                </tr>
+                <tr>
+                  <td>ImagePullBackOff after install</td>
+                  <td>Wrong image name or tag in values (e.g. Bitnami images)</td>
+                  <td><code>helm get values &lt;release&gt;</code>, check image.repository and image.tag</td>
+                </tr>
+                <tr>
+                  <td>helm lint reports errors</td>
+                  <td>Missing required Chart.yaml fields or template syntax issues</td>
+                  <td>Fix reported errors; run <code>helm lint --strict</code> for stricter checks</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 id="lab8-cleanup">Cleanup</h3>
+          <p>These commands uninstall the Helm releases created during the lab.</p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Uninstall the release</span></div>
+            <pre class="codehilite"><code class="language-bash">helm uninstall my-release 2&gt;/dev/null || true
+# Remove generated files
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Clean up the chart files</span></div>
+            <pre class="codehilite"><code class="language-bash">rm -rf my-app/ my-app-0.1.0.tgz default-values.yaml my-values.yaml
+</code></pre>
+          </div>
+
+          <blockquote class="success">
+            <ul>
+              <li><strong>Helm</strong> packages many YAML files into a single versioned chart with parameterised
+                values, solving copy-paste drift across environments.</li>
+              <li>A <strong>release</strong> is a named, versioned install of a chart. Every <code>helm upgrade</code>
+                creates a new revision tracked in history.</li>
+              <li><strong>Always pin <code>--version</code></strong> in scripts and GitOps configs for reproducibility.
+              </li>
+              <li><code>helm template</code> renders manifests locally without applying them: the foundation of
+                shift-left scanning in CI pipelines.</li>
+              <li>Never store secrets in <code>values.yaml</code>. Use sealed-secrets or external-secrets-operator
+                instead.</li>
+              <li>The Bitnami chart repository is no longer freely maintained. Use charts from their original vendors
+                (Traefik, prometheus-community, argoproj, etc.).</li>
+            </ul>
+          </blockquote>
+
+          <hr />
+          <h2 id="12-lab-9-observability-metrics-prometheus-grafana">12. Lab 9: Observability (Metrics, Prometheus,
+            Grafana)</h2>
+
+          <p>
+            You cannot operate a system you cannot see. <strong>Observability</strong> is the practice of understanding
+            a
+            system's internal state from its external outputs. Without it, you are debugging production outages with no
+            data, guessing at causes, and reacting to user complaints instead of catching problems proactively. The
+            industry converged on three complementary signals, called the three pillars of observability:
+          </p>
+          <ol class="sec2-indented">
+            <li><strong>Metrics:</strong> numeric time-series data. Examples: CPU usage percentage, HTTP request rate,
+              memory consumption, error count per second. Metrics are cheap to store and excellent for dashboards,
+              alerts,
+              and capacity planning. The trade-off: they tell you <em>something is wrong</em>, not exactly what.</li>
+            <li><strong>Logs:</strong> discrete text records of events. Examples: "user 123 logged in at 14:32",
+              "database
+              query took 450ms", "connection refused to redis:6379". Logs tell you exactly what happened at a specific
+              time. The trade-off: they are expensive to store and search at scale.</li>
+            <li><strong>Traces:</strong> the recorded path of a single request through multiple services. A trace shows
+              which service was slow, which database query took longest, and where an error originated in a chain of
+              microservice calls. The trade-off: they require instrumentation in every service.</li>
+          </ol>
+          <p>
+            This lab focuses on <strong>metrics</strong>, which is where every cluster's observability journey starts.
+            Logs (Loki) and traces (Tempo, OpenTelemetry) are the natural extensions covered at the end.
+          </p>
+
+          <h3 id="lab9-prometheus-architecture">Prometheus Architecture</h3>
+
+          <p>
+            <strong>Prometheus</strong> is the de facto metrics database for Kubernetes, and a CNCF graduated project.
+            Its architecture differs from traditional monitoring systems in one important way: it uses a
+            <strong>pull (scrape) model</strong>. Prometheus calls an HTTP endpoint (<code>/metrics</code>) on each
+            monitored target at a regular interval (typically every 15 or 30 seconds) and stores the data. Targets do
+            not
+            push data to Prometheus; Prometheus fetches it. This makes it easier to detect when a target has gone
+            silent.
+          </p>
+
+          <h4 id="lab9-data-model">Time-Series Data Model</h4>
+          <p>Every Prometheus metric is identified by a name and a set of key-value labels:</p>
+          <pre class="codehilite"><code class="language-text">
+# Format: metric_name{label1="value1", label2="value2"} numeric_value [timestamp]
+
+http_requests_total{method="GET", status="200", namespace="default"} 14253
+http_requests_total{method="POST", status="500", namespace="default"} 7
+container_cpu_usage_seconds_total{pod="web-0", container="nginx", namespace="default"} 0.045
+</code></pre>
+
+          <p>Labels are what make Prometheus powerful: you can filter, aggregate, and group metrics by any label
+            combination using PromQL.</p>
+
+          <h4 id="lab9-promql">Basic PromQL Examples</h4>
+          <p>The queries below show common PromQL expressions for inspecting CPU, memory, and request metrics.</p>
+          <pre class="codehilite"><code class="language-text">
+# Current CPU rate per container over the last 5 minutes
+rate(container_cpu_usage_seconds_total[5m])
+
+# Total HTTP requests per second, summed by namespace
+sum(rate(http_requests_total[5m])) by (namespace)
+
+# Average memory usage across all pods in the "default" namespace
+avg(container_memory_usage_bytes{namespace="default"})
+
+# 95th percentile response latency (requires histogram metric type)
+histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+
+# Number of pods not in Running state (useful for alerting)
+count(kube_pod_status_phase{phase!="Running"}) by (namespace)
+</code></pre>
+
+          <h4 id="lab9-exporters">Exporters: Adapters for Non-Native Systems</h4>
+          <p>
+            An <strong>exporter</strong> is a small process that reads metrics from a system that does not speak
+            Prometheus
+            natively and exposes them in Prometheus format at a <code>/metrics</code> HTTP endpoint. The
+            kube-prometheus-stack
+            installs several automatically:
+          </p>
+          <ol class="sec2-indented">
+            <li><strong>node-exporter:</strong> hardware and OS metrics for each node: CPU, memory, disk I/O, network
+              throughput, filesystem usage. Deployed as a DaemonSet.</li>
+            <li><strong>kube-state-metrics:</strong> Kubernetes object state metrics: number of pods by phase,
+              deployment
+              replica counts, PVC bound status, job completion counts. It exposes the state of the Kubernetes API, not
+              the nodes themselves.</li>
+            <li><strong>cAdvisor:</strong> container resource metrics built into the kubelet: CPU and memory per
+              container.
+              Already present in every node; Prometheus scrapes it directly.</li>
+          </ol>
+
+          <h3 id="lab9-stack">The kube-prometheus-stack</h3>
+          <p>
+            Installing Prometheus, Grafana, Alertmanager, node-exporter, and kube-state-metrics separately would require
+            configuring each one to talk to the others. The <strong>kube-prometheus-stack</strong> Helm chart bundles
+            all
+            of them with pre-configured wiring, pre-built Grafana dashboards for Kubernetes, and pre-written alerting
+            rules
+            for common conditions. It is the standard starting point for Kubernetes observability.
+          </p>
+
+          <h3 id="lab9-step1">Step 1: Verify metrics-server</h3>
+          <p>These commands confirm metrics-server is running and serving node and pod resource metrics.</p>
+          <pre class="codehilite"><code class="language-bash">kubectl top nodes
+kubectl top pods -A
+# If metrics-server is not running, enable it on Minikube:
+# minikube addons enable metrics-server
+</code></pre>
+
+          <h3 id="lab9-step2">Step 2: Install kube-prometheus-stack</h3>
+
+          <blockquote class="warning"><strong>WARNING: Memory Requirements</strong>
+
+            The kube-prometheus-stack is resource-intensive. Ensure Minikube was started with at least 4096MB of memory:
+            <code>minikube start --memory=4096 --cpus=2</code>. The stack includes Prometheus (which loads all
+            time-series
+            into memory), Grafana, Alertmanager, and multiple exporters. On machines with limited RAM, reduce Prometheus
+            retention or disable components you do not need.
+          </blockquote>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Add the Prometheus Community Helm repository</span></div>
+            <pre class="codehilite"><code class="language-bash">helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Create a dedicated namespace for monitoring</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl create namespace monitoring
+# Install the full stack. Pin the chart version for reproducibility.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">This installs: Prometheus, Grafana, Alertmanager, node-exporter, kube-state-metrics, and a set of pre-configured alerting rules and Grafana dashboards.</span></div>
+            <pre class="codehilite"><code class="language-bash">helm install kps prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --version 65.8.1
+# Watch pods come up (this takes 2-4 minutes on Minikube)
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Watch the monitoring stack pods until they are Running</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get pods -n monitoring -w
+# Once all pods show Running, press Ctrl-C
+</code></pre>
+          </div>
+
+          <h3 id="lab9-step3">Step 3: Access Grafana</h3>
+          <p>These commands retrieve the Grafana admin password and port-forward to its dashboard.</p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Retrieve the Grafana admin password</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get secret -n monitoring kps-grafana \
+  -o jsonpath=&quot;{.data.admin-password}&quot; | base64 -d; echo
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Forward Grafana&#x27;s Service port to your laptop. Run this in a separate terminal or with &amp; to keep it in the background.</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl port-forward -n monitoring svc/kps-grafana 3000:80 &amp;
+</code></pre>
+          </div>
+
+          <p>
+            Open <a href="http://localhost:3000">http://localhost:3000</a> in a browser. Log in with username
+            <code>admin</code> and the password retrieved above. Navigate to <strong>Dashboards</strong> in the left
+            sidebar and explore the pre-built dashboards:
+          </p>
+          <ol class="sec2-indented">
+            <li><strong>Kubernetes / Cluster:</strong> overall cluster health, node count, pod count by phase</li>
+            <li><strong>Kubernetes / Nodes:</strong> per-node CPU, memory, disk, and network metrics from node-exporter
+            </li>
+            <li><strong>Kubernetes / Namespaces:</strong> resource usage aggregated by namespace</li>
+            <li><strong>Kubernetes / Pods:</strong> per-pod CPU and memory with drill-down by namespace</li>
+          </ol>
+
+          <h3 id="lab9-step4">Step 4: Explore Prometheus</h3>
+          <p>These commands port-forward to the Prometheus UI so you can run PromQL queries directly.</p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Find the Prometheus Service</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get svc -n monitoring | grep prometheus
+# Forward the Prometheus web UI to port 9090
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Port-forward to the Prometheus UI</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl port-forward -n monitoring svc/kps-kube-prometheus-stack-prometheus 9090:9090 &amp;
+</code></pre>
+          </div>
+
+          <p>
+            Open <a href="http://localhost:9090">http://localhost:9090</a>. In the expression bar, try these PromQL
+            queries:
+          </p>
+          <pre class="codehilite"><code class="language-text">
+# Current CPU usage rate per container
+rate(container_cpu_usage_seconds_total{container!=""}[5m])
+
+# Total memory used by all pods in the default namespace
+sum(container_memory_working_set_bytes{namespace="default"}) by (pod)
+
+# Number of pods not in Running phase
+count(kube_pod_status_phase{phase!~"Running|Succeeded"}) by (namespace, phase)
+</code></pre>
+
+          <p>Click the <strong>Graph</strong> tab after running a query to see the time-series chart. Click
+            <strong>Status &gt; Targets</strong> in the top menu to see every endpoint Prometheus is scraping and their
+            health status.
+          </p>
+
+          <h3 id="lab9-step5">Step 5: View Alertmanager</h3>
+          <p>These commands port-forward to Alertmanager to inspect configured alerts and their state.</p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Find the Alertmanager Service</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get svc -n monitoring | grep alertmanager
+# Forward Alertmanager UI to port 9093
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Port-forward to the Alertmanager UI</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl port-forward -n monitoring svc/kps-kube-prometheus-stack-alertmanager 9093:9093 &amp;
+</code></pre>
+          </div>
+
+          <p>
+            Open <a href="http://localhost:9093">http://localhost:9093</a> to see active alerts and their status.
+            Alertmanager
+            receives alert notifications from Prometheus when alerting rules fire, deduplicates them, and routes them to
+            configured receivers (Slack, email, PagerDuty, OpsGenie). The kube-prometheus-stack includes pre-written
+            alerting rules for common conditions: nodes running out of memory, pods crash-looping, persistent volumes
+            running out of space.
+          </p>
+
+          <h3 id="lab9-servicemonitor">ServiceMonitor: Telling Prometheus to Scrape Your App</h3>
+          <p>
+            How does Prometheus know which pods to scrape? The kube-prometheus-stack uses a CRD called
+            <strong>ServiceMonitor</strong>. A ServiceMonitor selects Services by label and tells Prometheus which port
+            to scrape on them. The Prometheus operator watches for ServiceMonitor objects and updates Prometheus's
+            scrape configuration automatically. You do not edit Prometheus config files by hand.
+          </p>
+          <pre class="codehilite"><code class="language-yaml">
+# Example ServiceMonitor: tell Prometheus to scrape the "my-app" Service on port "metrics"
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: my-app-metrics                  # name of the ServiceMonitor
+  namespace: monitoring                 # must be in the Prometheus operator's namespace
+  labels:
+    release: kps                        # MUST match the Helm release label; Prometheus operator
+                                        # uses this label to find relevant ServiceMonitors
+spec:
+  selector:
+    matchLabels:
+      app: my-app                       # select Services with this label
+  namespaceSelector:
+    matchNames:
+    - default                           # which namespaces to look for Services in
+  endpoints:
+  - port: metrics                       # which named port on the Service to scrape
+    interval: 30s                       # scrape every 30 seconds
+    path: /metrics                      # the path to scrape (standard Prometheus path)
+</code></pre>
+
+          <h3 id="lab9-what-metrics-look-like">What a /metrics Endpoint Looks Like</h3>
+          <p>The sample below shows the Prometheus text exposition format that an instrumented app serves at /metrics.
+          </p>
+          <pre class="codehilite"><code class="language-text">
+# HELP http_requests_total Total number of HTTP requests received
+# TYPE http_requests_total counter
+http_requests_total{method="GET",path="/",status="200"} 14253
+http_requests_total{method="POST",path="/api/users",status="201"} 892
+http_requests_total{method="GET",path="/health",status="200"} 5421
+
+# HELP go_goroutines Number of goroutines currently running
+# TYPE go_goroutines gauge
+go_goroutines 12
+
+# HELP http_request_duration_seconds Request duration in seconds
+# TYPE http_request_duration_seconds histogram
+http_request_duration_seconds_bucket{le="0.1"} 8934
+http_request_duration_seconds_bucket{le="0.5"} 14102
+http_request_duration_seconds_bucket{le="1.0"} 14240
+http_request_duration_seconds_bucket{le="+Inf"} 14253
+http_request_duration_seconds_sum 1247.3
+http_request_duration_seconds_count 14253
+</code></pre>
+
+          <h3 id="lab9-next-steps">Loki and Tempo: Completing the Picture</h3>
+          <p>
+            Metrics show you <em>something is wrong</em>. Logs show you <em>what happened</em>. Traces show you
+            <em>where in the request chain it broke</em>. The Grafana ecosystem provides all three:
+          </p>
+          <ol class="sec2-indented">
+            <li><strong>Loki:</strong> a log aggregation system designed for Kubernetes. Fluent Bit (from Lab 6's
+              DaemonSet
+              example) ships logs to Loki; Grafana queries and visualises them with LogQL. Loki is cheaper to operate
+              than
+              Elasticsearch because it does not index log content, only labels.</li>
+            <li><strong>Tempo:</strong> a distributed tracing backend. Applications instrumented with OpenTelemetry SDKs
+              send traces to Tempo; Grafana shows them alongside metrics and logs. Grafana's "Explore" view links a
+              spike
+              in error rate (metric) directly to the traces and logs from that time window.</li>
+          </ol>
+
+          <h3 id="lab9-troubleshooting">Troubleshooting</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Symptom</th>
+                  <th>Cause</th>
+                  <th>Fix</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Grafana shows "No data" in dashboards</td>
+                  <td>Prometheus data source not configured, or Prometheus not running</td>
+                  <td>Grafana: Connections &gt; Data sources, check the Prometheus URL;
+                    <code>kubectl get pods -n monitoring</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Prometheus Status &gt; Targets shows a target as "down"</td>
+                  <td>Wrong port, missing ServiceMonitor label, or network policy blocking scrape</td>
+                  <td>Check the target's error message in the Targets page; verify ServiceMonitor labels match</td>
+                </tr>
+                <tr>
+                  <td><code>kubectl top</code> shows "error: metrics not available"</td>
+                  <td>metrics-server not running or not ready</td>
+                  <td><code>kubectl get pods -n kube-system | grep metrics-server</code>; enable with
+                    <code>minikube addons enable metrics-server</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td>kube-prometheus-stack pods stuck in Pending</td>
+                  <td>Insufficient memory or storage on Minikube</td>
+                  <td>Restart Minikube with more memory:
+                    <code>minikube delete &amp;&amp; minikube start --memory=6144</code>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 id="lab9-cleanup">Cleanup</h3>
+          <p>These commands stop the port-forwards and remove the monitoring stack.</p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Stop the background port-forwards</span></div>
+            <pre class="codehilite"><code class="language-bash">pkill -f &quot;port-forward.*monitoring&quot; 2&gt;/dev/null || true
+# Uninstall the stack
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Uninstall the monitoring stack</span></div>
+            <pre class="codehilite"><code class="language-bash">helm uninstall kps -n monitoring
+# Remove the monitoring namespace and all its resources
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Remove the monitoring namespace</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl delete namespace monitoring
+</code></pre>
+          </div>
+
+          <blockquote class="success">
+            <ul>
+              <li>The three pillars of observability are <strong>metrics</strong> (what), <strong>logs</strong> (when
+                and exactly what), and <strong>traces</strong> (where in the call chain).</li>
+              <li><strong>Prometheus</strong> uses a pull (scrape) model: it calls <code>/metrics</code> endpoints on
+                targets, not the other way around.</li>
+              <li>The <strong>kube-prometheus-stack</strong> Helm chart bundles Prometheus, Grafana, Alertmanager,
+                node-exporter, and kube-state-metrics with pre-built Kubernetes dashboards.</li>
+              <li><strong>ServiceMonitor</strong> CRDs tell the Prometheus operator which Services to scrape without
+                editing Prometheus config files.</li>
+              <li><strong>PromQL</strong> is the query language for Prometheus: use <code>rate()</code> for counters,
+                <code>sum() by (label)</code> for aggregation, and <code>histogram_quantile()</code> for latency
+                percentiles.
+              </li>
+              <li><strong>Loki</strong> (logs) and <strong>Tempo</strong> (traces) complete the Grafana observability
+                stack alongside Prometheus.</li>
+            </ul>
+          </blockquote>
+
+          <hr />
+          <h2 id="13-lab-10-gitops-with-argo-cd">13. Lab 10: GitOps with Argo CD</h2>
+
+          <p>
+            In Section 1, every change to the cluster was made by running <code>kubectl apply</code> from a terminal. This
+            works
+            for learning but fails at production scale for several reasons: there is no audit trail of who changed what
+            and
+            why; the live cluster can silently drift from whatever YAML files exist on a developer's laptop; rebuilding
+            a
+            cluster from scratch after a disaster requires someone to remember all the commands they ran; and there is
+            no
+            review gate before a change takes effect.
+          </p>
+          <p>
+            <strong>GitOps</strong> fixes all of these problems with one rule: <em>Git is the single source of truth for
+              all desired cluster state</em>. The cluster must always match what is in a specific Git repository and
+            branch.
+            Every change is a Git commit, meaning it is automatically recorded, peer-reviewed via a pull request, and
+            revertible with <code>git revert</code>. A software controller continuously compares the live cluster to Git
+            and corrects any difference, whether that difference was caused by a deployment, a manual kubectl command,
+            or a node crash.
+          </p>
+
+          <h3 id="lab10-gitops-loop">The GitOps Control Loop</h3>
+          <p>The diagram below shows how Argo CD continuously reconciles the cluster against the desired state declared
+            in Git.</p>
+          <figure class="k8s-figure" aria-labelledby="fig2-2-cap">
+            <svg viewBox="0 0 560 348" role="img" xmlns="http://www.w3.org/2000/svg"
+              aria-label="A GitOps loop between a Git repository and the Argo CD controller: a developer pushes a commit, the controller detects the change, compares Git state to the live cluster, applies the difference, and repeats forever.">
+              <defs>
+                <marker id="kfReq21" markerWidth="10" markerHeight="10" refX="7" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+                  <path d="M0,0 L8,3.5 L0,7 Z" class="kf-head-net"/>
+                </marker>
+                <marker id="kfRes21" markerWidth="10" markerHeight="10" refX="7" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+                  <path d="M0,0 L8,3.5 L0,7 Z" class="kf-head-res"/>
+                </marker>
+              </defs>
+
+              <!-- actors -->
+              <rect x="40" y="16" width="200" height="46" rx="9" class="kf-group-api"/>
+              <text x="140" y="36" text-anchor="middle" font-size="14" class="kf-h kf-net-t">Git repository</text>
+              <text x="140" y="53" text-anchor="middle" font-size="12" class="kf-muted">desired state</text>
+
+              <rect x="320" y="16" width="200" height="46" rx="9" class="kf-group-node"/>
+              <text x="420" y="36" text-anchor="middle" font-size="14" class="kf-h kf-net-t">Argo CD controller</text>
+              <text x="420" y="53" text-anchor="middle" font-size="12" class="kf-muted">running in the cluster</text>
+
+              <!-- lifelines -->
+              <line x1="140" y1="62" x2="140" y2="330" class="kf-life"/>
+              <line x1="420" y1="62" x2="420" y2="330" class="kf-life"/>
+
+              <!-- 1: push -->
+              <text x="142" y="86" font-size="12.5" class="kf-muted">1 · Developer pushes a commit</text>
+              <line x1="140" y1="92" x2="418" y2="92" class="kf-flow-net" marker-end="url(#kfReq21)"/>
+
+              <!-- 2 -->
+              <rect x="296" y="106" width="248" height="42" rx="8" class="kf-pill-node"/>
+              <text x="420" y="124" text-anchor="middle" font-size="12.5" class="kf-net-t">2 · Detects the change</text>
+              <text x="420" y="140" text-anchor="middle" font-size="11.5" class="kf-muted">(polls every 3 min or webhook)</text>
+
+              <!-- 3 -->
+              <rect x="296" y="158" width="248" height="42" rx="8" class="kf-pill-node"/>
+              <text x="420" y="176" text-anchor="middle" font-size="12.5" class="kf-net-t">3 · Compares Git to live state</text>
+              <text x="420" y="192" text-anchor="middle" font-size="11.5" class="kf-muted">desired vs. actual cluster state</text>
+
+              <!-- 4 -->
+              <rect x="296" y="210" width="248" height="42" rx="8" class="kf-pill-node"/>
+              <text x="420" y="228" text-anchor="middle" font-size="12.5" class="kf-net-t">4 · Applies the diff</text>
+              <text x="420" y="244" text-anchor="middle" font-size="11.5" class="kf-muted">kubectl apply equivalent</text>
+
+              <!-- 5: repeat -->
+              <text x="418" y="294" text-anchor="end" font-size="12.5" class="kf-muted">5 · Repeat forever</text>
+              <line x1="420" y1="300" x2="142" y2="300" class="kf-flow-res" marker-end="url(#kfRes21)"/>
+            </svg>
+            <figcaption id="fig2-2-cap">Figure 2.2: The Argo CD GitOps reconciliation loop.</figcaption>
+          </figure>
+
+          <h3 id="lab10-why-gitops">Why GitOps Matters</h3>
+          <ol class="sec2-indented">
+            <li><strong>Audit trail:</strong> every cluster change is a Git commit with author, timestamp, and message.
+              No
+              more mystery about who deployed what. <code>git log</code> shows the full history.</li>
+            <li><strong>Peer review:</strong> cluster changes go through pull requests just like application code.
+              Senior
+              engineers review and approve production changes before they are merged.</li>
+            <li><strong>Disaster recovery:</strong> rebuilding a destroyed cluster is a single command pointing Argo CD
+              at
+              the Git repository. The cluster converges to the correct state automatically.</li>
+            <li><strong>Drift prevention:</strong> if anyone runs <code>kubectl scale deployment --replicas=5</code> by
+              hand,
+              Argo CD detects that the live cluster differs from Git and reverts it. The cluster cannot silently drift.
+            </li>
+            <li><strong>Separation of duties:</strong> CI builds and tests code, then updates an image tag in Git. Argo
+              CD
+              handles all kubectl operations against the cluster. No CI system needs cluster credentials.</li>
+          </ol>
+
+          <h3 id="lab10-argocd-concepts">Argo CD Key Concepts</h3>
+          <ol class="sec2-indented">
+            <li><strong>Application CRD:</strong> the primary object you create. It says: "watch this Git repository at
+              this path, deploy its contents into this cluster and namespace, and keep it in sync." Argo CD watches
+              Application objects and runs a reconciliation loop for each one.</li>
+            <li><strong>Project:</strong> an Argo CD object that restricts which Git repositories and destination
+              clusters
+              an Application is allowed to use. It is the RBAC layer for GitOps: the platform team can grant developers
+              permission to deploy to <code>dev</code> but not <code>prod</code>.</li>
+            <li><strong>Sync:</strong> the act of making the live cluster match the Git state. Can be triggered manually
+              or set to automatic. A sync runs <code>kubectl apply</code> (or
+              <code>kustomize build | kubectl apply</code>,
+              or <code>helm upgrade</code>) under the hood.
+            </li>
+            <li><strong>Self-heal:</strong> when <code>syncPolicy.automated.selfHeal: true</code>, Argo CD automatically
+              reverts any live cluster change that differs from Git. Within about 60 seconds of a manual
+              <code>kubectl</code>
+              change, Argo CD detects and corrects the drift.
+            </li>
+            <li><strong>Prune:</strong> when <code>syncPolicy.automated.prune: true</code>, resources deleted from Git
+              are
+              also deleted from the cluster. Without prune, orphaned resources accumulate.</li>
+            <li><strong>Drift:</strong> when the live cluster state differs from the Git state. Argo CD shows drift
+              visually
+              in its UI and marks the Application as <code>OutOfSync</code>.</li>
+          </ol>
+
+          <h3 id="lab10-vs-flux">Argo CD vs Flux</h3>
+          <p>
+            Both Argo CD and <strong>Flux</strong> are CNCF-graduated GitOps controllers that implement the same core
+            loop.
+            The main practical differences: Argo CD has a richer web UI and a more feature-complete CLI
+            (<code>argocd</code>)
+            that makes it easier to explore during learning. Flux is more lightweight, with no UI by default, and is
+            preferred by teams that want a minimal control plane. Both are production-grade. This lab uses Argo CD
+            because
+            its UI makes the GitOps concepts visible and inspectable.
+          </p>
+
+          <h3 id="lab10-step1">Step 1: Install Argo CD</h3>
+
+          <blockquote><strong>INFO: Argo CD Release Lines</strong>
+
+            Argo CD follows a release cadence with multiple active release lines. As of mid-2026, the v3.2, v3.3, and
+            v3.4 lines are supported; v3.1 reached EOL in May 2026. Check
+            <a href="https://github.com/argoproj/argo-cd/releases">https://github.com/argoproj/argo-cd/releases</a>
+            for the latest patch release in a supported line and substitute the tag below.
+            Argo CD's images are signed with Cosign and ship SLSA Level 3 provenance, a real-world application of Lab
+            16.
+          </blockquote>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create a dedicated namespace for Argo CD</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl create namespace argocd
+# Install Argo CD from the upstream manifests.
+# Substitute the actual release tag (e.g. v2.12.0) for &lt;vX.Y.Z&gt;
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Install Argo CD into the argocd namespace</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl apply -n argocd \
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.12.0/manifests/install.yaml
+# Wait for all Argo CD deployments to become Available
+# This takes 2-4 minutes; several components start sequentially
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Wait for deployment</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl wait --for=condition=Available deployment --all -n argocd --timeout=300s
+# List all Argo CD pods to confirm they are Running
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Watch the Argo CD pods until they are Running</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get pods -n argocd
+</code></pre>
+          </div>
+
+          <h3 id="lab10-step2">Step 2: Access the Argo CD UI</h3>
+          <p>These commands fetch the initial admin password and port-forward to the Argo CD web UI.</p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Retrieve the Argo CD initial admin password</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get secret argocd-initial-admin-secret -n argocd \
+  -o jsonpath=&quot;{.data.password}&quot; | base64 -d; echo
+# Forward the Argo CD API server to localhost port 8080
+# The Argo CD server serves HTTPS by default; accept the self-signed certificate in the browser
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Port-forward to the Argo CD UI</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl port-forward svc/argocd-server -n argocd 8080:443 &amp;
+</code></pre>
+          </div>
+
+          <p>
+            Open <a href="https://localhost:8080">https://localhost:8080</a> in a browser (accept the self-signed TLS
+            certificate warning). Log in with username <code>admin</code> and the password retrieved above. The UI shows
+            an empty Applications list. You will return here after creating an Application in Step 3.
+          </p>
+
+          <h3 id="lab10-step3">Step 3: Deploy an App from Git Declaratively</h3>
+
+          <p>
+            Create an Argo CD <code>Application</code> object. Save as <code>argo-app.yaml</code>:
+          </p>
+
+          <pre class="codehilite"><code class="language-yaml">
+apiVersion: argoproj.io/v1alpha1        # Argo CD's API group (installed as a CRD)
+kind: Application                       # the Argo CD Application CRD
+metadata:
+  name: guestbook                       # unique name for this Application in Argo CD
+  namespace: argocd                     # Applications MUST live in the argocd namespace
+  finalizers:
+  # This finalizer ensures Argo CD deletes all managed resources when the Application is deleted.
+  # Without it, deleting the Application leaves orphaned cluster resources.
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default                      # which Argo CD Project this App belongs to
+                                        # "default" allows access to any repo and any destination
+  source:
+    repoURL: https://github.com/argoproj/argocd-example-apps.git  # the Git repo to watch
+    targetRevision: HEAD                # which branch, tag, or commit to track
+                                        # HEAD means "always the latest commit on the default branch"
+    path: guestbook                     # the subdirectory within the repo containing the manifests
+                                        # Argo CD auto-detects whether it is plain YAML, Kustomize, or Helm
+  destination:
+    server: https://kubernetes.default.svc  # deploy to the same cluster Argo CD runs in
+    namespace: default                  # which namespace to deploy the app into
+  syncPolicy:
+    automated:                          # enable automatic sync (instead of manual "Sync" button)
+      selfHeal: true                    # revert any live cluster change that differs from Git
+      prune: true                       # delete cluster resources that were removed from Git
+    syncOptions:
+    - CreateNamespace=true              # create the destination namespace if it does not exist
+</code></pre>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create the guestbook Application</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl apply -f argo-app.yaml
+# Watch the Application status. It starts as OutOfSync then transitions to Synced.
+# HEALTH should reach Healthy once pods are Running.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Watch Argo CD sync the Application</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get application guestbook -n argocd -w
+# The guestbook pods are deployed into the &quot;default&quot; namespace by Argo CD
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the guestbook pods are Running</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get pods
+# Richer status from the argocd CLI (install from https://github.com/argoproj/argo-cd/releases)
+# argocd login localhost:8080 --username admin --password &lt;password&gt; --insecure
+# argocd app get guestbook
+#
+</code></pre>
+          </div>
+
+          <h3 id="lab10-ui-walkthrough">Step 4: Walk Through the Argo CD UI</h3>
+          <p>
+            In the browser at <a href="https://localhost:8080">https://localhost:8080</a>, click the
+            <strong>guestbook</strong> Application card. You will see:
+          </p>
+          <ol class="sec2-indented">
+            <li><strong>Synced / Healthy badges:</strong> green means the cluster matches Git and the pods are healthy.
+              Yellow means Out of Sync. Red means a resource is degraded.</li>
+            <li><strong>Resource tree:</strong> a visual graph showing every Kubernetes resource the Application
+              manages,
+              with their current status. Click any node to see its YAML, events, and logs.</li>
+            <li><strong>Sync history:</strong> the History tab shows every sync that occurred, which Git commit
+              triggered
+              it, and whether it succeeded.</li>
+            <li><strong>Parameters tab:</strong> shows the source (repo URL, path, revision) and any Helm values or
+              Kustomize parameters.</li>
+          </ol>
+
+          <h3 id="lab10-self-heal">Step 5: Demonstrate Self-Healing</h3>
+          <p>These commands make a manual change to the cluster and watch Argo CD detect the drift and revert it back to
+            the Git state.</p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Scale the deployment to zero to simulate config drift</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl scale deployment guestbook-ui --replicas=0
+# Immediately check what Argo CD sees: the Application becomes OutOfSync
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Watch Argo CD flag the Application as OutOfSync</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get application guestbook -n argocd
+# Wait up to 60 seconds. With selfHeal: true, Argo CD detects the drift and reverts it.
+# Watch the replica count return to whatever Git declares (typically 1)
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Watch Argo CD heal the deployment back</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get pods -w
+# After Argo CD self-heals, the Application returns to Synced / Healthy
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Confirm the Application is Synced again</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get application guestbook -n argocd
+</code></pre>
+          </div>
+
+          <blockquote class="success"><strong>INFO: This is the GitOps Payoff</strong>
+
+            The cluster cannot durably drift from Git when self-heal is enabled. An engineer running a kubectl command
+            by mistake, or a script that makes a change for debugging, is automatically corrected. This property is
+            what makes GitOps a security control, not just an operational convenience. Combined with Kyverno (Lab 15)
+            enforcing policy at admission time, you have defence in depth.
+          </blockquote>
+
+          <h3 id="lab10-diff">Step 6: Inspect Diff and History</h3>
+          <p>These commands inspect the Application's synced revision and its deployment history.</p>
+          <pre class="codehilite"><code class="language-bash">kubectl get application guestbook -n argocd -o jsonpath='{.status.sync.revision}'
+</code></pre>
+
+          <h3 id="lab10-repo-structure">GitOps Repository Structure</h3>
+          <p>
+            Real-world GitOps repositories follow naming conventions to manage multiple environments cleanly. The most
+            common pattern is <strong>base/overlays</strong> using Kustomize:
+          </p>
+          <pre class="codehilite"><code class="language-text">
+gitops-repo/
+  apps/
+    guestbook/
+      base/                   # common configuration shared by all environments
+        deployment.yaml
+        service.yaml
+        kustomization.yaml
+      overlays/
+        dev/                  # dev-specific overrides (fewer replicas, debug image)
+          kustomization.yaml
+          replica-patch.yaml
+        staging/
+          kustomization.yaml
+          replica-patch.yaml
+        prod/                 # prod-specific overrides (more replicas, resource limits)
+          kustomization.yaml
+          replica-patch.yaml
+</code></pre>
+
+          <p>You create one Argo CD Application per environment, each pointing to a different overlay path.</p>
+
+          <h3 id="lab10-app-of-apps">App of Apps Pattern</h3>
+          <p>
+            When a cluster runs dozens of applications, managing dozens of Argo CD Application objects becomes its own
+            problem. The <strong>App of Apps</strong> pattern solves this: create one root Application whose source is a
+            Git directory containing the Application YAML files for all other applications. Argo CD recursively manages
+            everything. Adding a new application to the cluster becomes a Git commit to the root app directory.
+          </p>
+          <pre class="codehilite"><code class="language-text">
+gitops-repo/
+  apps/                        # root Application watches this directory
+    guestbook-app.yaml         # Application CRD for the guestbook
+    prometheus-app.yaml        # Application CRD for kube-prometheus-stack
+    traefik-app.yaml           # Application CRD for Traefik
+    my-service-app.yaml        # Application CRD for your own service
+</code></pre>
+
+          <h3 id="lab10-ci-integration">CI/CD Integration Pattern</h3>
+          <p>
+            In a GitOps workflow, the CI pipeline builds and tests the application but does not apply anything to the
+            cluster directly. Instead:
+          </p>
+          <ol>
+            <li>CI builds the container image and pushes it to a registry with a new tag (e.g.
+              <code>git-abc1234</code>).
+            </li>
+            <li>CI updates the image tag in the GitOps repository (a <code>values.yaml</code> or kustomize patch) and
+              opens a pull request.</li>
+            <li>A human (or automated approval for dev) merges the pull request.</li>
+            <li>Argo CD detects the new commit and syncs the cluster to the updated image tag.</li>
+          </ol>
+          <p>
+            No CI system ever runs <code>kubectl apply</code>. No CI system needs cluster credentials stored as secrets.
+            Argo CD handles all cluster operations from inside the cluster itself.
+          </p>
+
+          <h3 id="lab10-troubleshooting">Troubleshooting</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Symptom</th>
+                  <th>Cause</th>
+                  <th>Fix</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Application stuck <code>OutOfSync</code></td>
+                  <td>Server-side defaults (e.g. defaultMode on volumes) added by Kubernetes differ from Git</td>
+                  <td>Add <code>serverSideApply: true</code> to syncOptions, or explicitly set the differing fields in
+                    Git</td>
+                </tr>
+                <tr>
+                  <td>Sync fails with permission error</td>
+                  <td>Argo CD's service account lacks permission to create the resources</td>
+                  <td>Grant the Argo CD controller service account the needed RBAC permissions; check Project
+                    restrictions</td>
+                </tr>
+                <tr>
+                  <td>Self-heal not reverting manual changes</td>
+                  <td><code>syncPolicy.automated.selfHeal</code> not set to <code>true</code></td>
+                  <td>Check the Application YAML; update it in Git so the change is itself tracked</td>
+                </tr>
+                <tr>
+                  <td>Application Health shows "Degraded"</td>
+                  <td>A Deployment or StatefulSet has pods that are not ready (crash loop, image pull error)</td>
+                  <td>Click the resource in the Argo CD UI to see events; run <code>kubectl describe pod</code> on the
+                    failing pod</td>
+                </tr>
+                <tr>
+                  <td>Argo CD not detecting a new commit</td>
+                  <td>Polling interval (default 3 min) has not elapsed, or the repo URL is wrong</td>
+                  <td>Click "Refresh" in the UI to force an immediate Git poll; check the Application source.repoURL
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 id="lab10-cleanup">Cleanup</h3>
+          <p>These commands stop the port-forward and remove the Argo CD Application and its resources.</p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Stop the background port-forward</span></div>
+            <pre class="codehilite"><code class="language-bash">pkill -f &quot;port-forward.*argocd&quot; 2&gt;/dev/null || true
+# Delete the Application (the resources-finalizer will also delete the guestbook pods)
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Delete the guestbook Application</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl delete -f argo-app.yaml
+# Wait for the guestbook resources to be removed from the default namespace
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the app pods are removed</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get pods -w
+# Uninstall Argo CD entirely
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Remove the argocd namespace</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl delete namespace argocd
+</code></pre>
+          </div>
+
+          <blockquote class="success">
+            <ul>
+              <li><strong>GitOps</strong> means Git is the single source of truth for all cluster state. Every change is
+                a commit: auditable, reviewable, and revertible.</li>
+              <li><strong>Argo CD</strong> runs a continuous control loop: compare Git to cluster, apply the diff,
+                repeat every few minutes.</li>
+              <li><strong>Self-heal</strong> reverts manual kubectl changes automatically. The cluster cannot durably
+                drift from Git when selfHeal is enabled.</li>
+              <li><strong>Prune</strong> ensures resources removed from Git are also removed from the cluster, keeping
+                Git as the complete and authoritative picture.</li>
+              <li>In a GitOps workflow, CI builds images and updates Git. Argo CD handles all kubectl operations. CI
+                systems do not need cluster credentials.</li>
+              <li>The <strong>App of Apps</strong> pattern scales GitOps to many applications: one root Application
+                manages the Application objects for all other apps.</li>
+            </ul>
+          </blockquote>
+
+          <hr /></article>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Scripts: build page sections and sidebar from the embedded static HTML content -->
+  <script src="../js/app.js" defer></script>
+
+  <script>
+    window.addEventListener('load', function () {
+      [
+        '0-prerequisites-and-minikube-installation',
+        '1-kubernetes-theory-and-architecture',
+        '2-core-working-concepts',
+        '3-the-kubectl-debugging-toolkit',
+        '4-lab-1-deploying-your-first-pod-and-service',
+        '5-lab-2-rolling-updates-and-rollbacks',
+        '6-lab-3-configmaps-and-secrets',
+        '7-lab-4-persistent-volumes-and-data-survival',
+        '8-lab-5-health-probes-and-autoscaling-hpa',
+        '9-lab-6-other-workload-types-statefulset-daemonset-job-cronjob',
+        '10-lab-7-http-routing-with-the-gateway-api',
+        '11-lab-8-packaging-with-helm',
+        '12-lab-9-observability-metrics-prometheus-grafana',
+        '13-lab-10-gitops-with-argo-cd',
+        '14-devsecops-security-theory',
+        '15-lab-11-shift-left-scanning-manifests-images-secrets',
+        '16-lab-12-pod-security-standards-and-admission',
+        '17-lab-13-least-privilege-rbac',
+        '18-lab-14-network-microsegmentation',
+        '19-lab-15-policy-as-code-with-kyverno',
+        '20-lab-16-supply-chain-security-signing-sboms-verification',
+        '21-lab-17-runtime-security-with-falco'
+      ].forEach(function (id) {
+        var section = document.getElementById(id);
+        if (!section || !section.classList.contains('page-section')) return;
+        section.classList.add('styled-section');
+        var inH4 = false;
+        Array.from(section.children).forEach(function (el) {
+          if (el.matches('h3')) { inH4 = false; return; }
+          if (el.matches('h4')) { inH4 = true; return; }
+          if (inH4 && !el.matches('.cmd-step')) el.classList.add('sec2-indented');
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Kubernetes DevSecOps Training Lab Guide">
+  <title>Kubernetes · Kubernetes Guide Index</title>
+
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d1117'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23ffb627'/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/cmd-steps.css">
+
+</head>
+
+<body>
+
+  <div class="sidebar-backdrop"></div>
+
+  <a class="icon-btn corner-btn github-corner-btn" id="githubLink" href="https://github.com/bishalcpgn/Kubernetes"
+    target="_blank" rel="noopener noreferrer" aria-label="View this project on GitHub"
+    title="View on GitHub (open source, contributions welcome)">
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+      <path
+        d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.29-.01-1.04-.02-2.05-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.39 1.24-3.23-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6.01 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.23 0 4.62-2.81 5.64-5.49 5.94.43.37.81 1.1.81 2.22 0 1.6-.01 2.89-.01 3.29 0 .32.22.7.83.58A12 12 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z" />
+    </svg>
+  </a>
+
+  <button class="icon-btn corner-btn theme-corner-btn" id="themeToggle" aria-label="Toggle theme"></button>
+
+  <div class="app">
+
+    <!-- Reuse the existing sidebar from index.html for consistent navigation -->
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+      <div class="brand">
+        <div class="brand-title">
+          <span class="accent-dot"></span>
+          <span>DevSecOps<span class="italic-serif text-accent">·</span>Training</span>
+        </div>
+        <div class="brand-subtitle">Kubernetes Labs</div>
+        <span class="brand-edition">Trainer · 2026 Edition</span>
+      </div>
+      <div class="sidebar-search">
+        <input type="search" id="navSearch" placeholder="Search…  press /" aria-label="Filter navigation"
+          autocomplete="off">
+      </div>
+      <nav aria-label="Sidebar navigation">
+        <div class="nav-section">
+          <div class="nav-section-label">Contents</div>
+          <ul class="nav-list">
+            <!-- Links will be populated by the rendered Markdown headings if present -->
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <div class="content-inner">
+        <article id="md-root" class="md-content page-markdown">
+          <h1 id="devsecops-kubernetes-training-lab-guide">DevSecOps Kubernetes Training Lab Guide</h1>
+          <blockquote>
+            <p><strong>Version:</strong> 2026 Edition · Verified against Kubernetes <strong>v1.36</strong>, Helm
+              <strong>v4</strong>, the <strong>Gateway API</strong> (Ingress successor), Trivy, Kyverno,
+              Cosign/Sigstore, Argo CD <strong>v3.x</strong>, and Falco <strong>v0.43</strong>.
+            </p>
+          </blockquote>
+          <p>This guide takes you from a basic understanding of containers to deploying, managing, and securing
+            production-grade Kubernetes clusters. It follows a sectioned, zero-to-pro path and emphasizes
+            <strong>DevSecOps</strong> principles, integrating security at every stage of the lifecycle.
+          </p>
+          <p>The training is organized into four sections:</p>
+          <ol>
+            <li><strong>Setup</strong>: local tooling, Minikube, kubeconfig, and setup verification.</li>
+            <li><strong>Foundations</strong>: core concepts and the day-to-day <code>kubectl</code> skills every
+              engineer needs.</li>
+            <li><strong>Production Operations</strong>: how real teams package, expose, scale, and operate workloads
+              (Helm, Ingress, StatefulSets, observability, GitOps).</li>
+            <li><strong>DevSecOps Deep Dive</strong>: shift-left scanning, admission control, RBAC, network policy,
+              supply-chain security, policy-as-code, and runtime detection.</li>
+          </ol>
+          <blockquote>
+            <p><strong>A note on scope.</strong> "Everything about Kubernetes" is genuinely a multi-week curriculum.
+              This guide is a complete, hands-on <em>spine</em>: each lab is runnable on a laptop with Minikube and maps
+              to a real production practice. Where a topic is deep enough to deserve its own course (service meshes,
+              multi-cluster, operators), we flag it and point you onward rather than pretend a single lab covers it.</p>
+          </blockquote>
+          <hr />
+          <h2 id="table-of-contents">Table of Contents</h2>
+          <h3 id="toc-section-0-setup">Section 0: Setup</h3>
+          <ul>
+            <li><a href="html/section-0-setup.html#0-prerequisites-and-minikube-installation">0. Prerequisites and Minikube Installation</a></li>
+            <li><a href="html/section-0-setup.html#02-install-kubectl">0.2 Install kubectl</a></li>
+            <li><a href="html/section-0-setup.html#03-install-minikube">0.3 Install Minikube</a></li>
+            <li><a href="html/section-0-setup.html#04-start-minikube">0.4 Starting Minikube</a></li>
+            <li><a href="html/section-0-setup.html#06-verifying-the-full-setup">0.6 Verifying the Full Setup</a></li>
+          </ul>
+          <h3 id="toc-section-1-foundations">Section 1: Foundations</h3>
+          <ul>
+            <li><a href="html/section-1-foundations.html#1-kubernetes-theory-and-architecture">1. Kubernetes Theory and Architecture</a></li>
+            <li><a href="html/section-1-foundations.html#2-core-working-concepts">2. Core Working Concepts</a></li>
+            <li><a href="html/section-1-foundations.html#21-namespaces">2.1 Namespaces</a></li>
+            <li><a href="html/section-1-foundations.html#22-imperative-vs-declarative">2.2 Imperative vs Declarative</a></li>
+            <li><a href="html/section-1-foundations.html#23-resource-requests-limits-and-qos">2.3 Resource Requests, Limits, and QoS</a></li>
+            <li><a href="html/section-1-foundations.html#3-the-kubectl-debugging-toolkit">3. The kubectl Debugging Toolkit</a></li>
+            <li><a href="html/section-1-foundations.html#4-lab-1-deploying-your-first-pod-and-service">4. Lab 1: Deploying Your First Pod and
+                Service</a></li>
+            <li><a href="html/section-1-foundations.html#5-lab-2-rolling-updates-and-rollbacks">5. Lab 2: Rolling Updates and Rollbacks</a></li>
+            <li><a href="html/section-1-foundations.html#6-lab-3-configmaps-and-secrets">6. Lab 3: ConfigMaps and Secrets</a></li>
+            <li><a href="html/section-1-foundations.html#7-lab-4-persistent-volumes-and-data-survival">7. Lab 4: Persistent Volumes and Data
+                Survival</a></li>
+            <li><a href="html/section-1-foundations.html#8-lab-5-health-probes-and-autoscaling-hpa">8. Lab 5: Health Probes and Autoscaling (HPA)</a>
+            </li>
+            <li><a href="html/section-1-foundations.html#9-lab-6-other-workload-types-statefulset-daemonset-job-cronjob">9. Lab 6: Other Workload Types
+                (StatefulSet, DaemonSet, Job, CronJob)</a></li>
+          </ul>
+          <h3 id="toc-section-2-production-operations">Section 2: Production Operations</h3>
+          <ul>
+            <li><a href="html/section-2-production-operations.html#10-lab-7-http-routing-with-the-gateway-api">10. Lab 7: HTTP Routing with the Gateway API</a>
+            </li>
+            <li><a href="html/section-2-production-operations.html#11-lab-8-packaging-with-helm">11. Lab 8: Packaging with Helm</a></li>
+            <li><a href="html/section-2-production-operations.html#12-lab-9-observability-metrics-prometheus-grafana">12. Lab 9: Observability (Metrics,
+                Prometheus, Grafana)</a></li>
+            <li><a href="html/section-2-production-operations.html#13-lab-10-gitops-with-argo-cd">13. Lab 10: GitOps with Argo CD</a></li>
+          </ul>
+          <h3 id="toc-section-3-devsecops-deep-dive">Section 3: DevSecOps Deep Dive</h3>
+          <ul>
+            <li><a href="html/section-3-devsecops-deep-dive.html#14-devsecops-security-theory">14. DevSecOps Security Theory</a></li>
+            <li><a href="html/section-3-devsecops-deep-dive.html#15-lab-11-shift-left-scanning-manifests-images-secrets">15. Lab 11: Shift-Left Scanning
+                (Manifests, Images, Secrets)</a></li>
+            <li><a href="html/section-3-devsecops-deep-dive.html#16-lab-12-pod-security-standards-and-admission">16. Lab 12: Pod Security Standards and
+                Admission</a></li>
+            <li><a href="html/section-3-devsecops-deep-dive.html#17-lab-13-least-privilege-rbac">17. Lab 13: Least-Privilege RBAC</a></li>
+            <li><a href="html/section-3-devsecops-deep-dive.html#18-lab-14-network-microsegmentation">18. Lab 14: Network Microsegmentation</a></li>
+            <li><a href="html/section-3-devsecops-deep-dive.html#19-lab-15-policy-as-code-with-kyverno">19. Lab 15: Policy-as-Code with Kyverno</a></li>
+            <li><a href="html/section-3-devsecops-deep-dive.html#20-lab-16-supply-chain-security-signing-sboms-verification">20. Lab 16: Supply-Chain Security
+                (Signing, SBOMs, Verification)</a></li>
+            <li><a href="html/section-3-devsecops-deep-dive.html#21-lab-17-runtime-security-with-falco">21. Lab 17: Runtime Security with Falco</a></li>
+          </ul>
+          <h3 id="appendices">Appendices</h3>
+          <ul>
+            <li><a href="html/appendices.html#appendix-a-cleanup-cheatsheet">A. Cleanup Cheatsheet</a></li>
+            <li><a href="html/appendices.html#appendix-b-common-errors-and-troubleshooting">B. Common Errors and Troubleshooting</a></li>
+            <li><a href="html/appendices.html#appendix-c-what-we-did-not-cover-and-where-to-go-next">C. What We Did Not Cover (and Where to
+                Go Next)</a></li>
+            <li><a href="html/appendices.html#appendix-d-glossary">D. Glossary</a></li>
+          </ul>
+          <hr /></article>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Scripts: build page sections and sidebar from the embedded static HTML content -->
+  <script src="js/app.js" defer></script>
+
+  <script src="js/cmd-steps.js" defer></script>
+</body>
+
+</html>

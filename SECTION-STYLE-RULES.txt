@@ -1,0 +1,406 @@
+===========================================================================
+ SECTION STYLE RULES
+ The style & formatting reference for the Kubernetes training guide.
+===========================================================================
+
+ This is the single source of truth for how content in the split HTML guide
+ is authored and styled. If you are contributing, the fastest way to match
+ the style is to find a similar existing section in html/*.html and copy its
+ pattern. This file explains the "why" behind those patterns.
+
+ Last updated: 2026-06-14
+ Origin: finalized on Section 2 (Core Working Concepts), applied to chapters
+ 0-21, then updated after the guide was split into Section 0-3 pages and
+ after the heading-colour, font, and figure refresh.
+
+
+===========================================================================
+ QUICK START (the rules you'll use 90% of the time)
+===========================================================================
+
+ 1. Content lives in index.html and html/*.html. No inline style="..."
+    anywhere.
+ 2. Every <h3> needs a unique id (the right-rail menu is built from them).
+ 3. A heading is never followed immediately by a code box - add one intro
+    sentence first.
+ 4. Callouts are <blockquote class="...">, never hand-written <div>.
+ 5. Use <ol class="sec2-indented"> for lists; wrap tables in
+    <div class="table-wrap">.
+ 6. The page adds badges, numbering, copy buttons, and callout styling
+    automatically on load. Author plain HTML and let it do the work.
+
+ Everything below is the detail behind these.
+
+
+===========================================================================
+ 0. WHERE THINGS LIVE
+===========================================================================
+
+  Hub / table of contents ..... index.html
+  Content pages ............... html/section-0-setup.html
+                                html/section-1-foundations.html
+                                html/section-2-production-operations.html
+                                html/section-3-devsecops-deep-dive.html
+                                html/appendices.html
+  Layout CSS .................. css/app.css   (the ".styled-section" block)
+  Base theme, tokens, lists ... css/style.css
+  Theme palette ............... css/themes.css
+  Page-build JS ............... js/app.js     (builds sections + sidebar,
+                                enhances code blocks, converts <blockquote>
+                                into callouts, builds the right-rail menu and
+                                the prev/next footer)
+  Section-styling JS .......... an inline <script> at the bottom of
+                                every HTML page (holds STYLED_IDS; adds the
+                                A/B/C and i/ii badges and indentation)
+
+  Hard rules:
+   - Keep index.html at the repo root as the entry page.
+   - Keep guide content pages in html/, CSS in css/, and JS in js/.
+   - Use "Section 0" through "Section 3" for the major guide groups. Use
+     "chapter" for numbered content pages 0-21 when you need to distinguish
+     them from those major groups.
+   - From index.html, link content pages as html/<page>.html#id.
+   - From html/*.html, load shared assets as ../css/... and ../js/app.js.
+   - All CSS lives in css/, all JS in js/ (or the shared inline STYLED_IDS
+     script). No inline style="..." in HTML files.
+   - Don't add a new one-off class when a universal class already exists.
+
+  How the page is assembled (good to know):
+   js/app.js wraps each <h1>/<h2> (and the content under it) into a
+   <section class="page-section" id="...">. It wraps every
+   <pre class="codehilite"> in a <div class="code-block"> (the language
+   header + Copy button), and converts every <blockquote> into a styled
+   <div class="callout callout-TYPE">. The inline script then runs on window
+   'load' (after app.js) and adds the A/B/C + i/ii badges and indentation.
+
+
+===========================================================================
+ 1. WHICH SECTIONS ARE STYLED
+===========================================================================
+
+  The inline script holds an array STYLED_IDS listing the <h2> chapter ids
+  that get the full "styled-section" treatment. All chapters 0-21 are in it:
+
+    0-prerequisites-and-minikube-installation
+    1-kubernetes-theory-and-architecture
+    2-core-working-concepts
+    3-the-kubectl-debugging-toolkit
+    4-lab-1-deploying-your-first-pod-and-service
+    5-lab-2-rolling-updates-and-rollbacks
+    6-lab-3-configmaps-and-secrets
+    7-lab-4-persistent-volumes-and-data-survival
+    8-lab-5-health-probes-and-autoscaling-hpa
+    9-lab-6-other-workload-types-statefulset-daemonset-job-cronjob
+    10-lab-7-http-routing-with-the-gateway-api
+    11-lab-8-packaging-with-helm
+    12-lab-9-observability-metrics-prometheus-grafana
+    13-lab-10-gitops-with-argo-cd
+    14-devsecops-security-theory
+    15-lab-11-shift-left-scanning-manifests-images-secrets
+    16-lab-12-pod-security-standards-and-admission
+    17-lab-13-least-privilege-rbac
+    18-lab-14-network-microsegmentation
+    19-lab-15-policy-as-code-with-kyverno
+    20-lab-16-supply-chain-security-signing-sboms-verification
+    21-lab-17-runtime-security-with-falco
+
+  To add a new styled chapter: give its <h2> an id and add that id to
+  STYLED_IDS on every HTML page, because the inline script is duplicated
+  across index.html and html/*.html.
+  The CSS below is scoped to ".styled-section".
+
+
+===========================================================================
+ 2. HEADINGS & BADGES
+===========================================================================
+
+  Heading colour (all the same magenta-pink):
+   - h1, h2, h3, and h4 in a styled section are all #BE185D in light mode
+     and #f48fb1 in dark mode. This keeps the heading hierarchy visually
+     unified. The single page <h1> ("Section N: Title") sits above the
+     chapter sections, so it is coloured via ".md-content h1" rather than
+     ".styled-section > h1".
+
+  A / B / C badges (on <h4>):
+   - Each <h4> in a styled section gets a pink circular letter badge
+     (A, B, C ...). It's pure CSS (counter on h4, reset on h3), no JS, so
+     the sequence restarts at every <h3>.
+   - You don't add anything, just write the <h4>.
+
+  <h3> styling:
+   - Pink heading text with a 2px amber underline (border-bottom). No left
+     border and no background gradient. Automatic.
+
+  Every <h3> needs a unique id (see rule 9 - the right-rail menu depends
+  on it). Use a slug of the text: lowercase, non-alphanumeric -> "-",
+  trimmed. Example:
+      <h3 id="install-the-cli">Install the CLI</h3>
+
+  Heading spacing (style.css): h1 = 1.25rem, h2 = 1rem, h3 = .8rem,
+  h4 = .5rem margin-bottom, so an intro paragraph never jams against it.
+
+
+===========================================================================
+ 3. COMMAND BADGES  (i / ii / iii ...) - automatic
+===========================================================================
+
+  Inside an <h4> subsection, bash command boxes are numbered i, ii, iii ...
+  with a dotted connector line, to show a sequence of steps.
+
+  When a badge IS added:
+   - Only <pre class="codehilite"> whose <code> is class "language-bash".
+     YAML and text blocks never get one.
+   - Only when the subsection has 2 OR MORE bash boxes (a real sequence).
+     A single bash box gets a clean, unbadged box.
+   - Bash boxes nested inside an <li>/<ol> are skipped.
+
+  To force-skip a badge on a specific box, add  data-no-roman :
+      <pre class="codehilite" data-no-roman><code class="language-bash">...
+
+
+===========================================================================
+ 4. INDENTATION  (class "sec2-indented") - automatic
+===========================================================================
+
+  Everything inside an <h4> block is indented to line up with the heading
+  TEXT (to the right of the A/B/C badge). The JS adds "sec2-indented" to
+  each direct child.
+
+  The detail (you rarely touch this):
+   - Plain elements (p, ol) use padding-left.
+   - Bordered boxes (code blocks, tables, callouts) use margin-left instead,
+     so the box border lines up rather than sticking out to the far left.
+   - Callouts keep their icon-gutter padding restored on top of the margin.
+
+
+===========================================================================
+ 5. LISTS
+===========================================================================
+
+  Numbered lists (the default for steps/enumerations):
+      <ol class="sec2-indented">
+        <li>First step.</li>
+        <li>Second step.</li>
+      </ol>
+   - Renders small dark-blue 1/2/3 circles, deliberately subordinate to the
+     pink A/B/C badges.
+   - Prefer numbered lists over bullets for steps; we standardized on
+     numbered.
+
+  Nested sub-steps (i / ii / iii under a numbered item):
+      <ol type="i" class="nested-roman"> ... </ol>
+   - Plain lower-roman numerals, no circles, indented under the parent.
+
+  Visual hierarchy:
+      A/B/C            pink   (subsections, biggest)
+      i/ii             pink   (command steps)
+      1/2/3            blue   (ordered lists, smaller)
+      nested i/ii/iii  plain roman text (smallest)
+
+
+===========================================================================
+ 6. CONTENT PATTERNS  (how to write the HTML)
+===========================================================================
+
+  a) MERGE fragmented command boxes. Several consecutive bash boxes that are
+     really one sequence => one box, with a blank line between logical
+     groups. Keep "# comment" guide lines inside the box, not pulled out
+     into paragraphs.
+
+  b) A heading never jumps straight into a code box. Every <h3>/<h4>
+     immediately followed by a <pre> gets one short intro <p> first, saying
+     what the box is about:
+         <h3 id="...">3.5 kubectl port-forward</h3>
+         <p>These commands open a local tunnel to a pod or service.</p>
+         <pre class="codehilite"><code class="language-bash">...
+     Skip headings that already have an intro paragraph.
+
+  c) Lists: convert <ul> bullet lists and manually-numbered paragraphs
+     ("1. ...", "Purpose 1:") into <ol class="sec2-indented">. Leave any
+     <ul> that sits INSIDE a callout/blockquote alone.
+
+  d) Tables: turn ASCII "tables of text" (column grids, "----" / "+----+"
+     separators, cheat-sheets) into real HTML tables:
+         <div class="table-wrap"><table><thead>...</thead><tbody>...</tbody>
+         </table></div>
+     Keep genuine diagrams and sample output (request/response flow, box
+     diagrams, sample `describe` output) AS language-text code blocks - they
+     are illustrative, not tabular. This is a judgement call: read each
+     block and decide; don't automate it (both data tables and box-art use
+     "+--" and "|").
+     Never wrap a table in a <blockquote>: that renders it inside a coloured
+     callout box. A table stands on its own, with an optional bold lead-in
+     line (<p><strong>...</strong></p>) above it for the title.
+
+  e) Callouts: see rule 7. Always a <blockquote>, never a <div>.
+
+  f) Lab section intros are PLAIN PARAGRAPHS, not callouts. The
+     "What we are doing" / "Real-world mapping" / "Why this lab matters"
+     intro under a lab's <h2> is one <p> per part:
+         <p><strong>What we are doing:</strong> ...</p>
+         <p><strong>Real-world mapping:</strong> ...</p>
+     Don't box these and don't use <br><br> between them.
+
+  g) Paired YAML + command steps: when a step pairs a YAML manifest with the
+     command to apply it, add an i./ii. lead-in:
+         <p><strong>i.</strong> The following YAML defines ...</p>
+         <pre ...language-yaml> ... </pre>
+         <p><strong>ii.</strong> Apply it and verify ...</p>
+         <pre ...language-bash> ... </pre>
+
+  h) Writing style:
+       - US English spelling.
+       - NEVER use em-dashes ("—") anywhere: prose, headings, step titles,
+         figure labels, or captions. Use a colon, period, comma, or
+         parentheses. Inside an SVG figure, a middot ("·") reads well as a
+         separator.
+       - Straight quotes (' "), never curly ones. This is not just style: a
+         curly quote used as an HTML or SVG attribute delimiter (class=",
+         x=", viewBox=", ...) breaks parsing and can blank out an entire
+         figure. Curly quotes also break shell snippets such as a jsonpath.
+       - En-dash in a range becomes a plain hyphen (45-60).
+
+  i) No dark terminal "OUTPUT" boxes. Fold sample output back into the
+     preceding bash box as "# Output:" comment lines. A command and its
+     output render as ONE box; js/app.js keeps a "#" output group attached
+     to the command above it rather than splitting it into a second box.
+
+  j) Command-step titles describe intent, not the command. The label next to
+     an i/ii badge should say WHY the step exists ("Watch the rollout until
+     it completes"), not echo the command ("Run kubectl rollout status").
+     A reader scanning the badges should follow the flow without reading the
+     commands themselves.
+
+  k) Section overview page. Each content page opens with a single <h1>
+     ("Section N: Title"), then one intro <p> describing the section, then a
+     <ul> listing what the reader will do (one <li> per chapter or lab),
+     before the first <h2>. See html/section-0-setup.html for the template.
+
+  l) Every manifest (a language-yaml block) gets a lead-in <p> that names the
+     file and says what it defines, ending with "Save it as <file>.yaml:".
+     Don't drop the reader straight into raw YAML.
+
+
+===========================================================================
+ 7. CALLOUTS  (info / warning / danger / success)
+===========================================================================
+
+  There is ONE way to write a callout: a <blockquote>. js/app.js converts it
+  into a styled box on load. NEVER hand-write <div class="callout">.
+
+  Colour comes from the blockquote's class (default is info):
+      <blockquote>                  -> info
+      <blockquote class="warning">  -> warning
+      <blockquote class="danger">   -> danger
+      <blockquote class="success">  -> success
+
+  The TITLE is a LEADING <strong> (the first thing in the blockquote, or a
+  leading <p><strong>). A <strong> in the middle of a sentence stays as body
+  emphasis. Example:
+      <blockquote class="danger"><strong>Back up etcd in production</strong>
+      etcd holds all cluster state ... </blockquote>
+
+  Don't use a generic title like "INFO" or "WARNING" - the colour and icon
+  already signal the type. A callout with no title is fine (just omit the
+  leading <strong>).
+
+
+===========================================================================
+ 8. CODE STYLING  (automatic, style.css)
+===========================================================================
+
+  - Inline code in prose (p code, li code): a subtle grey chip.
+  - Inline code in a table cell (td code): plain monospace text, no chip -
+    table cells often hold full commands, and chips there look cluttered.
+  - Code inside a <pre> block: no chips on the syntax tokens.
+
+  Theme accent (--accent / --link) is green (#16a34a light, #34d399 dark):
+  it colours links, focus rings, the active sidebar item, and callout
+  borders. The heading and A/B/C badge colour is a separate magenta-pink
+  (#BE185D). Numbered-list circles are dark blue on purpose, to sit below
+  the pink badges in the visual hierarchy.
+
+  Fonts:
+   - Code (inline <code> and code blocks): JetBrains Mono, via --font-mono.
+   - SVG figure labels: Caveat, the hand-drawn Excalidraw look. Code-like
+     values inside a figure (image names, ports, file paths) stay monospace
+     via the "kf-mono" class. Figure-bearing pages must load Caveat in their
+     Google Fonts <link>, or the labels fall back to a serif font.
+
+
+===========================================================================
+ 9. "ON THIS PAGE" RIGHT-RAIL MENU  (js/app.js)
+===========================================================================
+
+  - Built automatically from each section's <h3> headings.
+  - EVERY <h3> MUST HAVE AN id, or it won't appear in the menu. If none of a
+    section's <h3>s have ids, that section gets no menu at all. (This bit us
+    once - sections 14-21 were authored with bare <h3>s and had no menu until
+    ids were added.) Keep ids unique across the current HTML file.
+  - A scrollspy highlights the active subsection as you scroll.
+
+
+===========================================================================
+ 10. ADDING OR EDITING A SECTION  (checklist)
+===========================================================================
+
+  1. Choose the right file:
+       - index.html for the guide home and table of contents only
+       - html/section-0-setup.html for setup
+       - html/section-1-foundations.html for chapters 1-9
+       - html/section-2-production-operations.html for chapters 10-13
+       - html/section-3-devsecops-deep-dive.html for chapters 14-21
+       - html/appendices.html for appendices
+  2. If it's a new styled chapter, give its <h2> an id and add that id to
+     STYLED_IDS on every HTML page.
+  3. If the new chapter should appear in the left sidebar, add it to
+     GUIDE_NAV in js/app.js. Use file names relative to html/ for content
+     pages, for example section-1-foundations.html.
+  4. Give every <h3> a unique id.
+  5. Per subsection:
+       - merge fragmented bash boxes (6a)
+       - add an intro <p> before any heading that jumps into a code box (6b)
+       - <ul> / manual numbers -> <ol class="sec2-indented"> (6c)
+       - ASCII reference grids -> HTML tables, by hand (6d)
+       - callouts as <blockquote class="TYPE"> with a leading <strong> (7)
+       - tables stand alone, never inside a <blockquote> (6d)
+       - fold OUTPUT boxes into bash as "# Output:" comments (6i)
+       - write informative i/ii step titles, not command echoes (6j)
+       - add a "Save it as ..." lead-in before every YAML block (6l)
+       - fix em-dashes / smart quotes (6h)
+  6. The page auto-applies badges, indentation, and callout styling on load.
+  7. Preview, review, and fix any alignment edge cases.
+
+  VALIDATION before you commit:
+   - no inline style="..." in the body
+   - no hand-written <div class="callout"> (callouts are <blockquote>)
+   - tags balanced (pre/code/div/ol/table)
+   - no duplicate ids in the same HTML file
+   - every <h3> has an id
+   - no em-dashes and no curly/smart quotes anywhere (a curly quote in an
+     attribute blanks out the whole figure)
+   - no <table> wrapped in a <blockquote>
+   - SVG <marker> ids unique within the file and every url(#id) resolves
+     (duplicate "arr" ids make all arrows share the first marker)
+   - figures: no text baseline below its box; figure pages load Caveat
+   - internal links use the current folder layout:
+       index.html -> html/<page>.html#id
+       html/*.html -> #id for same-page links, or <other-page>.html#id for
+       another content page, or ../index.html#id for the hub
+
+
+===========================================================================
+ 11. CONTRIBUTION UI  (GitHub icon + per-section footer)
+===========================================================================
+
+  Repo: https://github.com/bishalcpgn/Kubernetes
+
+  - Header GitHub icon: a fixed top-right link (id "githubLink") next to the
+    theme toggle, opening the repo.
+  - Per-section footer: js/app.js buildSectionFooters() adds a prev/next
+    pager and an "Edit this page on GitHub" link to each content section. It
+    is built from the section list, so the prev/next chain stays correct
+    automatically when sections are added or removed.
+  - js/app.js detects whether it is running from index.html or html/*.html
+    and builds sidebar links plus GitHub edit links with the correct relative
+    paths. Keep that behavior in mind if files move again.

@@ -1,0 +1,120 @@
+/* =========================================================
+   Theme tokens - deep navy / Catppuccin-inspired palette
+   Follows the Juice Shop Trainee design language.
+   Dark theme is default. Toggled via data-theme attribute.
+   ========================================================= */
+
+:root,
+[data-theme="dark"] {
+  /* Surfaces - deep navy */
+  --bg: #0a0e14;
+  --bg-elevated: #0d1219;
+  --bg-card: #131920;
+  --bg-code: #1e1e2e;          /* Catppuccin Mocha base */
+  --bg-code-header: #181825;   /* Catppuccin Mocha mantle */
+  --bg-code-border: #313244;   /* Catppuccin Mocha surface0 */
+  --bg-inline-code: rgba(137, 180, 250, 0.1);
+
+  /* Lines - blue-tinted */
+  --border: #1e2d3d;
+  --border-strong: #2a3f55;
+  --border-accent: rgba(240, 56, 59, 0.35);
+
+  /* Text - Catppuccin lavender */
+  --text: #cdd6f4;
+  --text-muted: #6e8aa8;
+  --text-subtle: #445566;
+  --text-inverse: #0a0e14;
+
+  /* Brand accent - security red */
+  --accent: #f0383b;
+  --accent-soft: rgba(240, 56, 59, 0.1);
+  --accent-hover: #ff5559;
+  --link: #89b4fa;
+  --link-hover: #a5d6ff;
+
+  /* Semantic */
+  --danger: #f38ba8;
+  --danger-soft: rgba(243, 139, 168, 0.1);
+  --success: #a6e3a1;
+  --success-soft: rgba(166, 227, 161, 0.1);
+  --warning: #f9e2af;
+  --warning-soft: rgba(249, 226, 175, 0.1);
+  --info: #89b4fa;
+  --info-soft: rgba(137, 180, 250, 0.1);
+
+  /* Severity pills */
+  --sev-critical-bg: rgba(240, 56, 59, 0.12);
+  --sev-critical-text: #f0383b;
+  --sev-high-bg: rgba(249, 226, 175, 0.1);
+  --sev-high-text: #f9e2af;
+  --sev-medium-bg: rgba(137, 180, 250, 0.1);
+  --sev-medium-text: #89b4fa;
+
+  /* Shadows & effects */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.65);
+  --shadow-glow: 0 0 28px rgba(240, 56, 59, 0.15);
+
+  /* Decorative */
+  --grid-color: rgba(137, 180, 250, 0.028);
+  --noise-opacity: 0.012;
+}
+
+[data-theme="light"] {
+  /* Surfaces - cool blue-grey */
+  --bg: #f0f4f8;
+  --bg-elevated: #ffffff;
+  --bg-card: #e8edf3;
+  --bg-code: #f7f3ed;          /* warm parchment - Carbon Shell light */
+  --bg-code-header: #ede8e0;   /* slightly darker warm header */
+  --bg-code-border: #d4cbbf;   /* warm border */
+  --bg-inline-code: rgba(37, 99, 235, 0.07);
+
+  /* Lines */
+  --border: #c8d4e0;
+  --border-strong: #a8b8cc;
+  --border-accent: rgba(212, 43, 46, 0.3);
+
+  /* Text */
+  --text: #1e2a38;
+  --text-muted: #4a6080;
+  --text-subtle: #8090a8;
+  --text-inverse: #f0f4f8;
+
+  /* Brand accent - darker red for contrast */
+  --accent: #d42b2e;
+  --accent-soft: rgba(212, 43, 46, 0.1);
+  --accent-hover: #b82226;
+  --link: #2563eb;
+  --link-hover: #1d4ed8;
+
+  /* Semantic */
+  --danger: #b91c1c;
+  --danger-soft: rgba(185, 28, 28, 0.08);
+  --success: #15803d;
+  --success-soft: rgba(21, 128, 61, 0.08);
+  --warning: #a16207;
+  --warning-soft: rgba(161, 98, 7, 0.08);
+  --info: #1d4ed8;
+  --info-soft: rgba(29, 78, 216, 0.08);
+
+  /* Severity pills */
+  --sev-critical-bg: rgba(185, 28, 28, 0.1);
+  --sev-critical-text: #991b1b;
+  --sev-high-bg: rgba(161, 98, 7, 0.12);
+  --sev-high-text: #854d0e;
+  --sev-medium-bg: rgba(29, 78, 216, 0.1);
+  --sev-medium-text: #1e40af;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(30, 42, 56, 0.07);
+  --shadow-md: 0 4px 12px rgba(30, 42, 56, 0.09);
+  --shadow-lg: 0 12px 32px rgba(30, 42, 56, 0.11);
+  --shadow-glow: 0 0 24px rgba(212, 43, 46, 0.12);
+
+  /* Decorative */
+  --grid-color: rgba(30, 42, 56, 0.04);
+  --noise-opacity: 0.018;
+}

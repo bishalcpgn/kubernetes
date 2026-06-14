@@ -1,0 +1,576 @@
+/* Page-specific: show only the active section (single-page app behaviour). */
+    .page-section { display: none; }
+    .page-section.active { display: block; }
+
+    .content-inner { padding-top: 2rem; }
+
+    /* On wide screens, give the body more room and pull it toward the left
+       instead of centering it (more working space for prose + figures).
+       Scoped to >1100px so the responsive/mobile layout is untouched. */
+    @media (min-width: 1101px) {
+      .content-inner {
+        max-width: 1500px;
+        margin-left: 0;
+        margin-right: auto;
+      }
+      .md-content {
+        max-width: 1060px;
+      }
+    }
+
+    /* Fixed top-right corner buttons (GitHub link + theme toggle) */
+    .corner-btn {
+      position: fixed;
+      top: 0.75rem;
+      z-index: 300;
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+    }
+
+    .theme-corner-btn {
+      right: 0.85rem;
+    }
+
+    .github-corner-btn {
+      right: 3.1rem;   /* sits just left of the theme toggle */
+    }
+
+    .corner-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .floating-toc {
+      display: none;
+      position: sticky;
+      top: 6rem;
+      width: 200px;
+      flex-shrink: 0;
+      align-self: flex-start;
+      padding: 0;
+      z-index: 100;
+    }
+
+    .floating-toc.visible {
+      display: block;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .floating-toc-title {
+      font-family: var(--font-sidebar);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-subtle);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding-left: 0.8rem;
+    }
+
+    .floating-toc-title svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+
+    .floating-toc-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .floating-toc-link {
+      font-family: var(--font-sidebar);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      padding: 0.45rem 0.8rem;
+      border-radius: 6px;
+    }
+
+    .floating-toc-link:hover {
+      color: var(--text);
+      background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+      text-decoration: none;
+    }
+
+    .floating-toc-link.active {
+      color: var(--link);
+      font-weight: 600;
+      background: var(--info-soft);
+    }
+    @media (max-width: 1100px) {
+      .floating-toc { display: none !important; }
+    }
+    /* =========================================================
+       Structured reading layout (applied to .styled-section:
+       sections 2 through 9). A/B/C subsection badges, i/ii/iii
+       command badges, and numbered-list circles.
+       ========================================================= */
+
+    /* Numbered lists inside an h4 block: the whole list shifts right so the
+       1/2/3 circles align with the A/B/C body text, not the A/B/C badge.
+       (.sec2-indented sets padding-left, but .md-content ol resets it to 0,
+       so set the indent explicitly here as margin-left.) */
+    ol.sec2-indented {
+      margin-left: 2.75rem;
+      padding-left: 0;
+    }
+
+    /* Smaller 1/2/3 circles — subordinate to A/B/C badges */
+    ol.sec2-indented > li {
+      padding-left: 3rem;
+    }
+
+    /* Nested roman sub-list (i, ii, iii) inside a numbered step.
+       Plain roman numerals, no circle, indented under the parent item. */
+    ol.nested-roman {
+      list-style: lower-roman;
+      counter-reset: none;
+      margin: 0.5rem 0 0.75rem 1.25rem;
+      padding-left: 1rem;
+    }
+
+    ol.nested-roman > li {
+      counter-increment: none;
+      padding-left: 0.35rem;
+      margin-bottom: 0.4rem;
+      list-style: lower-roman;
+    }
+
+    /* The nested list must NOT inherit the big circle ::before/::after */
+    ol.nested-roman > li::before,
+    ol.nested-roman > li::after {
+      content: none;
+      display: none;
+    }
+
+    ol.sec2-indented > li::before {
+      width: 1.7rem;
+      height: 1.7rem;
+      font-size: 0.75rem;
+      top: 0.2rem;
+      border-color: #1e3a5f;
+      color: #1e3a5f;
+      background: #e8f0fa;
+    }
+
+    [data-theme="dark"] ol.sec2-indented > li::before {
+      border-color: #6fa3e0;
+      color: #6fa3e0;
+      background: #0d1e33;
+    }
+
+    ol.sec2-indented > li::after {
+      left: 0.85rem;
+      top: calc(1.7rem + 0.4rem);
+    }
+
+    /* A/B/C/D counter — resets per h3, increments on each h4 */
+    .styled-section > h3 {
+      counter-reset: subsection-letter;
+      position: relative;
+      margin-top: 4rem;
+      margin-bottom: 1.2rem;
+      padding: 0 0 0.65rem 0;
+      border-left: none;
+      border-bottom: 2px solid #c8956a !important;
+      background: none;
+      color: #BE185D;
+      font-size: 1.55rem;
+      letter-spacing: 0;
+      scroll-margin-top: 8rem;
+    }
+
+    [data-theme="dark"] .styled-section > h3 {
+      border-bottom-color: #a0724a;
+      color: #f48fb1;
+    }
+
+    .styled-section > h3:first-of-type {
+      margin-top: 2.2rem;
+    }
+
+    /* Section heading uses the same pink as the A/B/C subsections. */
+    .styled-section > h2 {
+      color: #BE185D;
+    }
+
+    [data-theme="dark"] .styled-section > h2 {
+      color: #f48fb1;
+    }
+
+    /* Section overview title (h1) matches the same pink heading colour. */
+    .md-content h1 {
+      color: #BE185D;
+    }
+
+    [data-theme="dark"] .md-content h1 {
+      color: #f48fb1;
+    }
+
+    .styled-section > h4 {
+      counter-increment: subsection-letter;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 2.15rem;
+      margin-bottom: 0.7rem;
+      padding-left: 0;
+      border-left: none;
+      color: #BE185D;
+      font-size: 1.08rem;
+      letter-spacing: 0;
+    }
+
+    [data-theme="dark"] .styled-section > h4 {
+      color: #f48fb1;
+    }
+
+    /* All content inside an h4 block gets indented past the badge */
+    .sec2-indented {
+      padding-left: 2.75rem;
+    }
+
+    /* Bordered boxes (code blocks, tables, callouts) use margin (not padding)
+       so their internal layout and borders stay aligned. Matches the
+       .cmd-step indent (2.6rem) so badged and non-badged boxes line up.
+       Callouts keep their own large left padding (icon gutter), so we must
+       only shift them with margin and NOT let .sec2-indented add padding. */
+    .code-block.sec2-indented,
+    .table-wrap.sec2-indented,
+    .callout.sec2-indented {
+      padding-left: 0;
+      margin-left: 2.6rem;
+    }
+
+    /* Restore the callout's icon gutter that the rule above zeroed out. */
+    .callout.sec2-indented {
+      padding-left: 3.25rem;
+    }
+
+    /* When a code block sits inside a .cmd-step, the step wrapper already
+       provides the indent — don't double it. */
+    .cmd-step .code-block.sec2-indented,
+    .cmd-step .sec2-indented {
+      margin-left: 0;
+      padding-left: 0;
+    }
+
+
+    .styled-section > h4::before {
+      content: counter(subsection-letter, upper-alpha);
+      flex-shrink: 0;
+      width: 2.4rem;
+      height: 2.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: var(--bg-card);
+      border: 2px solid #BE185D;
+      color: #BE185D;
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    [data-theme="dark"] .styled-section > h4::before {
+      border-color: #f48fb1;
+      color: #f48fb1;
+    }
+
+    [data-theme="light"] .styled-section > h4::before {
+      background: #ffffff;
+    }
+
+    .styled-section > h4::after {
+      content: '';
+      flex-basis: 100%;
+      height: 1px;
+      margin-top: 0.4rem;
+      margin-left: 2.75rem;
+      width: min(9rem, 28%);
+      background: color-mix(in srgb, var(--link) 48%, transparent);
+    }
+
+    @media (max-width: 620px) {
+      .styled-section > h3 {
+        margin-top: 3rem;
+        padding-left: 0.9rem;
+        font-size: 1.35rem;
+      }
+    }
+
+    /* =========================================================
+       Roman numeral command labels — Section 2 only
+       ========================================================= */
+    .cmd-label {
+      display: flex;
+      align-items: center;   /* badge + title share one centred line */
+      gap: 0.65rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.35rem;
+      position: relative;
+    }
+
+    /* Dotted connector line — drawn on the wrapper, aligned to badge centre */
+    .cmd-step {
+      position: relative;
+      padding-left: 2.6rem;
+      margin-top: 1.5rem;
+    }
+
+    .cmd-step::before {
+      content: '';
+      position: absolute;
+      left: 0.8rem;
+      top: calc(1.6rem + 0.4rem);
+      bottom: -0.75rem;
+      width: 1px;
+      background-image: linear-gradient(var(--border-accent) 40%, transparent 0%);
+      background-size: 1px 8px;
+      background-repeat: repeat-y;
+      opacity: 0.85;
+      pointer-events: none;
+    }
+
+    /* No line after the last step in a subsection */
+    .cmd-step:last-of-type::before {
+      display: none;
+    }
+
+    /* Badge and label sit at the top, outside the padding */
+    .cmd-step .cmd-label {
+      margin-top: 0;
+      margin-left: -2.6rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .cmd-roman {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      min-width: 1.6rem;
+      height: 1.6rem;
+      padding: 0 0.35rem;
+      border-radius: 999px;
+      background: var(--bg-card);
+      border: 1.5px solid var(--link);
+      color: var(--link);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    [data-theme="light"] .cmd-roman {
+      background: #ffffff;
+    }
+
+    /* Step title shown next to the i/ii/iii badge — its line box matches the
+       1.6rem badge height so the two are perfectly centred on one line, the
+       same way the 1/2/3 circles align with their list text. */
+    .cmd-step-title {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.6rem;
+      margin: 0;
+    }
+
+    /* Remove top margin from the code-block wrapper when preceded by a cmd-label */
+    .cmd-label + .code-block {
+      margin-top: 0;
+    }
+
+    /* =========================================================
+       Diagram figures — theme-aware inline SVG that replaces the
+       old ASCII-art <pre> blocks. Colours all resolve to CSS
+       variables so the figures track the light/dark theme.
+       ========================================================= */
+    .k8s-figure {
+      margin: 1.9rem 0;
+      padding: 1.4rem 1.4rem 0.5rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    /* Align with code blocks when the layout engine indents the figure. */
+    .k8s-figure.sec2-indented {
+      padding-left: 1.4rem;
+      margin-left: 2.6rem;
+    }
+
+    .k8s-figure svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .k8s-figure figcaption {
+      margin: 1.1rem 0 0.5rem;
+      text-align: center;
+      font-family: var(--font-sans);
+      font-size: 0.86rem;
+      line-height: 1.55;
+      color: var(--text-muted);
+    }
+
+    .k8s-figure figcaption b {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* --- SVG text: Caveat (Excalidraw hand-drawn font) --- */
+    .k8s-figure text       { font-family: 'Caveat', cursive; fill: #adb5bd; font-weight: 400; }
+    .k8s-figure .kf-mono   { font-family: var(--font-mono); }
+    .k8s-figure .kf-h      { font-weight: 700; }
+    .k8s-figure .kf-muted  { fill: #6c757d; }
+    .k8s-figure .kf-subtle { fill: #495057; }
+
+    /* --- dark mode container boxes --- */
+    .k8s-figure .kf-outer     { fill: #1e1e1e; stroke: #3d3d3d; stroke-width: 1.5; }
+    .k8s-figure .kf-layer     { fill: #252525; stroke: #3d3d3d; stroke-width: 1.5; }
+    .k8s-figure .kf-container { fill: #1e1e1e; stroke: #3d3d3d; stroke-width: 1.5; }
+    .k8s-figure .kf-card      { fill: #252525; stroke: #3d3d3d; stroke-width: 1.5; }
+    .k8s-figure .kf-group     { fill: #252525; stroke: #323232; stroke-width: 1; }
+
+    /* explicit stroke overrides */
+    .k8s-figure .kf-s-link    { stroke: #748ffc; }
+    .k8s-figure .kf-s-accent  { stroke: #4dabf7; }
+    .k8s-figure .kf-s-success { stroke: #51cf66; }
+
+    /* tinted group backgrounds (dark mode) */
+    .k8s-figure .kf-group-api  { fill: #192840; stroke: #748ffc; stroke-width: 1; }
+    .k8s-figure .kf-group-node { fill: #0c2a26; stroke: #748ffc; stroke-width: 1; }
+    .k8s-figure .kf-group-net  { fill: #1c1530; stroke: #748ffc; stroke-width: 1; }
+
+    /* tinted fills for nested container layers */
+    .k8s-figure .kf-fill-warm { fill: #1f1800; }
+    .k8s-figure .kf-fill-cool { fill: #0e1a2d; }
+
+    /* pill fills inside tinted groups (dark mode) */
+    .k8s-figure .kf-pill-api   { fill: #1e3a55; stroke: #748ffc; stroke-width: 1; }
+    .k8s-figure .kf-pill-node  { fill: #103830; stroke: #748ffc; stroke-width: 1; }
+    .k8s-figure .kf-pill-net   { fill: #241a42; stroke: #748ffc; stroke-width: 1; }
+    .k8s-figure .kf-pill-outer { fill: #0e1e30; stroke: #748ffc; stroke-width: 1; }
+
+    /* Docker Engine / minikube container */
+    .k8s-figure .kf-purple   { stroke: #b197fc; }
+    .k8s-figure .kf-purple-t { fill: #b197fc; }
+
+    /* --- dark mode role pills --- */
+    .k8s-figure .kf-api   { fill: #1e3a5f; stroke: #4dabf7; stroke-width: 1.5; }
+    .k8s-figure .kf-state { fill: #3d2800; stroke: #ffd43b; stroke-width: 1.5; }
+    .k8s-figure .kf-ctrl  { fill: #1a3d1a; stroke: #51cf66; stroke-width: 1.5; }
+    .k8s-figure .kf-node  { fill: #0a3d36; stroke: #38d9a9; stroke-width: 1.5; }
+    .k8s-figure .kf-rt    { fill: #252525; stroke: #748ffc; stroke-width: 1.5; }
+    .k8s-figure .kf-net   { fill: #2d1e4a; stroke: #b197fc; stroke-width: 1.5; }
+
+    .k8s-figure .kf-api-t   { fill: #4dabf7; }
+    .k8s-figure .kf-state-t { fill: #ffd43b; }
+    .k8s-figure .kf-ctrl-t  { fill: #51cf66; }
+    .k8s-figure .kf-node-t  { fill: #38d9a9; }
+    .k8s-figure .kf-net-t   { fill: #b197fc; }
+    .k8s-figure .kf-rt-t    { fill: #ced4da; }
+
+    /* error / danger states */
+    .k8s-figure .kf-error   { fill: #3d0a0a; stroke: #e03131; stroke-width: 1.5; }
+    .k8s-figure .kf-error-t { fill: #e03131; }
+    .k8s-figure .kf-warn-t  { fill: #ffd43b; }
+
+    /* --- dark mode flow arrows + lifelines --- */
+    .k8s-figure .kf-flow-req { stroke: #4dabf7; stroke-width: 1.5; fill: none; }
+    .k8s-figure .kf-flow-res { stroke: #51cf66; stroke-width: 1.5; fill: none; stroke-dasharray: 6 4; }
+    .k8s-figure .kf-flow-net { stroke: #b197fc; stroke-width: 1.5; fill: none; }
+    .k8s-figure .kf-head-req { fill: #4dabf7; }
+    .k8s-figure .kf-head-res { fill: #51cf66; }
+    .k8s-figure .kf-head-api { fill: #4dabf7; }
+    .k8s-figure .kf-head-net { fill: #b197fc; }
+    .k8s-figure .kf-life     { stroke: #3d3d3d; stroke-width: 1; stroke-dasharray: 4 6; }
+    .k8s-figure .kf-bar-api  { fill: #4dabf7; }
+    .k8s-figure .kf-bar-node { fill: #38d9a9; }
+    .k8s-figure .kf-bar-net  { fill: #b197fc; }
+
+    /* --- light mode: full Excalidraw palette --- */
+    [data-theme="light"] .k8s-figure text       { fill: #343a40; }
+    [data-theme="light"] .k8s-figure .kf-muted  { fill: #868e96; }
+    [data-theme="light"] .k8s-figure .kf-subtle { fill: #adb5bd; }
+
+    [data-theme="light"] .k8s-figure .kf-outer     { fill: #f8f9fa; stroke: #868e96; stroke-width: 1; }
+    [data-theme="light"] .k8s-figure .kf-layer     { fill: #ffffff; stroke: #868e96; stroke-width: 1; }
+    [data-theme="light"] .k8s-figure .kf-container { fill: #f8f9fa; stroke: #868e96; stroke-width: 1; }
+    [data-theme="light"] .k8s-figure .kf-card      { fill: #ffffff; stroke: #868e96; stroke-width: 1; }
+    [data-theme="light"] .k8s-figure .kf-group     { fill: #f1f3f5; stroke: #adb5bd; stroke-width: 1; }
+    [data-theme="light"] .k8s-figure .kf-group-api  { fill: #bdd5f0; stroke: #7048e8; stroke-width: 1; }
+    [data-theme="light"] .k8s-figure .kf-group-node { fill: #a8e0d4; stroke: #7048e8; stroke-width: 1; }
+    [data-theme="light"] .k8s-figure .kf-group-net  { fill: #d4c8f0; stroke: #7048e8; stroke-width: 1; }
+    [data-theme="light"] .k8s-figure .kf-fill-warm  { fill: #fde8f0; }
+    [data-theme="light"] .k8s-figure .kf-fill-cool  { fill: #edf2f8; }
+    [data-theme="light"] .k8s-figure .kf-pill-api   { fill: #deeaf8; stroke: #7048e8; stroke-width: 1; }
+    [data-theme="light"] .k8s-figure .kf-pill-node  { fill: #d6f0ea; stroke: #7048e8; stroke-width: 1; }
+    [data-theme="light"] .k8s-figure .kf-pill-net   { fill: #ede8f8; stroke: #7048e8; stroke-width: 1; }
+    [data-theme="light"] .k8s-figure .kf-pill-outer { fill: #eef2f8; stroke: #7048e8; stroke-width: 1; }
+
+    [data-theme="light"] .k8s-figure .kf-purple   { stroke: #7048e8; stroke-width: 1; }
+    [data-theme="light"] .k8s-figure .kf-purple-t { fill: #7048e8; }
+    [data-theme="light"] .k8s-figure .kf-s-link    { stroke: #7048e8; }
+    [data-theme="light"] .k8s-figure .kf-s-accent  { stroke: #1971c2; }
+    [data-theme="light"] .k8s-figure .kf-s-success { stroke: #2b8a3e; }
+
+    [data-theme="light"] .k8s-figure .kf-api   { fill: #aeccf0; stroke: #1864ab; stroke-width: 2; }
+    [data-theme="light"] .k8s-figure .kf-state { fill: #ffe566; stroke: #e67700; stroke-width: 2; }
+    [data-theme="light"] .k8s-figure .kf-ctrl  { fill: #96d4a0; stroke: #2b8a3e; stroke-width: 2; }
+    [data-theme="light"] .k8s-figure .kf-node  { fill: #80d9c6; stroke: #0b7285; stroke-width: 2; }
+    [data-theme="light"] .k8s-figure .kf-rt    { fill: #b8bfc8; stroke: #343a40; stroke-width: 2; }
+    [data-theme="light"] .k8s-figure .kf-net   { fill: #bbaef0; stroke: #5f3dc4; stroke-width: 2; }
+
+    [data-theme="light"] .k8s-figure .kf-api-t   { fill: #1864ab; }
+    [data-theme="light"] .k8s-figure .kf-state-t { fill: #c05c00; }
+    [data-theme="light"] .k8s-figure .kf-ctrl-t  { fill: #2b8a3e; }
+    [data-theme="light"] .k8s-figure .kf-node-t  { fill: #0b7285; }
+    [data-theme="light"] .k8s-figure .kf-net-t   { fill: #5f3dc4; }
+    [data-theme="light"] .k8s-figure .kf-rt-t    { fill: #212529; }
+
+    [data-theme="light"] .k8s-figure .kf-error   { fill: #ffe3e3; stroke: #c92a2a; stroke-width: 2; }
+    [data-theme="light"] .k8s-figure .kf-error-t { fill: #c92a2a; }
+    [data-theme="light"] .k8s-figure .kf-warn-t  { fill: #c05c00; }
+
+    [data-theme="light"] .k8s-figure .kf-flow-req { stroke: #1971c2; stroke-width: 1.5; }
+    [data-theme="light"] .k8s-figure .kf-flow-res { stroke: #2b8a3e; stroke-width: 1.5; }
+    [data-theme="light"] .k8s-figure .kf-flow-net { stroke: #5f3dc4; stroke-width: 1.5; }
+    [data-theme="light"] .k8s-figure .kf-head-req { fill: #1971c2; }
+    [data-theme="light"] .k8s-figure .kf-head-res { fill: #2b8a3e; }
+    [data-theme="light"] .k8s-figure .kf-head-api { fill: #1971c2; }
+    [data-theme="light"] .k8s-figure .kf-head-net { fill: #5f3dc4; }
+    [data-theme="light"] .k8s-figure .kf-life     { stroke: #868e96; stroke-width: 1; }
+    [data-theme="light"] .k8s-figure .kf-bar-api  { fill: #1971c2; }
+    [data-theme="light"] .k8s-figure .kf-bar-node { fill: #0c8599; }
+    [data-theme="light"] .k8s-figure .kf-bar-net  { fill: #5f3dc4; }
+
+

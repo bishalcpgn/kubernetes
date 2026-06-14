@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Kubernetes DevSecOps Training Lab Guide">
+  <title>Kubernetes · Appendices</title>
+
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d1117'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23ffb627'/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/app.css">
+
+</head>
+
+<body>
+
+  <div class="sidebar-backdrop"></div>
+
+  <a class="icon-btn corner-btn github-corner-btn" id="githubLink" href="https://github.com/bishalcpgn/Kubernetes"
+    target="_blank" rel="noopener noreferrer" aria-label="View this project on GitHub"
+    title="View on GitHub (open source, contributions welcome)">
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+      <path
+        d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.29-.01-1.04-.02-2.05-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.39 1.24-3.23-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6.01 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.23 0 4.62-2.81 5.64-5.49 5.94.43.37.81 1.1.81 2.22 0 1.6-.01 2.89-.01 3.29 0 .32.22.7.83.58A12 12 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z" />
+    </svg>
+  </a>
+
+  <button class="icon-btn corner-btn theme-corner-btn" id="themeToggle" aria-label="Toggle theme"></button>
+
+  <div class="app">
+
+    <!-- Reuse the existing sidebar from index.html for consistent navigation -->
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+      <div class="brand">
+        <div class="brand-title">
+          <span class="accent-dot"></span>
+          <span>DevSecOps<span class="italic-serif text-accent">·</span>Training</span>
+        </div>
+        <div class="brand-subtitle">Kubernetes Labs</div>
+        <span class="brand-edition">Trainer · 2026 Edition</span>
+      </div>
+      <div class="sidebar-search">
+        <input type="search" id="navSearch" placeholder="Search…  press /" aria-label="Filter navigation"
+          autocomplete="off">
+      </div>
+      <nav aria-label="Sidebar navigation">
+        <div class="nav-section">
+          <div class="nav-section-label">Contents</div>
+          <ul class="nav-list">
+            <!-- Links will be populated by the rendered Markdown headings if present -->
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <div class="content-inner">
+        <article id="md-root" class="md-content page-markdown">
+          <h1 id="appendix-a-cleanup-cheatsheet">Appendix A: Cleanup Cheatsheet</h1>
+          <p>Run after finishing, or any time the cluster feels cluttered. On a single-node Minikube, leftover
+            Prometheus/Argo CD/Falco pods will exhaust resources.</p>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Delete all</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl delete all --all -n &lt;namespace&gt;
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Delete a whole namespace (and everything in it)</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl delete namespace &lt;namespace&gt;
+# Uninstall all Helm releases in a namespace
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Run helm list</span></div>
+            <pre class="codehilite"><code class="language-bash">helm list -n &lt;ns&gt; -q | xargs -r helm uninstall -n &lt;ns&gt;
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Nuclear option: wipe the entire cluster and start fresh</span></div>
+            <pre class="codehilite"><code class="language-bash">minikube delete
+minikube start --driver=docker --cpus=4 --memory=4096
+</code></pre>
+          </div>
+
+          <hr />
+          <h1 id="appendix-b-common-errors-and-troubleshooting">Appendix B: Common Errors and Troubleshooting</h1>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Pod STATUS</th>
+                  <th>Most likely cause</th>
+                  <th>First commands to run</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>ImagePullBackOff</code> / <code>ErrImagePull</code></td>
+                  <td>Wrong image name/tag, private registry without credentials, or rate limit</td>
+                  <td><code>kubectl describe pod &lt;p&gt;</code> (read Events)</td>
+                </tr>
+                <tr>
+                  <td><code>CrashLoopBackOff</code></td>
+                  <td>App exits/crashes on start (bad config, missing env, failing liveness probe)</td>
+                  <td><code>kubectl logs &lt;p&gt; --previous</code></td>
+                </tr>
+                <tr>
+                  <td><code>Pending</code></td>
+                  <td>No node has enough CPU/memory, or PVC can't bind</td>
+                  <td><code>kubectl describe pod &lt;p&gt;</code>; <code>kubectl get pvc</code>;
+                    <code>kubectl top nodes</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>CreateContainerConfigError</code></td>
+                  <td>References a missing ConfigMap/Secret key</td>
+                  <td><code>kubectl describe pod &lt;p&gt;</code></td>
+                </tr>
+                <tr>
+                  <td><code>0/1 Running</code> but not Ready</td>
+                  <td>Readiness probe failing</td>
+                  <td><code>kubectl describe pod &lt;p&gt;</code>; <code>kubectl logs &lt;p&gt;</code></td>
+                </tr>
+                <tr>
+                  <td>HPA shows <code>&lt;unknown&gt;</code></td>
+                  <td>No CPU <strong>requests</strong> set, or metrics-server not ready</td>
+                  <td><code>kubectl top pods</code>; check <code>resources.requests</code></td>
+                </tr>
+                <tr>
+                  <td>NetworkPolicy not enforced</td>
+                  <td>CNI doesn't support policies (default Minikube CNI)</td>
+                  <td>restart with <code>--cni=calico</code></td>
+                </tr>
+                <tr>
+                  <td>Service unreachable</td>Follows the Juice Shop Trainee design language.
+                  <td>Selector labels don't match Pod labels</td>
+                  <td><code>kubectl get endpoints &lt;svc&gt;</code> (empty = selector mismatch)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>General workflow for <em>any</em> failure: <strong><code>get</code> → <code>describe</code> (read Events) →
+              <code>logs</code></strong>.</p>
+          <hr />
+          <h1 id="appendix-c-what-we-did-not-cover-and-where-to-go-next">Appendix C: What We Did Not Cover (and Where to
+            Go Next)</h1>
+          <p>This guide is a complete spine, but "all of Kubernetes" is bigger than any single lab set. Strong next
+            topics, roughly in order of usefulness:</p>
+          <ol class="sec2-indented">
+            <li><strong>TLS &amp; certificates</strong>: <code>cert-manager</code> for automatic Let's Encrypt certs on
+              your Gateway listeners.</li>
+            <li><strong>Service Mesh</strong>: Istio / Linkerd / Cilium for mTLS, traffic shaping, and L7 observability
+              between services.</li>
+            <li><strong>Advanced networking</strong>: Cilium (eBPF CNI with built-in Gateway API support), and deeper
+              Gateway API features (traffic splitting, header routing, <code>GRPCRoute</code>/<code>TCPRoute</code>).
+            </li>
+            <li><strong>Storage depth</strong>: StorageClasses, CSI drivers, volume snapshots, StatefulSet backups.</li>
+            <li><strong>Multi-tenancy &amp; quotas</strong>: ResourceQuota, LimitRange, hierarchical namespaces.</li>
+            <li><strong>Operators &amp; CRDs</strong>: extending Kubernetes with custom controllers (Operator SDK /
+              Kubebuilder).</li>
+            <li><strong>Cluster lifecycle</strong>: managed clusters (EKS/GKE/AKS), upgrades, version-skew,
+              <code>kubeadm</code>.
+            </li>
+            <li><strong>Progressive delivery</strong>: Argo Rollouts / Flagger for canary and blue-green deploys.</li>
+            <li><strong>Cost &amp; autoscaling</strong>: Cluster Autoscaler, Karpenter, VPA, KEDA (event-driven
+              scaling).</li>
+            <li><strong>DR &amp; backup</strong>: Velero for cluster backup and migration.</li>
+            <li><strong>Deeper supply chain</strong>: full SLSA framework, in-toto attestations, admission with the
+              Sigstore Policy Controller.</li>
+          </ol>
+          <blockquote>
+            <p>A practical capstone: combine the labs into one secured pipeline, Git repo → CI runs Trivy + Cosign
+              signing → Argo CD deploys → Kyverno enforces signatures + PSS → Falco watches at runtime →
+              Prometheus/Grafana observe. That end-to-end loop <em>is</em> production DevSecOps.</p>
+          </blockquote>
+          <hr />
+          <hr />
+          <h1 id="appendix-d-glossary">Appendix D: Glossary</h1>
+          <p>A quick lookup for every term and tool used in this guide. Where a concept has a full explanation, the
+            relevant section is noted.</p>
+          <p><strong>Admission controller</strong>: code in the API server that inspects an object before it's saved,
+            and can accept, reject, or modify it. The enforcement point for PSA, Kyverno, and signature checks. (Sec.
+            14)</p>
+            <p><strong>Argo CD</strong>: a GitOps controller that continuously syncs the cluster to a Git repo. (Section
+            2 Concepts, Lab 10)</p>
+          <p><strong>CNI (Container Network Interface)</strong>: the plugin standard that provides Pod networking; also
+            enforces NetworkPolicies. Examples: Calico, Cilium, Flannel. (Lab 14)</p>
+          <p><strong>ClusterRole / Role</strong>: RBAC objects granting permissions cluster-wide / within one namespace.
+            (Sec. 14, Lab 13)</p>
+          <p><strong>Container runtime</strong>: the software that actually runs containers on a node (containerd,
+            CRI-O). (Sec. 1)</p>
+          <p><strong>Controller</strong>: software that watches objects and continuously drives actual state toward
+            desired state. The core pattern of Kubernetes. (Sec. 1, Section 2 Concepts)</p>
+          <p><strong>Cosign</strong>: CLI for signing and verifying container images, part of Sigstore. (Sec. 14, Lab
+            16)</p>
+          <p><strong>CRD (Custom Resource Definition)</strong>: a way to teach the cluster a new object type, used by
+            nearly every ecosystem tool. (Section 2 intro)</p>
+          <p><strong>CVE (Common Vulnerabilities and Exposures)</strong>: a publicly catalogued security flaw with a
+            unique ID. Trivy scans for these. (Sec. 14, Lab 11)</p>
+          <p><strong>DaemonSet</strong>: a controller that runs exactly one Pod per node; used for node-level agents
+            like Falco. (Lab 6, Lab 17)</p>
+          <p><strong>Deployment</strong>: the standard controller for stateless apps; manages ReplicaSets, rollouts, and
+            rollbacks. (Sec. 1, Lab 1)</p>
+          <p><strong>Drift</strong>: when the live cluster differs from the desired state in Git; GitOps tools detect
+            and revert it. (Lab 10)</p>
+          <p><strong>eBPF</strong>: Linux kernel technology to safely run small observation programs in the kernel; used
+            by Falco and modern CNIs. (Lab 17, Sec. 14)</p>
+          <p><strong>Exporter</strong>: a small adapter exposing a system's metrics in Prometheus format. (Lab 9)</p>
+          <p><strong>Falco</strong>: runtime security tool that watches syscalls via eBPF and alerts on suspicious
+            behavior. (Sec. 14, Lab 17)</p>
+          <p><strong>Fulcio</strong>: Sigstore's certificate authority issuing short-lived, identity-bound signing certs
+            (enables keyless signing). (Sec. 14, Lab 16)</p>
+          <p><strong>Gateway API</strong>: the modern CRD-based standard for L7 HTTP routing; replaces the frozen
+            Ingress API. Objects: GatewayClass, Gateway, HTTPRoute. (Lab 7)</p>
+          <p><strong>GitOps</strong>: operating model where Git is the source of truth and software continuously
+            reconciles the cluster to match it. (Lab 10)</p>
+          <p><strong>Grafana</strong>: dashboard/visualization tool, usually layered on Prometheus data. (Lab 9)</p>
+          <p><strong>Helm</strong>: the Kubernetes package manager; installs/upgrades/rolls back applications packaged
+            as charts. (Lab 8)</p>
+          <p><strong>Helm chart / repo / release / values</strong>: a chart is a versioned package; a repo hosts charts;
+            a release is one installed instance; values are its configuration knobs. (Lab 8)</p>
+          <p><strong>HPA (Horizontal Pod Autoscaler)</strong>: scales Pod count up/down based on metrics like CPU; needs
+            resource requests to work. (Sec. 2.3, Lab 5)</p>
+          <p><strong>Ingress</strong>: the legacy L7 routing object, now frozen; superseded by the Gateway API. (Lab 7)
+          </p>
+          <p><strong>Kyverno</strong>: a YAML-based policy engine / admission controller for
+            validate/mutate/generate/verify rules. (Sec. 14, Lab 15)</p>
+          <p><strong>metrics-server</strong>: lightweight current-CPU/memory collector that powers
+            <code>kubectl top</code> and the HPA. (Lab 5, Lab 9)
+          </p>
+          <p><strong>Namespace</strong>: a virtual partition of a cluster for isolation, quota, and access control.
+            (Sec. 2.1)</p>
+          <p><strong>NetworkPolicy</strong>: pod-level firewall rule; enforced by the CNI. (Sec. 14, Lab 14)</p>
+          <p><strong>OCI (Open Container Initiative)</strong>: the open standard for container image format and
+            registries (Docker Hub, GHCR). (Lab 16)</p>
+          <p><strong>OIDC (OpenID Connect)</strong>: identity standard that proves who you are via an existing account
+            (Google, GitHub). (Lab 16)</p>
+          <p><strong>PV / PVC (PersistentVolume / PersistentVolumeClaim)</strong>: cluster storage / a workload's
+            request for storage. (Sec. 3.1, Lab 4)</p>
+          <p><strong>Pod</strong>: the smallest deployable unit; one or more containers sharing an IP and volumes. (Sec.
+            1)</p>
+          <p><strong>Prometheus</strong>: time-series metrics database that scrapes and stores metrics; queried with
+            PromQL. (Lab 9)</p>
+          <p><strong>PSS / PSA (Pod Security Standards / Admission)</strong>: three built-in security profiles, and the
+            admission controller that enforces them per namespace. (Sec. 14, Lab 12)</p>
+          <p><strong>RBAC (Role-Based Access Control)</strong>: least-privilege permissions for users and
+            ServiceAccounts. (Sec. 14, Lab 13)</p>
+          <p><strong>Rekor</strong>: Sigstore's public, tamper-evident transparency log of signatures. (Sec. 14, Lab 16)
+          </p>
+          <p><strong>ReplicaSet</strong>: keeps a desired number of identical Pods running; managed by Deployments.
+            (Sec. 1)</p>
+          <p><strong>SBOM (Software Bill of Materials)</strong>: a full inventory of what's inside an image; format e.g.
+            CycloneDX. (Sec. 14, Lab 16)</p>
+          <p><strong>Service</strong>: a stable virtual IP/DNS name load-balancing across a set of Pods. Types:
+            ClusterIP, NodePort, LoadBalancer. (Sec. 1, Lab 1)</p>
+          <p><strong>ServiceAccount</strong>: the identity a Pod runs as, used for RBAC and authenticating to the API.
+            (Sec. 14, Lab 13)</p>
+          <p><strong>Sigstore</strong>: the umbrella project (Cosign + Fulcio + Rekor) for software signing and
+            verification. (Sec. 14, Lab 16)</p>
+          <p><strong>StatefulSet / Job / CronJob</strong>: controllers for stable-identity workloads / run-to-completion
+            tasks / scheduled tasks. (Lab 6)</p>
+          <p><strong>Supply-chain security</strong>: proving deployed software is exactly what your pipeline built.
+            (Sec. 14, Lab 16)</p>
+          <p><strong>Traefik</strong>: a modern reverse proxy / load balancer used here as a Gateway API controller and
+            Helm demo. (Labs 7-8)</p>
+          <p><strong>Trivy</strong>: open-source scanner for image CVEs, misconfigurations, secrets, and SBOMs. (Sec.
+            14, Lab 11)</p>
+          <hr />
+          <p><em>End of guide. Tested against Kubernetes v1.36, Helm v4, Argo CD v3.x, Falco v0.43, plus current Trivy,
+              Kyverno, and Cosign releases (2026). Pin all tool/chart versions to specific releases for reproducible,
+              supply-chain-safe deployments.</em></p>
+        </article>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Scripts: build page sections and sidebar from the embedded static HTML content -->
+  <script src="../js/app.js" defer></script>
+
+  <script>
+    window.addEventListener('load', function () {
+      [
+        'appendix-d-glossary',
+        'appendix-a-cleanup-cheatsheet',
+        'appendix-c-what-we-did-not-cover-and-where-to-go-next',
+        'appendix-b-common-errors-and-troubleshooting'
+      ].forEach(function (id) {
+        var section = document.getElementById(id);
+        if (!section || !section.classList.contains('page-section')) return;
+        section.classList.add('styled-section');
+        var inH4 = false;
+        Array.from(section.children).forEach(function (el) {
+          if (el.matches('h3')) { inH4 = false; return; }
+          if (el.matches('h4')) { inH4 = true; return; }
+          if (inH4 && !el.matches('.cmd-step')) el.classList.add('sec2-indented');
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>
