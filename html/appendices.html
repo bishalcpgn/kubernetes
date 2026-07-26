@@ -142,7 +142,7 @@ minikube start --driver=docker --cpus=4 --memory=4096
                 <tr>
                   <td>Service unreachable</td>Follows the Juice Shop Trainee design language.
                   <td>Selector labels don't match Pod labels</td>
-                  <td><code>kubectl get endpoints &lt;svc&gt;</code> (empty = selector mismatch)</td>
+                  <td><code>kubectl get endpointslices -l kubernetes.io/service-name=&lt;svc&gt;</code> (empty = selector mismatch)</td>
                 </tr>
               </tbody>
             </table>
@@ -274,7 +274,7 @@ minikube start --driver=docker --cpus=4 --memory=4096
           <p><strong>Trivy</strong>: open-source scanner for image CVEs, misconfigurations, secrets, and SBOMs. (Sec.
             14, Lab 11)</p>
           <hr />
-          <p><em>End of guide. Tested against Kubernetes v1.36, Helm v4, Argo CD v3.x, Falco v0.43, plus current Trivy,
+          <p><em>End of guide. Tested against Kubernetes v1.36, Helm v4, Argo CD v3.x, Falco v0.44, plus current Trivy,
               Kyverno, and Cosign releases (2026). Pin all tool/chart versions to specific releases for reproducible,
               supply-chain-safe deployments.</em></p>
         </article>

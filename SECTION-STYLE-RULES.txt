@@ -8,7 +8,7 @@
  the style is to find a similar existing section in html/*.html and copy its
  pattern. This file explains the "why" behind those patterns.
 
- Last updated: 2026-06-14
+ Last updated: 2026-07-26
  Origin: finalized on Section 2 (Core Working Concepts), applied to chapters
  0-21, then updated after the guide was split into Section 0-3 pages and
  after the heading-colour, font, and figure refresh.
@@ -380,6 +380,8 @@
    - no em-dashes and no curly/smart quotes anywhere (a curly quote in an
      attribute blanks out the whole figure)
    - no <table> wrapped in a <blockquote>
+   - no <h2>/<h3> inside a <details class="deep-dive">, and every
+     deep-dive has a visible concept sentence above it
    - SVG <marker> ids unique within the file and every url(#id) resolves
      (duplicate "arr" ids make all arrows share the first marker)
    - figures: no text baseline below its box; figure pages load Caveat
@@ -387,6 +389,54 @@
        index.html -> html/<page>.html#id
        html/*.html -> #id for same-page links, or <other-page>.html#id for
        another content page, or ../index.html#id for the hub
+
+
+===========================================================================
+ 12. DEEP-DIVE DISCLOSURE  (progressive disclosure for optional depth)
+===========================================================================
+
+  Beginners get lost in long theory. When a subsection carries more depth
+  than a first-time reader needs, keep the CONCEPT visible in the prose and
+  move the MECHANISM, edge cases, or reference tables into a collapsible
+  block:
+
+      <details class="deep-dive">
+        <summary>How the scheduler picks a node<span class="dd-tag">Optional depth</span></summary>
+
+        <p>...</p>
+      </details>
+
+  Rules:
+   - The concept never lives only inside the dropdown. Always leave at least
+     one visible sentence above it saying what the thing is and why it
+     exists. A reader who never opens a single dropdown must still meet
+     every concept in the guide.
+   - <summary> is always the FIRST child. Its text describes what is inside,
+     phrased as the question the reader would ask.
+   - The <span class="dd-tag"> pill is the affordance that marks the content
+     as skippable. Keep the wording "Optional depth" unless there is a
+     reason to differ.
+   - NEVER put an <h2> or <h3> inside a deep-dive. The right-rail menu is
+     built from <h3> ids (rule 9), and a heading hidden inside a collapsed
+     block produces a menu entry that scrolls to nothing. <h4> is fine but
+     usually unnecessary.
+   - Prefer theory, reference tables, and "why it works this way" content.
+     Do NOT hide a command sequence a reader is meant to run: badged i/ii
+     steps stay visible.
+   - Styling lives in css/app.css (the ".deep-dive" block). The chevron is
+     drawn with CSS borders, so no icon font or glyph is needed, and the
+     block is forced open when printing.
+
+  Good split, from 1.4:
+
+      <h4 id="kube-scheduler">kube-scheduler: Placing Pods on Nodes</h4>
+      <p>The scheduler watches for Pods that have no node yet and picks one
+        for each. That is its whole job.</p>          <- concept, visible
+      <details class="deep-dive">
+        <summary>How the scheduler picks a node: filtering and scoring
+          <span class="dd-tag">Optional depth</span></summary>
+        ...                                            <- mechanism, hidden
+      </details>
 
 
 ===========================================================================

@@ -85,17 +85,10 @@
 
           <h2 id="14-devsecops-security-theory">14. DevSecOps Security Theory</h2>
 
-          <p>
-            Security is not something you bolt on at the end of a software project. In traditional "waterfall" security,
-            developers wrote code, testers tested it, and then a security team reviewed it right before shipping. By
-            that
-            point, fixing a vulnerability was enormously expensive: entire features might need to be redesigned.
-            DevSecOps
-            is the practice of integrating security into every stage of the software development lifecycle, from the
-            moment
-            a developer writes the first line of code to the moment the application is running in production and being
-            monitored.
-          </p>
+          <p>Security is not something you bolt on at the end. The old model had developers write code, testers test
+            it, and a security team review it just before shipping, by which point a finding could mean redesigning a
+            whole feature. DevSecOps moves security into every stage instead, from the first line of code to the
+            running production system.</p>
           <p>
             This section is the conceptual foundation for all seven security labs that follow. Read it carefully. Every
             concept introduced here maps directly to a tool or lab exercise.
@@ -137,29 +130,14 @@
             Here is a concrete example. Suppose a developer writes a container that runs as the root user (UID 0).
           </p>
           <ol class="sec2-indented">
-            <li>
-              <strong>Caught in the IDE (leftmost):</strong> a plugin flags it immediately. Fix time: 30 seconds.
-              A one-line change to add <code>USER 1001</code> to the Dockerfile.
-            </li>
-            <li>
-              <strong>Caught in CI scanning:</strong> Trivy fails the build pipeline. Fix time: 10 minutes. The
-              developer
-              must understand the finding, push a fix, and re-run CI.
-            </li>
-            <li>
-              <strong>Caught at admission (deploy time):</strong> Pod Security Admission rejects the Pod when someone
-              runs
-              <code>kubectl apply</code>. Fix time: 30 minutes to 2 hours. The developer must understand the admission
-              error,
-              update the Deployment manifest, and re-deploy.
-            </li>
-            <li>
-              <strong>Caught at runtime (rightmost):</strong> Falco detects privilege escalation inside a running
-              container.
-              Fix time: potentially days, plus incident response, potential data breach, customer notifications. The
-              root
-              container may have already been exploited.
-            </li>
+            <li><strong>In the IDE.</strong> A plugin flags it as you type. Fix time: 30 seconds, one line adding
+              <code>USER 1001</code> to the Dockerfile.</li>
+            <li><strong>In CI.</strong> Trivy fails the build. Fix time: 10 minutes to read the finding, push, and
+              re-run.</li>
+            <li><strong>At admission.</strong> Pod Security Admission rejects the Pod on <code>kubectl apply</code>.
+              Fix time: 30 minutes to 2 hours, because now a manifest and a redeploy are involved.</li>
+            <li><strong>At runtime.</strong> Falco spots privilege escalation in a live container. Fix time: days, plus
+              incident response and possibly customer notification. The container may already be exploited.</li>
           </ol>
           <p>
             The cost of fixing a security problem grows exponentially the further right it is caught. Shift left.
@@ -251,32 +229,20 @@
             alone is not enough:
           </p>
           <ol class="sec2-indented">
-            <li>
-              <strong>Scanning alone is not enough:</strong> Trivy can only find <em>known</em> vulnerabilities (CVEs
-              that
-              have already been published). A zero-day vulnerability, one that has not been publicly disclosed yet, will
-              not appear in any scan. Also, a perfectly clean image can still be misconfigured at deploy time.
-            </li>
-            <li>
-              <strong>Admission control alone is not enough:</strong> It can block bad Pods at deploy time, but it
-              cannot
-              see what a Pod does once it starts running. A legitimately deployed Pod could be exploited at runtime.
-            </li>
-            <li>
-              <strong>Runtime detection alone is not enough:</strong> By the time Falco fires an alert, the attacker is
-              already inside. Detection is too late to prevent a breach; it can only limit the damage.
-            </li>
-            <li>
-              <strong>RBAC alone is not enough:</strong> RBAC controls API server access, but it does not stop a
-              compromised
-              container from making network connections to other services inside the cluster.
-            </li>
+            <li><strong>Scanning alone.</strong> Trivy only knows about published CVEs. A zero-day will not appear, and
+              a spotless image can still be deployed with a terrible configuration.</li>
+            <li><strong>Admission control alone.</strong> It blocks bad Pods at deploy time but cannot see what a good
+              Pod does once it is running.</li>
+            <li><strong>Runtime detection alone.</strong> By the time Falco fires, the attacker is already inside.
+              Detection limits damage; it does not prevent the breach.</li>
+            <li><strong>RBAC alone.</strong> It guards the API server, not the network. A compromised container can
+              still reach every other service.</li>
           </ol>
           <p>
             This is why this training tier has seven labs: you need all the layers working together.
           </p>
 
-          <blockquote><strong>INFO: The Attack Surface of a Kubernetes Cluster</strong>
+          <blockquote><strong>The Attack Surface of a Kubernetes Cluster</strong>
 
             <p>A Kubernetes cluster has many places an attacker can try to exploit:</p>
             <ul>
@@ -474,7 +440,11 @@
             </svg>
             <figcaption id="fig3-3-cap">Figure 3.3: How RBAC links subjects to roles through a binding.</figcaption>
           </figure>
-          <p>
+
+          <details class="deep-dive">
+            <summary>The four RBAC objects and how they combine<span class="dd-tag">Optional depth</span></summary>
+
+<p>
             <strong>Subjects</strong> are the entities that can take actions:
           </p>
           <ol class="sec2-indented">
@@ -510,8 +480,9 @@
             namespace. A <code>ClusterRole</code> is cluster-wide. A <code>RoleBinding</code> binds a subject to a Role
             or ClusterRole within a namespace. A <code>ClusterRoleBinding</code> binds cluster-wide.
           </p>
+          </details>
 
-          <h3 id="network-security-east-west-traffic">Network Security: East-West Traffic</h3>
+<h3 id="network-security-east-west-traffic">Network Security: East-West Traffic</h3>
           <p>
             <strong>North-south traffic</strong> is traffic that enters or leaves the cluster (user requests coming in,
             responses going out). This is what people usually think of when they think of firewalls.
@@ -521,7 +492,11 @@
             B.
             Frontend calling the database. This is equally important and often overlooked.
           </p>
-          <p>
+
+          <details class="deep-dive">
+            <summary>How a default-deny policy is built up<span class="dd-tag">Optional depth</span></summary>
+
+<p>
             By default, Kubernetes uses a "default-allow-all" network model: any Pod can reach any other Pod on any
             port.
             This is dangerous. If an attacker compromises one Pod (perhaps by exploiting a web application
@@ -539,24 +514,23 @@
             Minikube CNI (kindnet) silently ignores NetworkPolicies. You must use Calico, Cilium, or another
             policy-capable CNI for them to have any effect. This is a common source of confusion.
           </p>
+          </details>
 
-          <h3 id="supply-chain-threats">Supply Chain Threats</h3>
+<h3 id="supply-chain-threats">Supply Chain Threats</h3>
           <p>
             The supply chain is everything that happens between a developer writing code and that code running in
             production.
             Supply chain attacks target the pipeline itself rather than the running application.
           </p>
           <ol class="sec2-indented">
-            <li><strong>Malicious base images:</strong> an attacker publishes a Docker Hub image with a name that looks
-              legitimate (typosquatting) or compromises an existing popular image. Any application built on top of it
-              inherits the malware.</li>
-            <li><strong>Image tampering:</strong> after a CI pipeline builds and pushes an image, an attacker with
-              registry write access replaces it with a malicious version. Without signature verification, deployments
-              will happily pull the tampered image.</li>
-            <li><strong>Compromised CI:</strong> if CI credentials are leaked, an attacker can inject malicious code
-              into the build process before the image is even pushed.</li>
-            <li><strong>Dependency confusion:</strong> an attacker publishes a malicious package with the same name as
-              an internal private package. Package managers may resolve the public one instead.</li>
+            <li><strong>Malicious base images.</strong> A typosquatted Docker Hub image (<code>ubunut</code> for
+              <code>ubuntu</code>) that ships a backdoor.</li>
+            <li><strong>Dependency confusion.</strong> A public package published under an internal name, which your
+              build resolves in preference to the real one.</li>
+            <li><strong>Compromised build systems.</strong> An attacker with CI access injects code after review has
+              passed, so the source looks clean and the artifact is not.</li>
+            <li><strong>Registry tampering.</strong> A mutable tag such as <code>:latest</code> is repointed at a
+              different image after you approved it.</li>
           </ol>
           <p>
             The tools for supply chain security are Cosign (signing), SBOMs (inventory), and Kyverno verifyImages
@@ -568,16 +542,13 @@
             Even if every build-time and deploy-time control is perfect, a running container can still be compromised:
           </p>
           <ol class="sec2-indented">
-            <li><strong>Container escape:</strong> an attacker exploits a kernel vulnerability or a misconfigured
-              privileged container to break out of the container boundary and gain access to the host node.</li>
-            <li><strong>Privilege escalation:</strong> a process running as an unprivileged user inside a container
-              exploits a setuid binary or a kernel vulnerability to become root.</li>
-            <li><strong>Cryptomining:</strong> a compromised container runs a cryptocurrency miner, consuming cluster
-              CPU resources and potentially exfiltrating credentials to fund the attacker.</li>
-            <li><strong>Data exfiltration:</strong> a compromised container reads secrets from the filesystem or
-              environment variables and sends them to an external server.</li>
-            <li><strong>Lateral movement:</strong> a compromised Pod uses its ServiceAccount token or network access to
-              reach other services inside the cluster.</li>
+            <li><strong>Container escape.</strong> A kernel bug or a privileged container lets an attacker reach the
+              host.</li>
+            <li><strong>Cryptomining.</strong> Someone exploits your app and quietly spends your CPU budget.</li>
+            <li><strong>Credential theft.</strong> A process reads the mounted ServiceAccount token and starts calling
+              the API server as your workload.</li>
+            <li><strong>Lateral movement.</strong> From one compromised Pod, an attacker scans and reaches every other
+              service on a flat network.</li>
           </ol>
           <p>
             Runtime security (Lab 17: Falco) addresses these by watching system calls in real time. Every file open,
@@ -588,7 +559,7 @@
           <h3 id="the-security-tool-stack-what-layer-each-tool-operates-at">The Security Tool Stack: What Layer Each
             Tool Operates At</h3>
 
-          <p><strong>INFO: Tool-to-Layer Mapping</strong></p>
+          <p><strong>Tool-to-Layer Mapping</strong></p>
 
           <div class="table-wrap">
             <table>
@@ -636,7 +607,7 @@
             </table>
           </div>
 
-          <blockquote class="warning"><strong>WARNING: Defense in Depth is Not Optional</strong>
+          <blockquote class="warning"><strong>Defense in Depth is Not Optional</strong>
 
             <p>
               No single control covers all threats. Trivy cannot catch zero-days. PSA cannot see runtime behavior.
@@ -644,6 +615,207 @@
               network lateral movement if there are no NetworkPolicies. You need all of these layers working together.
               That is why this tier has seven labs.
             </p>
+          </blockquote>
+
+          <h3 id="lab14-find-the-security-layers-yourself">Lab: Find the Security Layers on Your Own Cluster</h3>
+
+          <p><strong>What we are doing:</strong> running read-only commands against your Minikube cluster to locate
+            each defense layer described above, and to see which ones are switched off by default.</p>
+          <p><strong>Why this lab matters:</strong> everything in this section so far has been a diagram. The point of
+            these commands is to show you that a default Kubernetes cluster is wide open, and to give you a baseline
+            you can re-measure after Labs 11 through 17 have hardened it.</p>
+          <p><strong>Real-world mapping:</strong> this is roughly the opening move of a Kubernetes security
+            assessment.</p>
+
+          <blockquote class="warning"><strong>Expect most of these checks to come back empty</strong>
+
+            <p>That is the lesson, not a mistake in the lab. A fresh cluster ships with almost none of these controls
+              enabled. Each empty result below is filled in by a later lab, and the step notes which one.</p>
+          </blockquote>
+
+          <h4 id="lab14-admission-plugins">See Which Admission Plugins the API Server Runs</h4>
+
+          <p>Admission controllers are the gateway described above. The API server is started with an explicit list of
+            them, and because it runs as a static Pod you can read its command line.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Read the admission plugin flags the API server was started with</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl -n kube-system get pod kube-apiserver-minikube \
+  -o jsonpath=&#x27;{.spec.containers[0].command}&#x27; | tr &#x27;,&#x27; &#x27;\n&#x27; | grep -i admission
+# Output: typically a single explicitly enabled plugin
+#   --enable-admission-plugins=NodeRestriction
+</code></pre>
+          </div>
+
+          <p>That short list is misleading in a useful way. Roughly twenty admission plugins are compiled into the API
+            server and enabled by default, so this flag only shows the extras a cluster installer added on top. What matters for this section is that
+            <code>ValidatingAdmissionWebhook</code> and <code>MutatingAdmissionWebhook</code> are among the defaults:
+            they are the hooks Kyverno registers itself into in Lab 15.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Check whether any webhooks are currently registered</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get validatingwebhookconfigurations
+kubectl get mutatingwebhookconfigurations
+# Output on a fresh cluster: "No resources found" for both.
+# Nothing is inspecting your Pods yet. Lab 15 changes this.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the built-in Pod Security Admission controller is available</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl label --dry-run=server --overwrite ns default \
+  pod-security.kubernetes.io/enforce=restricted
+# Output: namespace/default labeled (dry run)
+# The label is accepted, which proves PSA is compiled into this API server.
+# Nothing was actually changed because of --dry-run=server.
+</code></pre>
+          </div>
+
+          <h4 id="lab14-psa-labels">Check Which Namespaces Enforce a Pod Security Standard</h4>
+
+          <p>PSA is enabled per namespace with a label. No label means no profile is enforced, which is the default
+            everywhere.</p>
+
+          <pre class="codehilite"><code class="language-bash">kubectl get namespaces --show-labels
+# Output: look for any pod-security.kubernetes.io/ label. On a fresh cluster
+# there are none, so every namespace runs at the privileged profile by default.
+# Lab 12 applies these labels properly.
+</code></pre>
+
+          <h4 id="lab14-rbac-check">Ask the Cluster What You Are Allowed to Do</h4>
+
+          <p>RBAC answers questions of the form "can this subject perform this verb on this resource". You can ask it
+            directly about yourself, and about any ServiceAccount.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm your own kubectl user is effectively cluster admin</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl auth can-i &#x27;*&#x27; &#x27;*&#x27; --all-namespaces
+# Output: yes
+# Minikube gives your kubeconfig user cluster-admin. Convenient for a lab,
+# and exactly the anti-pattern Lab 13 teaches you to avoid in production.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Compare that against the default ServiceAccount every Pod gets</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl auth can-i --list --as=system:serviceaccount:default:default
+# Output: a very short list, mostly selfsubjectreviews and a few read verbs.
+# The default ServiceAccount is nearly powerless, which is the correct default.
+</code></pre>
+          </div>
+
+          <h4 id="lab14-workload-posture">Inspect the Security Posture of an Ordinary Pod</h4>
+
+          <p>Deploy a completely normal Pod and look at what it was granted. Nothing here is malicious; this is what a
+            standard manifest produces when nobody has thought about security.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create a plain Pod with no securityContext at all</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl run posture-demo --image=nginx:1.27-alpine
+kubectl wait --for=condition=Ready pod/posture-demo --timeout=60s
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm no security constraints were applied</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get pod posture-demo \
+  -o jsonpath=&#x27;{.spec.containers[0].securityContext}&#x27;
+# Output: empty. No runAsNonRoot, no dropped capabilities, no seccomp profile,
+# and a writable root filesystem. Lab 12 fixes every one of these.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Verify the container is really running as root</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl exec posture-demo -- id
+# Output: uid=0(root) gid=0(root) groups=0(root)
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Find the API credential that was mounted without you asking</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl exec posture-demo -- \
+  ls /var/run/secrets/kubernetes.io/serviceaccount
+# Output: ca.crt  namespace  token
+# Every Pod gets an API token by default. Lab 13 shows how to turn this off
+# with automountServiceAccountToken: false.
+</code></pre>
+          </div>
+
+          <h4 id="lab14-network-check">Check Whether Anything Restricts Pod-to-Pod Traffic</h4>
+
+          <p>The east-west traffic problem described above is not theoretical. By default there is nothing in the way
+            of any Pod talking to any other Pod.</p>
+
+          <pre class="codehilite"><code class="language-bash">kubectl get networkpolicies --all-namespaces
+# Output: "No resources found". Zero policies means the cluster is flat:
+# a compromised Pod can reach every service in every namespace.
+# Lab 14 builds the default-deny baseline that closes this.
+</code></pre>
+
+          <h4 id="lab14-baseline-summary">Record Your Baseline</h4>
+
+          <p>Before cleaning up, note what you found. Every row is a layer from the defense-in-depth discussion above,
+            and the right-hand column is the lab that closes it.</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Layer</th>
+                  <th>Default state you just observed</th>
+                  <th>Closed by</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Image scanning</td>
+                  <td>Nothing scans images before they run</td>
+                  <td>Lab 11</td>
+                </tr>
+                <tr>
+                  <td>Pod Security Standards</td>
+                  <td>No namespace carries a PSA label</td>
+                  <td>Lab 12</td>
+                </tr>
+                <tr>
+                  <td>RBAC</td>
+                  <td>Your user is cluster-admin</td>
+                  <td>Lab 13</td>
+                </tr>
+                <tr>
+                  <td>Network segmentation</td>
+                  <td>Zero NetworkPolicies, fully flat network</td>
+                  <td>Lab 14</td>
+                </tr>
+                <tr>
+                  <td>Policy as code</td>
+                  <td>No admission webhooks registered</td>
+                  <td>Lab 15</td>
+                </tr>
+                <tr>
+                  <td>Supply chain</td>
+                  <td>Unsigned images are accepted without question</td>
+                  <td>Lab 16</td>
+                </tr>
+                <tr>
+                  <td>Runtime detection</td>
+                  <td>Nothing is watching syscalls</td>
+                  <td>Lab 17</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4 id="lab14-lab-cleanup">Clean Up</h4>
+
+          <p>Remove the demo Pod. Nothing else in this lab changed cluster state.</p>
+
+          <pre class="codehilite"><code class="language-bash">kubectl delete pod posture-demo
+# Output: pod "posture-demo" deleted
+</code></pre>
+
+          <blockquote class="success"><strong>The baseline you just measured</strong>
+
+            <p>A default Kubernetes cluster enforces almost nothing. Pods run as root with a writable filesystem and an
+              API token they never asked for, any Pod can reach any other Pod, and no policy engine is watching. None
+              of that is a bug in Kubernetes; it is a platform that defers security decisions to you. The seven labs
+              that follow are those decisions.</p>
           </blockquote>
 
           <hr />
@@ -692,7 +864,11 @@
             to 10
             that represents severity:
           </p>
-          <ol class="sec2-indented">
+
+          <details class="deep-dive">
+            <summary>CVSS severity bands and how teams gate on them<span class="dd-tag">Optional depth</span></summary>
+
+<ol class="sec2-indented">
             <li><strong>Critical (9.0 - 10.0):</strong> remotely exploitable with no authentication, often resulting in
               full system compromise. Fix immediately. Example: Log4Shell (CVSS 10.0).</li>
             <li><strong>High (7.0 - 8.9):</strong> serious vulnerabilities, often remotely exploitable. Prioritize
@@ -707,7 +883,7 @@
             large number of Medium and Low findings that may exist in any real-world image.
           </p>
 
-          <blockquote><strong>INFO: CVEs vs Misconfigurations</strong>
+          <blockquote><strong>CVEs vs Misconfigurations</strong>
 
             <p>
               CVEs are vulnerabilities in <em>existing software packages</em> (a bug in OpenSSL, a flaw in libcurl).
@@ -715,8 +891,9 @@
               no readiness probe). Trivy can catch both: CVEs via image scanning, misconfigurations via config scanning.
             </p>
           </blockquote>
+          </details>
 
-          <h3 id="installing-trivy-natively">Installing Trivy Natively</h3>
+<h3 id="installing-trivy-natively">Installing Trivy Natively</h3>
           <p>
             While you can run Trivy via <code>docker run aquasec/trivy</code>, installing it as a native binary gives
             better performance (no container startup overhead), easier CI integration, and access to Trivy's local
@@ -724,11 +901,11 @@
           </p>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">On Debian/Ubuntu (the method used in this lab environment):</span></div>
-            <pre class="codehilite"><code class="language-bash">sudo apt-get install -y wget apt-transport-https gnupg lsb-release
-wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | \
+            <pre class="codehilite"><code class="language-bash">sudo apt-get install -y wget apt-transport-https gnupg
+wget -qO - https://get.trivy.dev/deb/public.key | \
   sudo gpg --dearmor -o /usr/share/keyrings/trivy.gpg
-echo &quot;deb [signed-by=/usr/share/keyrings/trivy.gpg] \
-  https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main&quot; | \
+# The suite is the literal word &quot;generic&quot;, not your distro codename.
+echo &quot;deb [signed-by=/usr/share/keyrings/trivy.gpg] https://get.trivy.dev/deb generic main&quot; | \
   sudo tee /etc/apt/sources.list.d/trivy.list
 sudo apt-get update
 sudo apt-get install -y trivy
@@ -860,7 +1037,7 @@ echo &quot;Exit code was: $?&quot;
 </code></pre>
           </div>
 
-          <blockquote class="warning"><strong>WARNING: No Image is Permanently Clean</strong>
+          <blockquote class="warning"><strong>No Image is Permanently Clean</strong>
 
             <p>
               An image that has zero HIGH/CRITICAL CVEs today may have several next month when a new vulnerability is
@@ -1015,7 +1192,7 @@ trivy image nginx:1.20
 # The ignored CVEs will not appear in the output
 </code></pre>
 
-          <blockquote class="warning"><strong>WARNING: Document Every Suppressed Finding</strong>
+          <blockquote class="warning"><strong>Document Every Suppressed Finding</strong>
 
             <p>
               Never ignore a CVE without a clear written reason. An auditor or a future team member needs to understand
@@ -1028,7 +1205,7 @@ trivy image nginx:1.20
 
           <h3 id="step-7-integrating-trivy-in-github-actions-ci">Step 7: Integrating Trivy in GitHub Actions CI</h3>
 
-          <blockquote class="danger"><strong>DANGER: Supply Chain Warning - Pin to Commit SHA</strong>
+          <blockquote class="danger"><strong>Supply Chain Warning - Pin to Commit SHA</strong>
 
             <p>
               The official <code>aquasecurity/trivy-action</code> GitHub Action was compromised twice in March 2026 via
@@ -1064,10 +1241,9 @@ jobs:
       # Install Trivy natively (more reliable than the action):
       - name: Install Trivy
         run: |
-          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | \
+          wget -qO - https://get.trivy.dev/deb/public.key | \
             sudo gpg --dearmor -o /usr/share/keyrings/trivy.gpg
-          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] \
-            https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | \
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://get.trivy.dev/deb generic main" | \
             sudo tee /etc/apt/sources.list.d/trivy.list
           sudo apt-get update -q
           sudo apt-get install -y trivy
@@ -1208,6 +1384,17 @@ report:
             </ul>
           </blockquote>
 
+          <h3 id="lab11-cleanup">Cleanup</h3>
+
+          <p>Trivy runs entirely on your machine, so this lab created nothing in the cluster. It did leave scan output
+            and sample manifests in your working directory.</p>
+
+          <pre class="codehilite"><code class="language-bash">rm -f test-config.yaml nginx-deployment.yaml results.json \
+      trivy-image.sarif trivy-results.sarif
+# The Trivy vulnerability database stays cached in ~/.cache/trivy so later
+# scans start fast. Remove it with: trivy clean --all
+</code></pre>
+
           <hr />
           <h2 id="16-lab-12-pod-security-standards-and-admission">16. Lab 12: Pod Security Standards and Admission</h2>
 
@@ -1275,9 +1462,11 @@ report:
           <p>
             For example, to warn developers about baseline violations while strictly enforcing restricted:
           </p>
-          <pre class="codehilite"><code class="language-bash">kubectl label namespace my-namespace \
-  pod-security.kubernetes.io/warn=baseline \      # warn if baseline is violated
-  pod-security.kubernetes.io/enforce=restricted   # hard reject if restricted is violated
+          <pre class="codehilite"><code class="language-bash"># warn=baseline      prints a warning if baseline is violated
+# enforce=restricted  hard-rejects anything that violates restricted
+kubectl label namespace my-namespace \
+  pod-security.kubernetes.io/warn=baseline \
+  pod-security.kubernetes.io/enforce=restricted
 </code></pre>
 
           <h3 id="securitycontext-fields-explained-one-by-one">securityContext Fields Explained One by One</h3>
@@ -1287,7 +1476,13 @@ report:
             container,
             overrides the Pod-level setting for that field).
           </p>
-          <ol class="sec2-indented">
+
+          <p>The full field reference is below. Lab 12 uses the important ones in context.</p>
+
+          <details class="deep-dive">
+            <summary>Every securityContext field, one by one<span class="dd-tag">Optional depth</span></summary>
+
+<ol class="sec2-indented">
             <li>
               <strong>runAsNonRoot: true</strong> - Kubernetes checks that the container's effective user ID is not 0
               (root)
@@ -1356,8 +1551,9 @@ report:
             harmless, unprivileged user on the node. It needs a container runtime that supports it (containerd/CRI-O
             with the right config) and is the strongest built-in defence against container-escape privilege escalation.
             Treat it as the layer beyond <code>runAsNonRoot</code> once your runtime supports it.</blockquote>
+          </details>
 
-          <h3 id="step-1-create-and-label-a-namespace-in-warn-mode-first">Step 1: Create and Label a Namespace in Warn
+<h3 id="step-1-create-and-label-a-namespace-in-warn-mode-first">Step 1: Create and Label a Namespace in Warn
             Mode First</h3>
           <p>
             Best practice: always apply the <code>warn</code> mode first to observe the impact without breaking
@@ -1448,7 +1644,7 @@ forbidden: violates PodSecurity "restricted:latest":
               default (unconfined) is not allowed.</li>
           </ol>
 
-          <blockquote><strong>INFO: What Happens Internally When a Pod is Rejected</strong>
+          <blockquote><strong>What Happens Internally When a Pod is Rejected</strong>
 
             <p>
               When you run <code>kubectl apply -f bad-pod.yaml</code>, the request goes to the API server. The API
@@ -1684,6 +1880,25 @@ plugins:
                 (Lab 15).</li>
             </ul>
           </blockquote>
+
+          <h3 id="lab12-cleanup">Cleanup</h3>
+
+          <p>This lab created a namespace and two Pods. Removing the namespace removes everything inside it.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Delete the lab namespace and everything in it</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl delete namespace secure-apps
+# Output: namespace "secure-apps" deleted
+# This removes the Pods, the PSA labels, and the namespace in one step.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Remove the local manifests</span></div>
+            <pre class="codehilite"><code class="language-bash">rm -f bad-pod.yaml good-pod.yaml
+kubectl get namespace secure-apps
+# Output: Error from server (NotFound) - which is what you want here.
+</code></pre>
+          </div>
 
           <hr />
           <h2 id="17-lab-13-least-privilege-rbac">17. Lab 13: Least-Privilege RBAC</h2>
@@ -3188,9 +3403,13 @@ spec:
 
           <p>These commands exercise the behavior described in this step.</p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Send request to https://github.com/kyverno/kyverno/releases/latest/download/kyverno-cli_linux_amd64.tar.gz</span></div>
-            <pre class="codehilite"><code class="language-bash">curl -LO https://github.com/kyverno/kyverno/releases/latest/download/kyverno-cli_linux_amd64.tar.gz
-tar xzf kyverno-cli_linux_amd64.tar.gz
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Download and install the Kyverno CLI binary</span></div>
+            <pre class="codehilite"><code class="language-bash"># Release assets are versioned and use x86_64 (not amd64) in the file name,
+# so the download URL has to carry the tag. Set KYVERNO_VER to a current release
+# from https://github.com/kyverno/kyverno/releases
+KYVERNO_VER=v1.18.2
+curl -LO &quot;https://github.com/kyverno/kyverno/releases/download/${KYVERNO_VER}/kyverno-cli_${KYVERNO_VER}_linux_x86_64.tar.gz&quot;
+tar xzf &quot;kyverno-cli_${KYVERNO_VER}_linux_x86_64.tar.gz&quot;
 sudo mv kyverno /usr/local/bin/kyverno
 kyverno version
 </code></pre>
@@ -3558,9 +3777,11 @@ cosign sign ${IMAGE}
           <p>These commands carry out this step.</p>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Generate a CycloneDX SBOM (JSON format) for the image</span></div>
-            <pre class="codehilite"><code class="language-bash">trivy image \
-  --format cyclonedx \               # output format: cyclonedx JSON
-  --output sbom.json \               # save to this file
+            <pre class="codehilite"><code class="language-bash"># --format cyclonedx  emit CycloneDX JSON
+# --output sbom.json  write it to this file
+trivy image \
+  --format cyclonedx \
+  --output sbom.json \
   ${IMAGE}
 # Inspect the SBOM (it will be a large JSON file)
 </code></pre>
@@ -3575,9 +3796,11 @@ cosign sign ${IMAGE}
           <h4 id="step-7-attach-the-sbom-as-a-signed-attestation">Step 7: Attach the SBOM as a Signed Attestation</h4>
 
           <p>These commands exercise the behavior described in this step.</p>
-          <pre class="codehilite"><code class="language-bash">cosign attest \
-  --predicate sbom.json \            # the SBOM file generated by Trivy
-  --type cyclonedx \                 # the predicate type: tells verifiers what format the payload is in
+          <pre class="codehilite"><code class="language-bash"># --predicate  the SBOM file generated by Trivy
+# --type       the predicate type: tells verifiers what format the payload is in
+cosign attest \
+  --predicate sbom.json \
+  --type cyclonedx \
   ${IMAGE}
 # This also requires OIDC authentication (browser will open)
 </code></pre>
@@ -3585,8 +3808,9 @@ cosign sign ${IMAGE}
           <h4 id="step-8-verify-the-sbom-attestation">Step 8: Verify the SBOM Attestation</h4>
 
           <p>These commands inspect the result of the previous step.</p>
-          <pre class="codehilite"><code class="language-bash">cosign verify-attestation \
-  --type cyclonedx \                 # must match the type used during attest
+          <pre class="codehilite"><code class="language-bash"># --type must match the type used during attest
+cosign verify-attestation \
+  --type cyclonedx \
   --certificate-identity="your-email@example.com" \
   --certificate-oidc-issuer="https://accounts.google.com" \
   ${IMAGE} \
@@ -3952,25 +4176,27 @@ rm -f sbom.json cosign-linux-amd64
 
           <h3 id="step-by-step-lab-5">Step-by-Step Lab</h3>
 
-          <h4 id="step-1-install-falco-via-helm-ebpf-driver">Step 1: Install Falco via Helm (eBPF Driver)</h4>
+          <h4 id="step-1-install-falco-via-helm-ebpf-driver">Step 1: Install Falco via Helm (Modern eBPF Driver)</h4>
 
           <p>These commands install the tool and verify it is ready.</p>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Add the Falco Helm chart repository</span></div>
             <pre class="codehilite"><code class="language-bash">helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update
-# Install Falco with the eBPF driver
-# eBPF is preferred over the kernel module: no kernel recompilation needed,
+# Install Falco with the modern eBPF driver.
+# It is preferred over the kernel module: no kernel headers, no compilation,
 # works on managed Kubernetes (GKE, EKS, AKS), and is safer for the host.
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Install Falco with eBPF runtime monitoring enabled</span></div>
-            <pre class="codehilite"><code class="language-bash">helm install falco falcosecurity/falco \
+            <pre class="codehilite"><code class="language-bash"># driver.kind=modern_ebpf  CO-RE eBPF probe compiled into the Falco binary
+# tty=true                  flush alerts immediately so kubectl logs shows them
+helm install falco falcosecurity/falco \
   --namespace falco \
   --create-namespace \
-  --set driver.kind=ebpf \             # use eBPF probe instead of kernel module
-  --set tty=true                       # make alerts easier to read in terminal
+  --set driver.kind=modern_ebpf \
+  --set tty=true
 # Falco runs as a DaemonSet: one pod per node (requires privileged access to the kernel)
 </code></pre>
           </div>
@@ -3978,7 +4204,7 @@ helm repo update
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the Falco DaemonSet is running on every node</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get daemonset falco -n falco
 kubectl get pods -n falco -o wide      # one pod per node
-# Wait for Falco to initialize (can take 2-3 minutes while eBPF probe compiles)
+# Wait for Falco to initialize (usually under a minute; the CO-RE probe needs no compilation)
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -3990,13 +4216,14 @@ kubectl get pods -n falco -o wide      # one pod per node
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Tail the Falco logs to confirm it started cleanly</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=30
-# Look for: &quot;Falco initialized&quot; or &quot;Starting gRPC server&quot; in the logs
+# Look for: &quot;Falco initialized&quot; and &quot;Starting health webserver&quot; in the logs
 </code></pre>
           </div>
 
-          <blockquote class="warning">Falco requires Linux kernel version 4.14 or higher for eBPF support. Check your
-            kernel version with <code>uname -r</code>. On Minikube, the host machine's kernel is used. On most modern
-            distributions (Ubuntu 20.04+, Debian 11+), the kernel version is sufficient.
+          <blockquote class="warning">The modern eBPF driver needs Linux kernel 5.8 or newer, with BTF and BPF
+            ring-buffer support. Check your kernel with <code>uname -r</code>. On Minikube the host machine's kernel is
+            used. Ubuntu 22.04+, Debian 12+, and current Fedora all qualify. On an older kernel, use
+            <code>--set driver.kind=kmod</code> instead, which builds a kernel module and works further back.
           </blockquote>
 
           <h4 id="step-2-deploy-a-victim-pod">Step 2: Deploy a Victim Pod</h4>
@@ -4185,7 +4412,7 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=100
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Load custom rules via Helm upgrade</span></div>
             <pre class="codehilite"><code class="language-bash">helm upgrade falco falcosecurity/falco \
   --namespace falco \
-  --set driver.kind=ebpf \
+  --set driver.kind=modern_ebpf \
   --set-file &quot;customRules.custom-rules\.yaml=custom-rules.yaml&quot;
 </code></pre>
           </div>
@@ -4202,13 +4429,16 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i &quot;
           <p>These commands carry out this step.</p>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Upgrade Falco to load the custom rules</span></div>
-            <pre class="codehilite"><code class="language-bash">helm upgrade falco falcosecurity/falco \
+            <pre class="codehilite"><code class="language-bash"># falcosidekick.enabled        deploy the Falcosidekick router
+# falcosidekick.webui.enabled   deploy the Falcosidekick web UI
+# slack.minimumpriority         only send Warning and above to Slack
+helm upgrade falco falcosecurity/falco \
   --namespace falco \
-  --set driver.kind=ebpf \
-  --set falcosidekick.enabled=true \               # deploy Falcosidekick sidecar
-  --set falcosidekick.webui.enabled=true \          # deploy the Falcosidekick web UI
+  --set driver.kind=modern_ebpf \
+  --set falcosidekick.enabled=true \
+  --set falcosidekick.webui.enabled=true \
   --set &quot;falcosidekick.config.slack.webhookurl=https://hooks.slack.com/services/YOUR/WEBHOOK/URL&quot; \
-  --set &quot;falcosidekick.config.slack.minimumpriority=warning&quot;  # only send Warning and above to Slack
+  --set &quot;falcosidekick.config.slack.minimumpriority=warning&quot;
 # Access the Falcosidekick web UI
 </code></pre>
           </div>
@@ -4285,9 +4515,10 @@ kubectl create configmap falco-custom-rules \
               <tbody>
                 <tr>
                   <td>Falco DaemonSet pods in CrashLoopBackOff</td>
-                  <td>eBPF not supported on this kernel (kernel &lt; 4.14) or kernel headers missing</td>
-                  <td>Check <code>uname -r</code>; try <code>driver.kind=modern_ebpf</code> for newer kernels, or
-                    <code>driver.kind=module</code> as fallback
+                  <td>Kernel is older than 5.8, or BTF is not exposed, so the modern eBPF probe cannot load</td>
+                  <td>Check <code>uname -r</code>; the driver options are <code>modern_ebpf</code> (default choice) and
+                    <code>kmod</code> (fallback for older kernels). Set one explicitly with
+                    <code>--set driver.kind=kmod</code>
                   </td>
                 </tr>
                 <tr>

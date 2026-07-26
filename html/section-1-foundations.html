@@ -99,46 +99,24 @@
 
           <h4 id="era-1-bare-metal">Era 1: Bare Metal Servers</h4>
 
-          <p>
-            In the earliest era of web applications, you deployed software directly on physical servers. If your
-            application needed
-            more RAM than the server had, it crashed. If another application on the same server leaked memory, your
-            application
-            suffered. To isolate applications, you bought more physical servers. This was slow (servers take weeks to
-            provision),
-            expensive, and led to massive underutilization because each server ran at maybe 10-20% capacity most of the
-            time.
-          </p>
+          <p>You deployed software straight onto physical servers. Need more RAM than the box had? It crashed. Another
+            app on the same box leaked memory? Yours suffered. Isolation meant buying another server, which took weeks
+            and left most machines idling at 10-20% capacity.</p>
 
           <h4 id="era-2-virtual-machines">Era 2: Virtual Machines</h4>
 
-          <p>
-            Hypervisors (VMware, Xen, KVM) solved the isolation problem by letting multiple "virtual" computers share a
-            single
-            physical host. Each virtual machine (VM) got its own operating system, its own kernel, its own network
-            stack. You
-            could now run five isolated applications on one server. Utilization improved, provisioning became faster
-            (minutes
-            instead of weeks with cloud providers), and you gained the ability to snapshot and migrate workloads.
-          </p>
+          <p>Hypervisors (VMware, Xen, KVM) let several virtual computers share one physical host, each with its own
+            OS, kernel, and network stack. Five isolated applications on one server. Utilization improved, provisioning
+            dropped from weeks to minutes, and you could snapshot and migrate workloads.</p>
 
-          <p>
-            But VMs were still heavy. Each VM carried a full operating system kernel, typically 512 MB to 2 GB just for
-            the OS
-            before your application even started. Booting a VM took 30-60 seconds. Packaging an application for a VM
-            meant
-            building a multi-gigabyte image.
-          </p>
+          <p>VMs were still heavy, though. Each carried a full OS kernel, 512 MB to 2 GB before your application even
+            started, took 30-60 seconds to boot, and shipped as a multi-gigabyte image.</p>
 
           <h4 id="era-3-containers">Era 3: Containers</h4>
 
-          <p>
-            Containers use Linux kernel features called <strong>namespaces</strong> (for isolation: each container sees
-            its own
-            process tree, network, and filesystem mount points) and <strong>cgroups</strong> (for resource limits:
-            maximum CPU and
-            RAM per container). Containers share the host kernel rather than running their own, which means:
-          </p>
+          <p>Containers lean on two Linux kernel features: <strong>namespaces</strong> give each container its own
+            process tree, network, and mounts, and <strong>cgroups</strong> cap its CPU and RAM. Crucially they share
+            the host kernel instead of shipping their own, which means:</p>
 
           <ol class="sec2-indented">
             <li>A container image might be 50-200 MB instead of 2 GB.</li>
@@ -164,44 +142,17 @@
           </p>
 
           <ol class="sec2-indented">
-            <li>
-              <strong>No self-healing:</strong> if a container crashes, <code>docker run</code> does not restart it
-              automatically.
-              You need monitoring and scripts to detect and recover from failures. In practice, these scripts are
-              brittle and
-              become a maintenance burden.
-            </li>
-            <li>
-              <strong>No automated scaling:</strong> if your web service gets 10x more traffic, you need to manually
-              launch more
-              containers. You need something to watch metrics, decide when to scale, and start or stop containers
-              automatically.
-            </li>
-            <li>
-              <strong>No scheduling intelligence:</strong> if you have 50 machines and you want to run 200 containers,
-              how do you
-              decide which container goes on which machine? You need something that knows the available CPU and RAM on
-              each machine
-              and places containers optimally.
-            </li>
-            <li>
-              <strong>No zero-downtime updates:</strong> to update a container to a new version, you need to stop the
-              old one and
-              start the new one. During that transition, requests fail. A rolling update strategy requires
-              orchestration.
-            </li>
-            <li>
-              <strong>No service discovery:</strong> containers get different IP addresses every time they start. Other
-              containers
-              cannot have a stable address to send traffic to. You need a layer that provides stable names regardless of
-              which
-              containers are currently running.
-            </li>
-            <li>
-              <strong>No secret management:</strong> injecting passwords and API keys into containers without baking
-              them into
-              images requires infrastructure that Docker alone does not provide.
-            </li>
+            <li><strong>No self-healing.</strong> If a container crashes, <code>docker run</code> will not bring it
+              back. You end up writing brittle watchdog scripts.</li>
+            <li><strong>No automated scaling.</strong> Ten times the traffic means you launch containers by hand.</li>
+            <li><strong>No scheduling intelligence.</strong> Given 50 machines and 200 containers, something has to
+              know each machine's free CPU and RAM and place the containers well.</li>
+            <li><strong>No zero-downtime updates.</strong> Stopping the old container and starting the new one drops
+              requests in between. Rolling updates need an orchestrator.</li>
+            <li><strong>No service discovery.</strong> Containers get a new IP every start, so nothing has a stable
+              address to talk to.</li>
+            <li><strong>No secret management.</strong> Getting passwords and API keys into a container without baking
+              them into the image needs infrastructure Docker does not provide.</li>
           </ol>
 
           <blockquote><strong>Kubernetes is the answer to all of these problems</strong>
@@ -444,36 +395,16 @@
           <p>Why this design? It provides a single point for:</p>
 
           <ol class="sec2-indented">
-            <li>
-              <strong>Authentication:</strong> every request must prove who it is. The API server validates client
-              certificates,
-              bearer tokens, and other credential types. Anonymous requests are rejected unless explicitly configured.
-            </li>
-            <li>
-              <strong>Authorization:</strong> once a request is authenticated (we know who is asking), the API server
-              checks
-              whether that identity is <em>allowed</em> to perform the requested action. This is done via RBAC
-              (Role-Based Access
-              Control), which we cover in Lab 5.
-            </li>
-            <li>
-              <strong>Admission control:</strong> even if a request is authenticated and authorized, it goes through a
-              chain of
-              "admission controllers" that can modify or reject it. For example, the "PodSecurity" admission controller
-              enforces
-              security policies on pods, and the "LimitRanger" controller enforces default resource limits.
-            </li>
-            <li>
-              <strong>Validation:</strong> the API server validates that the submitted YAML/JSON is well-formed and
-              conforms to
-              the API schema. If you make a typo in a field name, the API server rejects the request before any state is
-              changed.
-            </li>
-            <li>
-              <strong>Serialization and storage:</strong> the API server serializes accepted requests into etcd's
-              key-value format
-              and stores them. It also watches etcd for changes and notifies other components via a watch mechanism.
-            </li>
+            <li><strong>Authentication.</strong> Every request must prove who it is, via client certificate, bearer
+              token, or similar. Anonymous requests are rejected unless you opt in.</li>
+            <li><strong>Authorization.</strong> Now that it knows who is asking, the API server checks whether they may
+              do it. That is RBAC, covered in Lab 13.</li>
+            <li><strong>Admission control.</strong> A chain of controllers can still modify or reject the request.
+              PodSecurity enforces security profiles; LimitRanger applies default resource limits.</li>
+            <li><strong>Validation.</strong> The object is checked against the API schema, so a typo in a field name is
+              rejected before anything changes.</li>
+            <li><strong>Storage.</strong> Accepted objects are written to etcd, and the API server notifies watchers of
+              the change.</li>
           </ol>
 
           <blockquote><strong>The API server is stateless</strong>
@@ -596,7 +527,16 @@
 </code></pre>
           </div>
 
-          <h4 id="kube-scheduler">kube-scheduler: Placing Pods on Nodes</h4>
+                    <h4 id="kube-scheduler">kube-scheduler: Placing Pods on Nodes</h4>
+
+          <p>The scheduler watches for Pods that have no node yet and picks one for each. That is its whole job. It
+            does not start anything; it writes a node name onto the Pod, and the kubelet on that node takes over from
+            there.</p>
+
+          <details class="deep-dive">
+            <summary>How the scheduler picks a node: filtering and scoring<span class="dd-tag">Optional depth</span></summary>
+
+
 
           <p>
             The scheduler's job is to watch the API server for pods that have been created but not yet assigned to a
@@ -611,23 +551,15 @@
           <p>The scheduler applies a series of filter predicates to eliminate nodes that cannot run the pod:</p>
 
           <ol class="sec2-indented">
-            <li><strong>Resource fit:</strong> does the node have enough allocatable CPU and memory to satisfy the pod's
-              <code>requests</code>?
-            </li>
-            <li><strong>Node selector:</strong> does the pod have a <code>nodeSelector</code> field? If so, does this
-              node have
-              the required label?</li>
-            <li><strong>Taints and tolerations:</strong> does the node have a "taint" that would repel this pod? Does
-              the pod
-              have a matching "toleration"?</li>
-            <li><strong>Affinity rules:</strong> does the pod have node affinity rules that require certain node labels?
-            </li>
-            <li><strong>Volume constraints:</strong> if the pod needs a persistent volume, is a compatible volume
-              available in
-              this node's zone?</li>
-            <li><strong>Pod anti-affinity:</strong> does the pod say "don't schedule me on a node that already has a pod
-              with
-              label X"?</li>
+            <li><strong>Resource fit.</strong> Does the node have enough allocatable CPU and memory for the pod's
+              <em>requests</em>?</li>
+            <li><strong>Node selector and affinity.</strong> Does the node carry the labels the pod insists on?</li>
+            <li><strong>Taints and tolerations.</strong> Does a taint on the node repel this pod, and does the pod
+              tolerate it?</li>
+            <li><strong>Volume constraints.</strong> If the pod needs a persistent volume, is a compatible one
+              reachable from this node's zone?</li>
+            <li><strong>Pod anti-affinity.</strong> Has the pod asked not to sit beside another pod that is already
+              here?</li>
           </ol>
 
           <p><strong>Phase 2: Scoring (rank the feasible nodes)</strong></p>
@@ -661,8 +593,18 @@ kubectl describe node minikube | grep -A5 Taints
 # Taints: node-role.kubernetes.io/control-plane:NoSchedule
 </code></pre>
           </blockquote>
+          </details>
 
           <h4 id="kube-controller-manager">kube-controller-manager: The Reconciliation Engine</h4>
+
+          <p>One binary running dozens of independent control loops. Each watches one kind of object and works to make
+            reality match the spec: the Deployment controller creates ReplicaSets, the ReplicaSet controller creates
+            Pods, the Node controller reacts when a node goes silent.</p>
+
+          <details class="deep-dive">
+            <summary>Inside the controller manager: what each controller does<span class="dd-tag">Optional depth</span></summary>
+
+
 
           <p>
             The controller manager is a single binary that bundles dozens of individual controllers. Each controller is
@@ -673,50 +615,21 @@ kubectl describe node minikube | grep -A5 Taints
           </p>
 
           <ol class="sec2-indented">
-            <li>
-              <strong>Deployment controller:</strong> watches Deployment objects. When you create or update a
-              Deployment, this
-              controller creates or updates a ReplicaSet to match the Deployment's pod template and replica count.
-            </li>
-            <li>
-              <strong>ReplicaSet controller:</strong> watches ReplicaSet objects. It ensures that exactly the right
-              number of
-              pods exist. If a pod is deleted or crashes, the ReplicaSet controller creates a replacement. If there are
-              too many
-              pods, it deletes the excess.
-            </li>
-            <li>
-              <strong>Node controller:</strong> watches Node objects. If a node stops sending heartbeats (its kubelet is
-              dead),
-              the Node controller marks it as "NotReady" and, after a timeout, evicts all pods from that node so the
-              ReplicaSet
-              controller can reschedule them elsewhere.
-            </li>
-            <li>
-              <strong>Endpoints controller:</strong> watches Services and Pods. It maintains the Endpoints object for
-              each Service,
-              which is the list of pod IP addresses that currently match the Service's label selector. kube-proxy reads
-              these
-              Endpoints to program routing rules.
-            </li>
-            <li>
-              <strong>Job controller:</strong> watches Job objects. It creates the required pods to run a batch task to
-              completion,
-              retrying failed pods up to a configured limit.
-            </li>
-            <li>
-              <strong>ServiceAccount controller:</strong> automatically creates default ServiceAccounts and their
-              associated API
-              tokens in every new namespace.
-            </li>
-            <li>
-              <strong>Namespace controller:</strong> when a namespace is deleted, this controller garbage-collects all
-              resources
-              inside it.
-            </li>
+            <li><strong>Deployment controller.</strong> Turns a Deployment into a ReplicaSet matching its pod template
+              and replica count.</li>
+            <li><strong>ReplicaSet controller.</strong> Keeps the pod count exact, creating replacements and deleting
+              surplus.</li>
+            <li><strong>Node controller.</strong> Marks a node <code>NotReady</code> when heartbeats stop and, after a
+              timeout, evicts its pods so they can be rescheduled.</li>
+            <li><strong>Endpoints controller.</strong> Maintains each Service's list of matching pod IPs, which is what
+              kube-proxy turns into routing rules.</li>
+            <li><strong>Job controller.</strong> Runs batch pods to completion, retrying failures up to a limit.</li>
+            <li><strong>ServiceAccount and Namespace controllers.</strong> Create the default ServiceAccount in each new
+              namespace, and garbage-collect everything inside a namespace when it is deleted.</li>
           </ol>
+          </details>
 
-          <h3 id="15-worker-node-components-deep-dive">1.5 Worker Node Components: Deep Dive</h3>
+<h3 id="15-worker-node-components-deep-dive">1.5 Worker Node Components: Deep Dive</h3>
 
           <h4 id="kubelet">kubelet: The Node Agent</h4>
 
@@ -1103,7 +1016,13 @@ kubectl describe node minikube | grep -A5 Taints
             </table>
           </div>
 
-          <h4 id="api-versions">API Versions: alpha, beta, stable</h4>
+                    <p>Each resource also carries a stability level in its version string, which tells you how much the field
+            layout can still change under you.</p>
+
+          <details class="deep-dive">
+            <summary>API versions: alpha, beta, and stable<span class="dd-tag">Optional depth</span></summary>
+
+
 
           <p>
             Kubernetes uses semantic versioning suffixes to indicate the maturity and stability of an API:
@@ -1130,8 +1049,9 @@ kubectl describe node minikube | grep -A5 Taints
           <pre class="codehilite"><code class="language-bash"># See all API versions supported by your cluster
 kubectl api-versions
 </code></pre>
+          </details>
 
-          <h3 id="18-the-declarative-model">1.8 The Declarative Model: Why YAML + apply Beats Imperative Commands</h3>
+<h3 id="18-the-declarative-model">1.8 The Declarative Model: Why YAML + apply Beats Imperative Commands</h3>
 
           <p>
             There are two ways to work with Kubernetes: <strong>imperative</strong> and <strong>declarative</strong>.
@@ -1540,6 +1460,49 @@ spec:
   externalName: mydb.example.com  # DNS resolution returns CNAME to this
 </code></pre>
 
+          <h4 id="service-dns-names">How Services Get DNS Names</h4>
+
+          <p>A ClusterIP is a number, and nothing should hardcode a number. Every Service also gets a DNS name from
+            CoreDNS, the cluster's built-in DNS server running in <code>kube-system</code>. The full form is:</p>
+
+          <pre class="codehilite"><code class="language-text">&lt;service-name&gt;.&lt;namespace&gt;.svc.cluster.local
+        |             |         |
+        |             |         +-- cluster domain (fixed)
+        |             +------------ namespace the Service lives in
+        +-------------------------- the Service's metadata.name
+</code></pre>
+
+          <p>You rarely type the whole thing. A Pod's resolver is configured with search domains, so from inside a Pod
+            in the same namespace, <code>nginx-service</code> alone resolves. From a different namespace you need
+            <code>nginx-service.other-namespace</code>. This is the single most common cause of "connection refused"
+            between two working services: the name resolved in the wrong namespace, or did not resolve at all.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Resolve a Service name from inside the cluster</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl run dns-test --rm -it --restart=Never --image=busybox:1.36 -- \
+  nslookup kubernetes.default.svc.cluster.local
+# Output: an Address line pointing at the ClusterIP of the kubernetes Service.
+# If this fails, CoreDNS itself is unhealthy, not your application.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm CoreDNS is running when resolution fails</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get pods -n kube-system -l k8s-app=kube-dns
+# Output: the CoreDNS pods, which should be Running.
+</code></pre>
+          </div>
+
+          <details class="deep-dive">
+            <summary>Headless Services, and why StatefulSets need them<span class="dd-tag">Optional depth</span></summary>
+
+            <p>Setting <code>clusterIP: None</code> makes a Service <strong>headless</strong>. It gets no virtual IP
+              and no load balancing. Instead, the DNS name resolves directly to the IP of every matching Pod.</p>
+            <p>That is the behaviour a StatefulSet needs. With a headless Service, each Pod also gets its own stable
+              name of the form <code>&lt;pod-name&gt;.&lt;service-name&gt;.&lt;namespace&gt;.svc.cluster.local</code>,
+              so <code>web-0</code> and <code>web-1</code> are individually addressable. A database replica has to know
+              which peer it is talking to, and a load-balanced ClusterIP would make that impossible. Lab 6 uses this.</p>
+          </details>
+
           <h3 id="111-the-cncf-landscape">1.11 The CNCF Landscape: Where Kubernetes Fits</h3>
 
           <p>
@@ -1629,6 +1592,185 @@ spec:
             Runtime Security with Falco (Lab 17).
           </p>
 
+          <h3 id="112-see-the-architecture-yourself">1.12 Lab: See the Architecture on Your Own Cluster</h3>
+
+          <p><strong>What we are doing:</strong> running a short sequence of mostly read-only commands against the
+            Minikube cluster from Section 0 to find every component described in this section.</p>
+          <p><strong>Why this lab matters:</strong> the control plane is not an abstraction. Each box in the diagrams
+            above is a real process you can list, inspect, and watch make a decision. Ten minutes here turns the
+            previous eleven subsections into something you have actually seen.</p>
+          <p><strong>Real-world mapping:</strong> these are close to the first commands an on-call engineer runs when a
+            production cluster starts behaving strangely.</p>
+
+          <blockquote><strong>Before you start</strong>
+
+            <p>You need the running Minikube cluster from Section 0. Check with
+              <code>kubectl get nodes</code>. If it reports a node named <code>minikube</code> in
+              <code>Ready</code> state, you are set. If not, run <code>minikube start</code> first.</p>
+          </blockquote>
+
+          <h4 id="lab0-find-control-plane">Find the Control Plane</h4>
+
+          <p>Every control plane component runs as an ordinary Pod in the <code>kube-system</code> namespace. The four
+            you read about in 1.4 are all there under their own names.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">List the control plane components as running Pods</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get pods -n kube-system
+# Output: among the rows you will see the four components from 1.4
+#   etcd-minikube                      1/1  Running   the cluster&#x27;s memory
+#   kube-apiserver-minikube            1/1  Running   the front door
+#   kube-controller-manager-minikube   1/1  Running   the reconciliation engine
+#   kube-scheduler-minikube            1/1  Running   the placement brain
+# Plus coredns (cluster DNS), kube-proxy (node networking), storage-provisioner
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Reveal where those four Pods actually come from</span></div>
+            <pre class="codehilite"><code class="language-bash">minikube ssh -- sudo ls /etc/kubernetes/manifests
+# Output:
+#   etcd.yaml  kube-apiserver.yaml  kube-controller-manager.yaml  kube-scheduler.yaml
+</code></pre>
+          </div>
+
+          <p>Those four files are the answer to a chicken-and-egg problem. The API server cannot be scheduled by
+            Kubernetes, because scheduling requires an API server. So kubelet watches that directory on disk and starts
+            whatever it finds there directly. These are called <strong>static Pods</strong>: kubelet owns them, not the
+            scheduler. That is why you cannot delete them with <code>kubectl delete</code> and make them stay gone.</p>
+
+          <h4 id="lab0-ask-api-server">Ask the API Server Whether It Is Healthy</h4>
+
+          <p>Every <code>kubectl</code> command is an HTTP request. You can skip the friendly output and talk to the
+            REST API directly, which is the clearest way to see that the API server is just a web server in front of
+            etcd.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Read the API server's own readiness checklist</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get --raw=&#x27;/readyz?verbose&#x27;
+# Output: one line per internal check, then a verdict
+#   [+]ping ok
+#   [+]log ok
+#   [+]etcd ok                      &lt;- the API server can reach etcd
+#   [+]poststarthook/start-apiserver-admission-initializer ok
+#   ...
+#   readyz check passed
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Count the resource types this cluster understands</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl api-resources --no-headers | wc -l
+# Output: a number, typically around 60 on a fresh Minikube cluster.
+# Each row is a resource type the API server will accept, as described in 1.7.
+</code></pre>
+          </div>
+
+          <blockquote><strong>The etcd line is the one that matters</strong>
+
+            <p>If <code>[+]etcd ok</code> ever turns into <code>[-]etcd failed</code>, the cluster has lost its memory
+              and nothing else will work. This single line is why 1.4 insisted that etcd backups are not optional.</p>
+          </blockquote>
+
+          <h4 id="lab0-watch-scheduler">Watch the Scheduler Make a Decision</h4>
+
+          <p>The scheduler does one job: it picks a node for a Pod that does not have one yet. It records that decision
+            as an Event, so you can read the decision after the fact.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create a small Deployment to give the scheduler some work</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl create deployment arch-demo --image=nginx:1.27-alpine --replicas=2
+# Output: deployment.apps/arch-demo created
+kubectl get pods -l app=arch-demo
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Read the scheduler's placement decision in the event log</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get events --sort-by=.metadata.creationTimestamp | grep -i scheduled
+# Output: one line per Pod, written by the scheduler itself
+#   Normal  Scheduled  pod/arch-demo-...  Successfully assigned default/arch-demo-... to minikube
+</code></pre>
+          </div>
+
+          <p>The word <code>Scheduled</code> and the source <code>default-scheduler</code> are the visible output of
+            the component described in 1.4. On a single-node cluster the decision is easy, but the mechanism is
+            identical on a 500-node cluster.</p>
+
+          <h4 id="lab0-watch-reconciliation">Watch the Reconciliation Loop Close a Gap</h4>
+
+          <p>Section 1.2 described desired state versus actual state as a loop that never stops running. Here you break
+            the actual state on purpose and watch the loop repair it.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Open a live watch on the Pods, then leave it running</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get pods -l app=arch-demo -w
+# Leave this running. Open a SECOND terminal for the next command.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">In the second terminal, destroy one Pod</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl delete pod -l app=arch-demo --field-selector=status.phase=Running --wait=false | head -1
+# Output: pod "arch-demo-..." deleted
+</code></pre>
+          </div>
+
+          <p>In the first terminal you will see the deleted Pod go to <code>Terminating</code> and a brand new Pod
+            appear within a second or two. Nobody told Kubernetes to create it. The ReplicaSet controller noticed that
+            desired (2) no longer matched actual (1) and closed the gap. Press <code>Ctrl+C</code> to stop the watch.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the replacement was recorded by the controller, not by you</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl describe replicaset -l app=arch-demo | grep -A5 Events
+# Output: the ReplicaSet controller logs its own action
+#   Normal  SuccessfulCreate  replicaset-controller  Created pod: arch-demo-...
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Verify the replica count is back where you asked for it</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get deployment arch-demo
+# Output: READY 2/2. Actual state matches desired state again.
+</code></pre>
+          </div>
+
+          <h4 id="lab0-node-components">See kubelet and the Container Runtime on the Node</h4>
+
+          <p>Section 1.5 described two things that do not run as Pods: kubelet and the container runtime. Both are
+            ordinary Linux services on the node, so you have to log into the node to see them.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm kubelet is a systemd service, not a Pod</span></div>
+            <pre class="codehilite"><code class="language-bash">minikube ssh -- systemctl is-active kubelet
+# Output: active
+# Note there is no kubelet Pod in the earlier kube-system listing. kubelet is the
+# agent that starts Pods, so it cannot itself be one.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">List the actual containers the runtime is managing</span></div>
+            <pre class="codehilite"><code class="language-bash">minikube ssh -- sudo crictl ps --name arch-demo
+# Output: the real containers behind your Pods, as seen by containerd through the
+# CRI. Kubernetes never starts a container directly; it always asks the runtime.
+</code></pre>
+          </div>
+
+          <p>This is the bottom of the stack. Your <code>kubectl create deployment</code> became an API object, which
+            became a ReplicaSet, which became Pods, which the scheduler assigned to a node, which kubelet turned into a
+            request to containerd, which started the container you just listed. That is the full path from 1.6.</p>
+
+          <h4 id="lab0-cleanup">Clean Up</h4>
+
+          <p>Remove the Deployment so it does not consume memory during later labs.</p>
+
+          <pre class="codehilite"><code class="language-bash">kubectl delete deployment arch-demo
+# Output: deployment.apps "arch-demo" deleted
+</code></pre>
+
+          <blockquote class="success"><strong>What you just proved</strong>
+
+            <p>The control plane runs as four static Pods that kubelet starts from disk. The API server is a REST
+              server that reports its own health. The scheduler writes its decisions into the event log. Controllers
+              repair drift without being asked. kubelet and containerd live outside Kubernetes on the node. Every one
+              of those is something you observed rather than read.</p>
+          </blockquote>
+
           <blockquote class="success"><strong>You now have the mental model</strong>
 
             <p>
@@ -1661,7 +1803,7 @@ spec:
             get a private, isolated space where your Pods, Services, Deployments, and other resources live. The API
             server enforces these boundaries.</p>
 
-          <blockquote><strong>KEY CONCEPT: What a Namespace Actually Is</strong>
+          <blockquote><strong>What a Namespace Actually Is</strong>
 
             A namespace is not a separate machine, not a separate network, and not a container. It is a label that the
             Kubernetes API server uses to scope every API request. When you ask for "all pods in namespace
@@ -1743,7 +1885,7 @@ rules:
               through hundreds of Pods from every team.</li>
           </ol>
 
-          <blockquote class="warning"><strong>WARNING: Namespaces Do NOT Provide Network Isolation by Default</strong>
+          <blockquote class="warning"><strong>Namespaces Do NOT Provide Network Isolation by Default</strong>
 
             A common misconception is that putting services in different namespaces automatically isolates their network
             traffic. It does not. A Pod in namespace <code>team-alpha</code> can still call a Service in namespace
@@ -1865,7 +2007,7 @@ kubectl config use-context minikube        # switch back
 </code></pre>
           </div>
 
-          <blockquote><strong>TIP: kubens for Fast Namespace Switching</strong>
+          <blockquote><strong>kubens for Fast Namespace Switching</strong>
 
             Typing the full <code>kubectl config set-context --current --namespace=...</code> command is tedious. The
             <strong>kubens</strong> tool (part of the <code>kubectx</code> project, installed via your package manager
@@ -1952,7 +2094,7 @@ spec:
 </code></pre>
           </div>
 
-          <blockquote class="warning"><strong>WARNING: ResourceQuota Forces All Pods to Declare Resources</strong>
+          <blockquote class="warning"><strong>ResourceQuota Forces All Pods to Declare Resources</strong>
 
             Once you apply a ResourceQuota that includes <code>requests.cpu</code> or <code>requests.memory</code>,
             every single Pod in that namespace MUST declare both <code>requests</code> and <code>limits</code> in its
@@ -1962,7 +2104,7 @@ spec:
             resource declarations still get sensible values injected automatically.
           </blockquote>
 
-          <blockquote><strong>INFO: Quota Scopes</strong>
+          <blockquote><strong>Quota Scopes</strong>
 
             ResourceQuota can also be scoped to apply only to certain Pods. For example, you can set a quota that
             applies only to <code>BestEffort</code> Pods (those with no requests or limits), or only to
@@ -2067,7 +2209,7 @@ spec:
 </code></pre>
           </div>
 
-          <blockquote class="success"><strong>BEST PRACTICE: Always Pair LimitRange with ResourceQuota</strong>
+          <blockquote class="success"><strong>Always Pair LimitRange with ResourceQuota</strong>
 
             These two objects are designed to work together. Apply them in this order:
             <ol class="sec2-indented">
@@ -2083,25 +2225,21 @@ spec:
 
           <h3 id="22-imperative-vs-declarative">2.2 Imperative vs Declarative</h3>
 
-          <p>There are two fundamentally different ways to tell Kubernetes what you want. Understanding the difference
-            between them shapes how you work in development, how you collaborate with teammates, and whether your
-            infrastructure is reliable and auditable in production.</p>
+          <p>Section 1.8 introduced these two styles. This section is the practical version: when to reach for each, and
+            the commands that go with them.</p>
 
           <h4>The Analogy: Building a House</h4>
 
-          <p>The <strong>imperative approach</strong> is like calling a contractor every hour and saying: "Pour the
-            foundation now. Wait until it dries. Frame the walls now." You describe every step in order. The contractor
-            does exactly what you say. If something goes wrong halfway through, the contractor stops and waits for your
-            next instruction.</p>
+          <p><strong>Imperative</strong> is calling a contractor every hour: "pour the foundation now, wait for it to
+            dry, frame the walls now." You name each step, and if something goes wrong halfway the contractor stops and
+            waits for you.</p>
 
-          <p>The <strong>declarative approach</strong> is like handing the contractor a full set of blueprints and
-            saying: "Build me this house." The contractor figures out the steps. If a wall falls down during
-            construction, the contractor rebuilds it without calling you. You describe the desired end state, not the
-            steps to get there.</p>
+          <p><strong>Declarative</strong> is handing over blueprints and saying "build this." The contractor works out
+            the order, and rebuilds a collapsed wall without phoning you. You describe the end state, not the route to
+            it.</p>
 
-          <p>Kubernetes is built around the declarative model. The API server stores your desired state. Controllers
-            continuously watch the actual state and work to make it match the desired state. This is called the
-            <strong>reconciliation loop</strong>, and it is the core mechanism that makes Kubernetes self-healing.
+          <p>Kubernetes is built the second way. The API server holds your desired state and controllers work continuously
+            to make reality match it, which is the reconciliation loop from 1.2.
           </p>
 
           <h4>Imperative: Telling Kubernetes What to Do Right Now</h4>
@@ -2196,19 +2334,13 @@ spec:
 
           <h4>Why Declarative is Essential for Production</h4>
 
-          <p><strong>GitOps</strong>: Your YAML files live in a Git repository. Every change to your infrastructure is a
-            pull request. You have full history, code review, blame tracking, and rollback by reverting a commit.</p>
+          <p>Three things follow once your YAML lives in Git. <strong>GitOps</strong>: every infrastructure change
+            becomes a pull request, with review and one-commit rollback. <strong>Auditability</strong>: when something
+            breaks at 2am, the Git log tells you what changed and who changed it. <strong>Reproducibility</strong>: you
+            can rebuild a staging cluster with <code>kubectl apply -f ./</code>. Imperative clusters give you none of
+            these. Lab 10 turns this into an automated loop.</p>
 
-          <p><strong>Auditability</strong>: When something breaks at 2am, you can look at the Git history and see
-            exactly what changed, when, and who changed it. With imperative commands, all you have is a broken cluster
-            and no history.</p>
-
-          <p><strong>Reproducibility</strong>: You can tear down a staging cluster and recreate it exactly by running
-            <code>kubectl apply -f ./</code> against your Git repository. Imperative clusters are nearly impossible to
-            recreate exactly.
-          </p>
-
-          <blockquote class="success"><strong>BEST PRACTICE: Always Use Declarative for Anything That Matters</strong>
+          <blockquote class="success"><strong>Always Use Declarative for Anything That Matters</strong>
 
             Use imperative commands only for things you are willing to throw away. Use declarative YAML for anything
             that needs to exist tomorrow. When you find yourself using an imperative command that you want to keep,
@@ -2275,7 +2407,13 @@ spec:
           <pre class="codehilite"><code class="language-bash">kubectl apply -f deployment.yaml
 </code></pre>
 
-          <h4>How kubectl apply Works: The Three-Way Merge</h4>
+                    <p>One more thing worth knowing about <code>apply</code>: it does not blindly overwrite. It reconciles three
+            versions of the object, which is why it can leave fields set by other tools alone.</p>
+
+          <details class="deep-dive">
+            <summary>How kubectl apply computes a diff: the three-way merge<span class="dd-tag">Optional depth</span></summary>
+
+
 
           <p>When you run <code>kubectl apply</code>, Kubernetes uses a technique called a three-way strategic merge to
             figure out what to change. It compares three things:</p>
@@ -2292,15 +2430,16 @@ spec:
             <code>kubectl apply</code> are left alone.
           </p>
 
-          <blockquote class="warning"><strong>WARNING: Do Not Mix apply and create/replace</strong>
+          <blockquote class="warning"><strong>Do Not Mix apply and create/replace</strong>
 
             If you create a resource with <code>kubectl create</code>, it will not have the
             <code>last-applied-configuration</code> annotation. If you later try to manage it with
             <code>kubectl apply</code>, the three-way merge will not work correctly. Pick one approach and stick with it
             for each resource.
           </blockquote>
+          </details>
 
-          <h3 id="23-resource-requests-limits-and-qos">2.3 Resource Requests, Limits, and QoS</h3>
+<h3 id="23-resource-requests-limits-and-qos">2.3 Resource Requests, Limits, and QoS</h3>
 
           <p>One of the most common sources of mysterious failures in Kubernetes clusters is incorrect or missing
             resource configuration. Pods get evicted, crash-looping, or throttled in ways that seem unpredictable until
@@ -2338,7 +2477,7 @@ spec:
             </table>
           </div>
 
-          <blockquote class="danger"><strong>DANGER: OOM Kill is Silent and Confusing</strong>
+          <blockquote class="danger"><strong>OOM Kill is Silent and Confusing</strong>
 
             When a container is OOM killed, you will see <code>OOMKilled</code> in the container state and exit code
             137. New engineers often spend hours looking at application logs for the crash cause, not realizing the
@@ -2500,7 +2639,17 @@ spec:
             be scheduled on it. Why? Because the running Pods have high requests even though they are not actively using
             all that CPU. The scheduler works on reservations, not actual usage.</p>
 
-          <h4>QoS Classes: Kubernetes Quality of Service</h4>
+                    <h4 id="qos-classes">QoS Classes: Who Gets Evicted First</h4>
+
+          <p>From the requests and limits you set, Kubernetes derives a <strong>Quality of Service class</strong> for
+            each Pod: <code>Guaranteed</code>, <code>Burstable</code>, or <code>BestEffort</code>. You never set it
+            directly. It decides who gets killed first when a node runs out of memory, so it is worth knowing which
+            class your Pods land in.</p>
+
+          <details class="deep-dive">
+            <summary>QoS classes and eviction order<span class="dd-tag">Optional depth</span></summary>
+
+
 
           <p>Kubernetes automatically assigns every Pod one of three QoS classes based on the resource requests and
             limits you specify. This class determines the Pod's eviction priority when a node runs low on resources.</p>
@@ -2545,15 +2694,16 @@ kubectl get pod my-pod -o jsonpath='{.status.qosClass}'
             resort.
           </p>
 
-          <blockquote><strong>INFO: HPA Requires CPU Requests</strong>
+          <blockquote><strong>HPA Requires CPU Requests</strong>
 
             The Horizontal Pod Autoscaler computes target CPU utilization as a percentage of the CPU request. If you do
             not set CPU requests, HPA cannot compute a percentage and will not work. You will see:
             <code>unable to get metrics for resource cpu: unable to fetch metrics from resource metrics API</code>. This
             is one of the most common reasons HPA does not work for beginners.
           </blockquote>
+          </details>
 
-          <h3 id="24-labels-annotations-and-selectors">2.4 Labels, Annotations, and Selectors</h3>
+<h3 id="24-labels-annotations-and-selectors">2.4 Labels, Annotations, and Selectors</h3>
 
           <p>Kubernetes manages thousands of objects in a cluster. It needs a way to group, filter, and connect these
             objects to each other. Labels and selectors are the mechanism Kubernetes uses for this.</p>
@@ -2611,13 +2761,17 @@ spec:
     targetPort: 8080
 </code></pre>
 
-          <h4>Equality-Based vs Set-Based Selectors</h4>
+                    <details class="deep-dive">
+            <summary>Equality-based versus set-based selectors<span class="dd-tag">Optional depth</span></summary>
+
+
 
           <p>Kubernetes supports two distinct styles of label selectors, and knowing the difference between them matters
             because different API objects support different styles. Both styles can express "find me all Pods that match
             these label conditions," but they have different expressiveness and syntax.</p>
+          </details>
 
-          <h4>Equality-Based Selectors</h4>
+<h4>Equality-Based Selectors</h4>
 
           <p>Equality-based selectors are the simpler form. They test whether a label key has a specific value.</p>
 
@@ -2789,7 +2943,7 @@ kubectl get pods -l 'app=web,environment in (prod, staging),!canary'
             and recreate it. This is one reason to design label selectors carefully before your first deploy.
           </blockquote>
 
-          <blockquote class="success"><strong>BEST PRACTICE: Selector Design Rules</strong>
+          <blockquote class="success"><strong>Selector Design Rules</strong>
 
             <ol class="sec2-indented">
               <li>Keep selectors narrow enough to uniquely identify one application's Pods. A selector of just
@@ -2821,7 +2975,7 @@ kubectl get pods -l 'app=web,environment in (prod, staging),!canary'
     deployed-by: "ci-pipeline-job-12345"
 </code></pre>
 
-          <blockquote><strong>INFO: Labels vs Annotations</strong>
+          <blockquote><strong>Labels vs Annotations</strong>
 
             Use <strong>labels</strong> when you need to SELECT or GROUP objects (a Service finding Pods, monitoring
             querying all production Pods). Use <strong>annotations</strong> when you need to STORE metadata that tools
@@ -2832,14 +2986,11 @@ kubectl get pods -l 'app=web,environment in (prod, staging),!canary'
           <h3 id="25-node-scheduling-taints-tolerations-and-affinity">2.5 Node Scheduling: Taints, Tolerations, and
             Affinity</h3>
 
-          <p>By default, the Kubernetes scheduler places a Pod on whichever node has enough free CPU and memory to
-            satisfy the Pod's resource requests. For many workloads this is exactly what you want. But real production
-            clusters have heterogeneous hardware: some nodes have GPUs, some have fast NVMe SSDs, some are reserved for
-            system components, some are in different availability zones. You need a way to express rules like "only run
-            this Pod on GPU nodes" or "never schedule two replicas of the same Deployment on the same node." Kubernetes
-            gives you four tools to express these constraints: <strong>taints</strong>, <strong>tolerations</strong>,
-            <strong>nodeSelector</strong>, and <strong>affinity/anti-affinity</strong>.
-          </p>
+          <p>By default the scheduler drops a Pod on any node with enough free CPU and memory for its requests. Often
+            that is fine. But production nodes are not interchangeable: some have GPUs, some have fast NVMe disks, some
+            are reserved for system components, some sit in other availability zones. You need to say things like "only
+            run this on GPU nodes" or "never put two replicas on one node." Four tools do that: <strong>taints</strong>,
+            <strong>tolerations</strong>, <strong>nodeSelector</strong>, and <strong>affinity/anti-affinity</strong>.</p>
 
           <div class="table-wrap">
             <table>
@@ -2984,7 +3135,7 @@ kubectl taint nodes node-gpu-1 hardware=gpu:NoSchedule-
     image: tensorflow/tensorflow:latest-gpu
 </code></pre>
 
-          <blockquote class="warning"><strong>WARNING: Tolerations Allow, They Do Not Force</strong>
+          <blockquote class="warning"><strong>Tolerations Allow, They Do Not Force</strong>
 
             A very common beginner mistake: adding a toleration to a Pod does not guarantee it lands on the tainted
             node. The toleration only removes the barrier. If you want a Pod to <em>always</em> run on GPU nodes, you
@@ -3034,7 +3185,7 @@ kubectl label nodes node-ssd-1 storage=nvme
     image: my-gpu-app:latest
 </code></pre>
 
-          <blockquote><strong>INFO: When to Use nodeSelector vs Node Affinity</strong>
+          <blockquote><strong>When to Use nodeSelector vs Node Affinity</strong>
 
             Use <code>nodeSelector</code> when your requirement is simple: "this Pod must run on nodes with label X=Y."
             Use <strong>node affinity</strong> when you need more expressive rules: "prefer nodes with label X in set
@@ -3042,7 +3193,17 @@ kubectl label nodes node-ssd-1 storage=nvme
             always a hard requirement. Node affinity can be either hard (required) or soft (preferred).
           </blockquote>
 
-          <h4>Node Affinity: Expressive Node Selection Rules</h4>
+                    <h4 id="affinity-overview">Affinity: More Expressive Placement Rules</h4>
+
+          <p><code>nodeSelector</code> only does exact label matches. <strong>Affinity</strong> rules go further: they
+            can express preferences as well as requirements, match on sets of values, and place Pods relative to
+            <em>other Pods</em> rather than to node labels. None of the labs need them, so treat the three blocks below
+            as reference for when you meet them in a real cluster.</p>
+
+          <details class="deep-dive">
+            <summary>Node affinity: more expressive node selection<span class="dd-tag">Optional depth</span></summary>
+
+
 
           <p>Node affinity is a more powerful replacement for <code>nodeSelector</code>. It uses the same set-based
             selector operators you learned in section 2.4 (<code>In</code>, <code>NotIn</code>, <code>Exists</code>,
@@ -3102,15 +3263,19 @@ kubectl label nodes node-ssd-1 storage=nvme
     image: my-app:latest
 </code></pre>
 
-          <blockquote><strong>INFO: nodeSelectorTerms - OR Logic Between Terms</strong>
+          <blockquote><strong>nodeSelectorTerms - OR Logic Between Terms</strong>
 
             Inside <code>requiredDuringSchedulingIgnoredDuringExecution</code>, if you provide multiple items in the
             <code>nodeSelectorTerms</code> list, a node only needs to match ONE of them (OR logic). But within a single
             term, all <code>matchExpressions</code> must match (AND logic). This lets you express complex rules like:
             "nodes in zone A with SSD, OR nodes in zone B regardless of storage type."
           </blockquote>
+          </details>
 
-          <h4>Pod Affinity: Co-locating Pods on the Same Node</h4>
+          <details class="deep-dive">
+            <summary>Pod affinity: co-locating Pods<span class="dd-tag">Optional depth</span></summary>
+
+
 
           <p>While node affinity controls which <em>nodes</em> a Pod can land on, <strong>pod affinity</strong> controls
             which <em>other Pods</em> a Pod wants to be near. You use pod affinity when two services communicate so
@@ -3143,15 +3308,19 @@ kubectl label nodes node-ssd-1 storage=nvme
     image: my-latency-sensitive-app:latest
 </code></pre>
 
-          <blockquote class="warning"><strong>WARNING: Pod Affinity Can Create Scheduling Bottlenecks</strong>
+          <blockquote class="warning"><strong>Pod Affinity Can Create Scheduling Bottlenecks</strong>
 
             If you use <code>required</code> pod affinity and the target Pods do not exist yet (or all live on one
             node), your Pod will be stuck in <code>Pending</code> or all replicas will crowd onto a single node. Use
             <code>preferred</code> pod affinity for most co-location use cases, and reserve <code>required</code> for
             strict data locality requirements.
           </blockquote>
+          </details>
 
-          <h4>Pod Anti-Affinity: Spreading Replicas Across Nodes</h4>
+          <details class="deep-dive">
+            <summary>Pod anti-affinity: spreading replicas<span class="dd-tag">Optional depth</span></summary>
+
+
 
           <p>Pod anti-affinity is the opposite of pod affinity. It tells the scheduler "do not place this Pod near other
             Pods that match this selector." The most common use case is spreading Deployment replicas across different
@@ -3242,7 +3411,7 @@ kubectl label nodes node-ssd-1 storage=nvme
             <figcaption id="fig1-8-cap">Figure 1.8: Pod anti-affinity spreads replicas across nodes.</figcaption>
           </figure>
 
-          <blockquote><strong>INFO: Topology Spread Constraints - the Modern Alternative</strong>
+          <blockquote><strong>Topology Spread Constraints - the Modern Alternative</strong>
 
             Kubernetes 1.19+ introduced <strong>topologySpreadConstraints</strong> as a more predictable and
             controllable way to spread Pods across nodes and zones. It lets you declare "spread my Pods such that no
@@ -3251,7 +3420,7 @@ kubectl label nodes node-ssd-1 storage=nvme
             still the right tool for strict "never co-locate" requirements.
           </blockquote>
 
-          <blockquote class="success"><strong>SUMMARY: Choosing the Right Scheduling Tool</strong>
+          <blockquote class="success"><strong>Choosing the Right Scheduling Tool</strong>
 
             <ol class="sec2-indented">
               <li>Use <strong>taints + tolerations</strong> to reserve nodes for specific workloads (GPU nodes, spot
@@ -3268,6 +3437,114 @@ kubectl label nodes node-ssd-1 storage=nvme
                 over pod anti-affinity.</li>
             </ol>
           </blockquote>
+          </details>
+
+<h3 id="26-multi-container-pods">2.6 Multi-Container Pods: Init Containers and Sidecars</h3>
+
+          <p>Most Pods hold one container. When a Pod holds more, the extras almost always fall into one of two roles,
+            and Kubernetes has a separate mechanism for each.</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Role</th>
+                  <th>Where it goes</th>
+                  <th>Lifecycle</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Init container</strong></td>
+                  <td><code>spec.initContainers</code></td>
+                  <td>Runs to completion <em>before</em> app containers start. Several run in order, one after another.</td>
+                </tr>
+                <tr>
+                  <td><strong>Sidecar</strong></td>
+                  <td><code>spec.initContainers</code> with <code>restartPolicy: Always</code></td>
+                  <td>Starts before the app and keeps running beside it for the life of the Pod.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>Use an <strong>init container</strong> for setup that must finish first: wait for a database to accept
+            connections, run a schema migration, or pull config into a shared volume. If it exits non-zero, kubelet
+            restarts it and the app never starts, which is usually what you want.</p>
+
+          <p>Use a <strong>sidecar</strong> for a helper that must run the whole time: a log shipper, a metrics
+            exporter, or a service-mesh proxy. Declaring it in <code>initContainers</code> with
+            <code>restartPolicy: Always</code> is the modern way, stable since Kubernetes v1.33.</p>
+
+          <p>The manifest below runs a migration first, then keeps a log shipper alongside the app. Save it as
+            <code>multi-container.yaml</code>:</p>
+
+          <pre class="codehilite"><code class="language-yaml">apiVersion: v1
+kind: Pod
+metadata:
+  name: multi-container-demo
+spec:
+  volumes:
+    - name: logs
+      emptyDir: {}                  # shared by the app and the log shipper
+
+  initContainers:
+    - name: run-migration           # plain init container: must finish first
+      image: busybox:1.36
+      command: ['sh', '-c', 'echo "migrating..."; sleep 3; echo done']
+
+    - name: log-shipper             # sidecar: restartPolicy makes it long-running
+      image: busybox:1.36
+      restartPolicy: Always         # the only accepted value here
+      command: ['sh', '-c', 'tail -F /var/log/app/out.log']
+      volumeMounts:
+        - name: logs
+          mountPath: /var/log/app
+
+  containers:
+    - name: app
+      image: busybox:1.36
+      command: ['sh', '-c', 'while true; do echo "hello $(date)" &gt;&gt; /var/log/app/out.log; sleep 5; done']
+      volumeMounts:
+        - name: logs
+          mountPath: /var/log/app
+</code></pre>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Apply it and watch the init container run before the app</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl apply -f multi-container.yaml
+kubectl get pod multi-container-demo -w
+# Output: STATUS moves Init:0/2 -&gt; Init:1/2 -&gt; Running as each stage completes.
+# Press Ctrl+C once it reaches Running.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Read the sidecar's output to confirm it is tailing the shared volume</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl logs multi-container-demo -c log-shipper --tail=5
+# Output: the "hello ..." lines the app container is writing.
+# -c selects a container; without it kubectl asks you to pick one.
+kubectl delete pod multi-container-demo
+</code></pre>
+          </div>
+
+          <details class="deep-dive">
+            <summary>Why sidecars moved into initContainers<span class="dd-tag">Optional depth</span></summary>
+
+            <p>Before this existed, a sidecar was just a second entry in <code>spec.containers</code>, which caused two
+              persistent bugs.</p>
+            <ol class="sec2-indented">
+              <li><strong>Startup races.</strong> Containers in <code>spec.containers</code> start together with no
+                ordering, so an app could issue its first request before the proxy beside it was listening.</li>
+              <li><strong>Jobs that never finished.</strong> A Job is complete when its containers exit. A sidecar that
+                runs forever meant the Job hung forever, which is why service-mesh proxies broke batch workloads.</li>
+            </ol>
+            <p>Putting the sidecar in <code>initContainers</code> reuses the init machinery to fix both: Kubernetes
+              starts it before the app, lets the Pod proceed once it is started rather than finished, and terminates it
+              after the app exits so Jobs can complete. The feature was alpha in v1.28, on by default in v1.29, and
+              stable in v1.33.</p>
+            <p>One consequence worth knowing: a sidecar's resource requests count toward the Pod's total, so they
+              affect scheduling and QoS class exactly like an app container's.</p>
+          </details>
 
           <hr />
           <h2 id="3-the-kubectl-debugging-toolkit">3. The kubectl Debugging Toolkit</h2>
@@ -3555,7 +3832,7 @@ kubectl logs my-pod -p
 </code></pre>
           </div>
 
-          <blockquote class="success"><strong>BEST PRACTICE: Always Use --previous for CrashLoopBackOff</strong>
+          <blockquote class="success"><strong>Always Use --previous for CrashLoopBackOff</strong>
 
             If you see a pod in <code>CrashLoopBackOff</code>, your first command should always be:
             <code>kubectl logs &lt;pod-name&gt; --previous</code>. This shows you the last output before the crash,
@@ -3795,7 +4072,7 @@ kubectl rollout status deployment/payment-api -n payments
 </code></pre>
           </div>
 
-          <p><strong>SUMMARY: The Debugging Cheat Sheet</strong></p>
+          <p><strong>The Debugging Cheat Sheet</strong></p>
 
           <div class="table-wrap">
             <table>
@@ -3849,6 +4126,89 @@ kubectl rollout status deployment/payment-api -n payments
               </tbody>
             </table>
           </div>
+
+          <h3 id="310-node-maintenance">3.10 Node Maintenance: cordon, drain, and uncordon</h3>
+
+          <p>Sooner or later you need to take a node out of service to patch its kernel or resize it. Deleting the node
+            would strand its Pods. Kubernetes gives you three commands to move workloads off first.</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Command</th>
+                  <th>What it does</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>kubectl cordon</code></td>
+                  <td>Marks the node unschedulable. Existing Pods stay put; no new ones land there.</td>
+                </tr>
+                <tr>
+                  <td><code>kubectl drain</code></td>
+                  <td>Cordons the node, then evicts its Pods so their controllers reschedule them elsewhere.</td>
+                </tr>
+                <tr>
+                  <td><code>kubectl uncordon</code></td>
+                  <td>Marks the node schedulable again once maintenance is finished.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Stop new Pods landing on the node</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl cordon minikube
+kubectl get nodes
+# Output: STATUS becomes "Ready,SchedulingDisabled"
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Evict the Pods so they can be rescheduled</span></div>
+            <pre class="codehilite"><code class="language-bash"># --ignore-daemonsets   DaemonSet Pods are expected on every node, so skip them
+# --delete-emptydir-data acknowledges that emptyDir contents will be lost
+kubectl drain minikube --ignore-daemonsets --delete-emptydir-data
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Put the node back into service</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl uncordon minikube
+kubectl get nodes
+# Output: STATUS back to "Ready"
+</code></pre>
+          </div>
+
+          <blockquote class="warning"><strong>Draining a single-node cluster empties it</strong>
+
+            <p>On Minikube there is nowhere else for the Pods to go, so they will sit in <code>Pending</code> until you
+              run <code>uncordon</code>. Run the drain above only if you are ready to undo it immediately. On a real
+              multi-node cluster this is the normal way to patch a node.</p>
+          </blockquote>
+
+          <details class="deep-dive">
+            <summary>What eviction actually does, and PodDisruptionBudgets<span class="dd-tag">Optional depth</span></summary>
+
+            <p><code>drain</code> does not delete Pods directly. It submits an <strong>eviction</strong> request for
+              each one, which is a different API endpoint that respects a safety valve called a
+              <strong>PodDisruptionBudget</strong> (PDB).</p>
+            <p>A PDB declares how much of an application may be down at once, for example "at least 2 of my 3 replicas
+              must stay available." If evicting a Pod would breach that budget, the API server refuses the eviction and
+              <code>drain</code> waits rather than taking your service down. Save it as <code>pdb.yaml</code>:</p>
+            <pre class="codehilite"><code class="language-yaml">apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web-pdb
+spec:
+  minAvailable: 2            # or use maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: web
+</code></pre>
+            <p>This is why a drain can appear to hang. It is usually not stuck, it is respecting a budget. Check with
+              <code>kubectl get pdb</code>. Note that a PDB only protects against <em>voluntary</em> disruption like a
+              drain; it cannot stop a node from crashing.</p>
+          </details>
 
           <hr />
           <h2 id="4-lab-1-deploying-your-first-pod-and-service">4. Lab 1: Deploying Your First Pod and Service</h2>
@@ -3948,229 +4308,114 @@ kubectl rollout status deployment/payment-api -n payments
               these objects together.</li>
           </ol>
 
-          <h4 id="lab1-what-is-a-pod">What is a Pod?</h4>
+          <h4 id="lab1-what-is-a-pod">The Four Objects, in One Table</h4>
 
-          <p>A <strong>Pod</strong> is the smallest unit of scheduling in Kubernetes. It is not a container, it is a
-            <em>wrapper around one or more containers</em> that Kubernetes treats as a single unit. Understanding what
-            this means requires understanding what Pods share.
-          </p>
+          <p>Section 1.9 introduced these objects and 1.10 covered the Service types. Here they are in one place,
+            because this lab creates all four and you will want the definitions within reach.</p>
 
-          <p>All containers inside the same Pod share:</p>
-          <ol class="sec2-indented">
-            <li><strong>The same network namespace</strong>: containers in a Pod share an IP address and can reach each
-              other on <code>localhost</code>. If your Pod has an Nginx container on port 80 and a log-collector
-              sidecar, the sidecar can reach Nginx at <code>localhost:80</code>.</li>
-            <li><strong>The same volumes</strong>: any volume declared in the Pod spec is available to every container
-              in that Pod. This is how sidecars share log files or configuration with the main application container.
-            </li>
-            <li><strong>The same lifecycle</strong>: if the Pod dies, all containers in it die together. If the Pod is
-              rescheduled to a different node, all containers move together.</li>
-          </ol>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Object</th>
+                  <th>Its one job</th>
+                  <th>Why you rarely create it directly</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Pod</strong></td>
+                  <td>Wraps one or more containers that share an IP, volumes, and a lifecycle</td>
+                  <td>It is ephemeral. If its node dies, a naked Pod is gone for good and nothing replaces it.</td>
+                </tr>
+                <tr>
+                  <td><strong>ReplicaSet</strong></td>
+                  <td>Keeps exactly N Pods alive that match a label selector</td>
+                  <td>It has no concept of updates. Changing its image leaves the running Pods untouched.</td>
+                </tr>
+                <tr>
+                  <td><strong>Deployment</strong></td>
+                  <td>Owns a ReplicaSet and adds rolling updates and rollbacks</td>
+                  <td>This is the one you create.</td>
+                </tr>
+                <tr>
+                  <td><strong>Service</strong></td>
+                  <td>Puts a stable IP and DNS name in front of Pods that come and go</td>
+                  <td>This is the other one you create.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-          <p>A Pod is <strong>ephemeral by nature</strong>. This is not a bug, it is a deliberate design decision. When
-            Kubernetes needs to reschedule a Pod (because the node failed, or the Pod consumed too much memory and was
-            evicted, or you manually deleted it), it creates a completely new Pod object with a new name and a new IP
-            address. The old Pod is gone permanently. There is no restart-in-place for Pods; instead, a new Pod is born.
-          </p>
+          <p>The chain runs one way: you create a Deployment, it creates a ReplicaSet, and the ReplicaSet creates the
+            Pods. The Service sits outside that chain and finds Pods by label instead. That last detail breaks more
+            first labs than anything else, so it gets its own subsection below.</p>
 
-          <p>This is why you <strong>almost never create Pods directly in production</strong>. A naked Pod, one you
-            created with <code>kubectl run</code> or a raw Pod manifest, has no controller watching over it. If the node
-            it runs on fails, that Pod disappears forever and nothing brings it back. Instead, you always create a
-            <strong>Deployment</strong>, which maintains the desired number of Pods for you automatically.
-          </p>
+          <blockquote><strong>Pod IPs are temporary</strong>
 
-          <p>What does a Pod's IP address look like? In a typical cluster, Pods get private IP addresses from the
-            cluster's Pod CIDR range, something like <code>10.244.0.5</code>. These addresses are only reachable from
-            within the cluster. They are also temporary: when Pod <code>nginx-abc12</code> dies and a new Pod
-            <code>nginx-xyz99</code> is born, the new Pod gets a completely different IP address. Any system that tried
-            to connect to the old IP address will fail. This is exactly the problem that Services solve.
-          </p>
-
-          <h4 id="lab1-what-is-a-replicaset">What is a ReplicaSet?</h4>
-
-          <p>A <strong>ReplicaSet</strong> is the middle layer in the hierarchy. Its job is simple and singular: ensure
-            that exactly <em>N</em> Pods with a given label selector are running at all times. If you ask for 2 Pods and
-            only 1 is running, the ReplicaSet creates another. If 3 are running when you asked for 2, it deletes one.
-          </p>
-
-          <p>The ReplicaSet does this by running a continuous <strong>reconciliation loop</strong> inside the Kubernetes
-            controller manager. The controller manager is a process running on the control plane that watches the
-            cluster state and continuously compares it to the desired state. When the actual state diverges from
-            desired, it takes corrective action.</p>
-
-          <p>You will almost never create a ReplicaSet manually. The reason is that ReplicaSets alone have no concept of
-            <em>updates</em>. If you change the container image in a ReplicaSet, the running Pods are not changed, the
-            change only applies to newly created Pods. A Deployment wraps the ReplicaSet and adds the ability to do
-            rolling updates (creating a new ReplicaSet with the new version while slowly draining the old one) and
-            rollbacks (reverting to a previous ReplicaSet). This is the correct abstraction to use.
-          </p>
-
-          <p>When you run <code>kubectl get replicasets</code> after creating a Deployment, you will see a ReplicaSet
-            with a name like <code>nginx-deployment-7c79c4bf97</code>. The hash suffix is a fingerprint of the Pod
-            template. When you update the Deployment, a new ReplicaSet with a different hash is created, and the old one
-            is kept (with 0 replicas) so rollbacks are possible.</p>
-
-          <h4 id="lab1-what-is-a-deployment">What is a Deployment?</h4>
-
-          <p>A <strong>Deployment</strong> is the standard way to run a stateless application in Kubernetes. It wraps a
-            ReplicaSet and adds three critical capabilities that the ReplicaSet alone cannot provide:</p>
-
-          <ol class="sec2-indented">
-            <li><strong>Desired-state reconciliation</strong>: you declare "I want 2 replicas of this app running."
-              Kubernetes ensures that is always true, even if Pods crash, nodes fail, or containers run out of memory.
-            </li>
-            <li><strong>Rolling updates</strong>: when you change the container image or any Pod template field, the
-              Deployment replaces old Pods with new ones gradually, maintaining availability throughout. You can
-              configure how many Pods may be unavailable at once (<code>maxUnavailable</code>) and how many extra Pods
-              may exist during the transition (<code>maxSurge</code>).</li>
-            <li><strong>Rollbacks</strong>: the Deployment keeps a history of previous ReplicaSets. If a new version is
-              broken, one command restores the previous working state.</li>
-          </ol>
-
-          <p>The Deployment controller, the code inside the controller manager responsible for watching Deployment
-            objects, runs a continuous loop:</p>
-          <ol>
-            <li>Read the desired state from the Deployment spec (e.g., 2 replicas, <code>nginx:1.29-alpine</code>).</li>
-            <li>Read the actual state from the cluster (e.g., 1 running Pod, 1 Pod in <code>CrashLoopBackOff</code>).
-            </li>
-            <li>Calculate the diff.</li>
-            <li>Take the minimum action needed to move actual state toward desired state (create one Pod).</li>
-            <li>Wait and repeat.</li>
-          </ol>
-
-          <p>This loop runs constantly, not just when you run a command. That is why Kubernetes is described as a
-            <em>declarative, self-healing system</em>: you state what you want, and the system continuously works to
-            make it true.
-          </p>
-
-          <h4 id="lab1-what-is-a-service">What is a Service?</h4>
-
-          <p>A <strong>Service</strong> solves the fundamental networking problem created by ephemeral Pods: Pod IP
-            addresses are temporary, but clients need a stable address to connect to your application.</p>
-
-          <p>A Service gives you three stable things:</p>
-          <ol class="sec2-indented">
-            <li>A <strong>stable virtual IP address</strong> (called the ClusterIP) that never changes as long as the
-              Service exists.</li>
-            <li>A <strong>stable DNS name</strong> (<code>nginx-service.default.svc.cluster.local</code>) that other
-              Pods inside the cluster can use to reach your app. CoreDNS, the cluster's built-in DNS server, resolves
-              this name to the Service's ClusterIP.</li>
-            <li><strong>Load balancing</strong> across all healthy Pods that match the Service's label selector. Each
-              new connection is sent to a different Pod, distributing the load.</li>
-          </ol>
-
-          <p>How does a Service actually route traffic? This is done by <strong>kube-proxy</strong>, a process running
-            on every node. kube-proxy watches the Kubernetes API for Service and Endpoints objects and programs the
-            host's network rules (using <code>iptables</code>, <code>ipvs</code>, or <code>nftables</code>, depending on
-            the cluster configuration) so that any traffic destined for the Service's ClusterIP gets rewritten and
-            forwarded to one of the actual Pod IPs. This happens entirely in the kernel, no userspace proxy is involved
-            in the actual packet forwarding path on modern clusters.</p>
-
-          <p>The object that bridges a Service to its actual Pod IP addresses is called an <strong>Endpoints</strong>
-            (or <strong>EndpointSlice</strong> in modern clusters) object. Kubernetes automatically creates and
-            maintains this object based on the Service's label selector. Every time a Pod with a matching label becomes
-            Ready, its IP is added to the Endpoints. Every time a matching Pod dies, its IP is removed. You can inspect
-            this at any time with <code>kubectl get endpoints nginx-service</code>. If the Endpoints object is empty
-            (<code>&lt;none&gt;</code>), traffic cannot reach your Pods, the most common cause is a label selector
-            mismatch.</p>
-
-          <h4 id="lab1-service-types">The Three Service Types</h4>
-
-          <p>Kubernetes offers three main Service types, each for a different use case:</p>
-
-          <ol class="sec2-indented">
-            <li><strong>ClusterIP</strong> (the default): creates a virtual IP that is only reachable from
-              <em>within</em> the cluster. Use this for any service that only needs to be reached by other Pods,
-              databases, internal APIs, caches. This is the most secure type because it is not accessible from outside
-              the cluster at all.
-            </li>
-            <li><strong>NodePort</strong>: exposes the Service on a static port (default range: 30000-32767) on
-              <em>every node's</em> external IP address. Traffic arriving at
-              <code>&lt;any-node-ip&gt;:&lt;nodePort&gt;</code> is forwarded to the Service. This is useful for
-              development clusters and Minikube labs, but in production it opens a high-numbered port on every node in
-              your cluster, not ideal from a security standpoint. This is the type we use in this lab.
-            </li>
-            <li><strong>LoadBalancer</strong>: provisions an external load balancer (e.g., an AWS ELB or GCP Load
-              Balancer) in front of your Service. This is the correct way to expose a Service to the internet in a cloud
-              environment. In Minikube, this type does not provision a real load balancer unless you use
-              <code>minikube tunnel</code>.
-            </li>
-          </ol>
-
-          <blockquote>
-            <p><strong>Modern alternative:</strong> for HTTP/HTTPS traffic in production, you rarely use NodePort or
-              LoadBalancer directly on each Service. Instead, you deploy a single LoadBalancer Service for an
-              <strong>Ingress Controller</strong> or a Gateway API controller, and route HTTP traffic to internal
-              ClusterIP Services based on hostname and path rules. This is covered in Lab 7.
-            </p>
+            <p>A Pod gets a cluster-internal address such as <code>10.244.0.5</code>. Delete it and the replacement
+              comes back on a different one. Nothing should ever connect to a Pod IP directly, and that is the whole
+              reason Services exist.</p>
           </blockquote>
 
-          <h4 id="lab1-labels-selectors">Labels and Selectors: The Glue of Kubernetes</h4>
+          <h4 id="lab1-labels-selectors">Labels: the Three Rules That Break Labs</h4>
 
-          <p>Labels are key-value pairs attached to any Kubernetes object. They are the fundamental mechanism by which
-            objects find and refer to each other. Without labels, Deployments cannot find their Pods, Services cannot
-            route to Pods, and HPA cannot find Deployments to scale.</p>
+          <p>A label is a key-value pair on an object. A selector is a query against those labels. That is the entire
+            idea, and 2.4 goes deeper into it. What matters right now is that three specific mismatches cause most
+            first-lab failures.</p>
 
-          <p>A label looks like this in a manifest:</p>
-          <pre class="codehilite"><code class="language-yaml">metadata:
-  labels:
-    app: web
-    tier: frontend
-    environment: production
-</code></pre>
-
-          <p>A <strong>selector</strong> is a query against labels. For example, <code>app=web</code> selects all
-            objects that have the label <code>app</code> with value <code>web</code>. In a Deployment, the
-            <code>spec.selector.matchLabels</code> field tells the Deployment controller which Pods it owns. In a
-            Service, the <code>spec.selector</code> field tells kube-proxy which Pods to route traffic to.
-          </p>
-
-          <p>Three critical rules about label consistency:</p>
-          <ol>
-            <li>The <code>spec.selector.matchLabels</code> in a Deployment must exactly match the
-              <code>metadata.labels</code> in the <code>spec.template</code> (the Pod template). If they do not match,
-              the Deployment will not manage the Pods it creates, and the API server will reject the manifest.
-            </li>
-            <li>The <code>spec.selector</code> in a Service must match the labels on the Pods you want to route to, not
-              the Deployment's labels, not the ReplicaSet's labels, but the <em>Pod's</em> labels as defined in the Pod
-              template.</li>
-            <li>Labels are case-sensitive and whitespace-sensitive. <code>app: Web</code> and <code>app: web</code> are
+          <ol class="sec2-indented">
+            <li>A Deployment's <code>spec.selector.matchLabels</code> must exactly match the labels under
+              <code>spec.template.metadata</code>. If they differ, the API server rejects the manifest outright.</li>
+            <li>A Service's <code>spec.selector</code> must match the <em>Pod</em> labels, not the Deployment's own
+              labels. These are often different, and when they are, the Service accepts traffic and quietly routes it
+              nowhere.</li>
+            <li>Labels are case and whitespace sensitive. <code>app: Web</code> and <code>app: web</code> are two
               different labels.</li>
           </ol>
 
-          <h4 id="lab1-yaml-anatomy">Anatomy of a Kubernetes YAML Manifest</h4>
+          <h4 id="lab1-yaml-anatomy">Anatomy of a Manifest</h4>
 
-          <p>Every Kubernetes object is described by a YAML manifest with four top-level fields. Understanding these
-            fields eliminates the mystery from any manifest you will ever encounter:</p>
+          <p>Every object you write has the same four top-level fields, plus a fifth that Kubernetes fills in itself.</p>
 
-          <ol class="sec2-indented">
-            <li><strong><code>apiVersion</code></strong>: identifies which API group and version this object belongs to.
-              <code>apps/v1</code> means the object is in the <code>apps</code> API group, version <code>v1</code>
-              (stable). Core objects like Pods, Services, ConfigMaps, and Namespaces use <code>v1</code> with no group
-              prefix. Newer objects like <code>networking.k8s.io/v1</code> or <code>policy/v1</code> include both group
-              and version. If you are unsure of the correct value, run
-              <code>kubectl api-resources | grep Deployment</code>.
-            </li>
-            <li><strong><code>kind</code></strong>: the type of object. <code>Deployment</code>, <code>Service</code>,
-              <code>Pod</code>, <code>ConfigMap</code>, <code>Secret</code>, etc. Combined with <code>apiVersion</code>,
-              this uniquely identifies the object schema.
-            </li>
-            <li><strong><code>metadata</code></strong>: data <em>about</em> the object, its name (required), namespace
-              (defaults to <code>default</code>), labels, annotations, and other bookkeeping. The <code>name</code>
-              field must be unique within a namespace for a given kind.</li>
-            <li><strong><code>spec</code></strong>: the <em>desired state</em> of the object. This is where you declare
-              what you want, how many replicas, which container image, which ports to expose, what resources to
-              allocate. The structure of <code>spec</code> is different for every <code>kind</code>. Use
-              <code>kubectl explain deployment.spec</code> to explore it from the command line.
-            </li>
-          </ol>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>What it holds</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>apiVersion</code></td>
+                  <td>API group and version, such as <code>apps/v1</code>. Core objects (Pod, Service, ConfigMap) use a
+                    bare <code>v1</code>. Unsure which? Run <code>kubectl api-resources</code>.</td>
+                </tr>
+                <tr>
+                  <td><code>kind</code></td>
+                  <td>The object type: <code>Deployment</code>, <code>Service</code>, <code>Pod</code>. Together with
+                    <code>apiVersion</code> it pins down the exact schema.</td>
+                </tr>
+                <tr>
+                  <td><code>metadata</code></td>
+                  <td>Name (required), namespace, labels, annotations.</td>
+                </tr>
+                <tr>
+                  <td><code>spec</code></td>
+                  <td>What you want. Its shape differs for every kind. Explore any of them with
+                    <code>kubectl explain deployment.spec</code>.</td>
+                </tr>
+                <tr>
+                  <td><code>status</code></td>
+                  <td>What actually exists right now. Kubernetes writes this field; you never do.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-          <p>There is also a fifth field, <strong><code>status</code></strong>, which Kubernetes writes itself. You
-            never set <code>status</code> in your manifests. It reflects the <em>actual</em> current state. The
-            difference between <code>spec</code> (desired) and <code>status</code> (actual) is the gap that Kubernetes
-            controllers are always trying to close.</p>
-
-          <hr />
+          <p>The gap between <code>spec</code> and <code>status</code> is the gap every controller in the cluster is
+            working to close. You watched that loop run in 1.12.</p>
 
           <h3 id="lab1-step0">Step 0: Prerequisites Check</h3>
 
@@ -4804,13 +5049,16 @@ Events:                   &lt;none&gt;
             troubleshooting section below.</p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Inspect the auto-created Endpoints object directly</span></div>
-            <pre class="codehilite"><code class="language-bash">kubectl get endpoints nginx-service
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Inspect the auto-created EndpointSlice directly</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get endpointslices -l kubernetes.io/service-name=nginx-service
+# Output: one slice listing the Pod IPs currently behind the Service
+#   NAME                  ADDRESSTYPE   PORTS   ENDPOINTS
+#   nginx-service-abc12   IPv4          80      10.244.0.5,10.244.0.6
 </code></pre>
           </div>
 
-          <p>The Endpoints object is a separate API resource that Kubernetes manages automatically. When a Pod with a
-            matching label becomes Ready, its IP is added here. When it dies, its IP is removed. kube-proxy watches this
+          <p>An <strong>EndpointSlice</strong> is a separate API resource Kubernetes manages for you. When a Pod with a
+            matching label becomes Ready its IP is added; when the Pod dies the IP is removed. kube-proxy watches this
             object and updates iptables rules on every node accordingly, within milliseconds of a Pod change.</p>
 
           <hr />
@@ -4965,7 +5213,7 @@ curl http://nginx-service.default.svc.cluster.local
 
           <hr />
 
-          <h3 id="lab1-troubleshooting">Section C: Troubleshooting Guide</h3>
+          <h3 id="lab1-troubleshooting">Section B: Troubleshooting Guide</h3>
 
           <p>Every Kubernetes beginner encounters the same set of errors. Here is a systematic guide to diagnosing and
             fixing the most common ones. The universal first step for <em>any</em> problem is always the same
@@ -5114,12 +5362,10 @@ kubectl logs &lt;pod-name&gt;            # Step 3: read the container's own outp
           <p><strong>Diagnosis:</strong></p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Check whether the Service has any Endpoints</span></div>
-            <pre class="codehilite"><code class="language-bash">kubectl get endpoints nginx-service
-# If this shows:
-# NAME            ENDPOINTS   AGE
-# nginx-service   &lt;none&gt;      5m
-# ... then the selector is not matching any Pods.
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Check whether the Service has any backing Pods</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get endpointslices -l kubernetes.io/service-name=nginx-service
+# If the ENDPOINTS column is empty, or no slice exists at all,
+# the Service selector is not matching any Pods.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -5270,7 +5516,7 @@ kubectl get service nginx-service
 
           <hr />
 
-          <h3 id="lab1-hierarchy-summary">Section E: The Object Hierarchy, Putting It All Together</h3>
+          <h3 id="lab1-hierarchy-summary">Section C: The Object Hierarchy, Putting It All Together</h3>
 
           <p>Now that you have run through the full lab, re-read this hierarchy diagram with fresh eyes. Every step you
             executed maps directly onto this structure:</p>
@@ -6075,13 +6321,11 @@ kubectl delete service nginx-deployment 2>/dev/null || true
               its cache propagation delay, which in practice is up to roughly one to two minutes.</li>
           </ol>
 
-          <p>Two important consequences follow from the mount mechanism. First, the application itself must
-            <em>re-read</em> the file to observe a change; Kubernetes updates the file on disk but cannot make your
-            process notice. Many servers expose a reload signal for exactly this (for example
-            <code>nginx -s reload</code>). Second, Secrets mounted as volumes are written to an in-memory
-            <strong>tmpfs</strong>, never to the node's persistent disk, so secret material does not survive a node
-            reboot on disk and is less likely to be captured by disk-level backups.
-          </p>
+          <p>Two things follow from how the mount works. First, your application has to re-read the file to see a
+            change. Kubernetes updates the file on disk; it cannot make your process notice. Many servers expose a
+            reload signal for exactly this (<code>nginx -s reload</code>). Second, mounted Secrets are written to an
+            in-memory <code>tmpfs</code>, never the node's disk, so they do not survive a reboot on disk and are
+            unlikely to end up in disk-level backups.</p>
 
           <blockquote>A subtlety that surprises people: <code>subPath</code> volume mounts do <strong>not</strong>
             receive automatic updates. When you mount a single key with <code>subPath</code> (to place one file
@@ -7488,10 +7732,8 @@ spec:
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the Pod is added to the Service Endpoints</span></div>
-            <pre class="codehilite"><code class="language-bash">kubectl get endpoints probe-demo
-# NAME         ENDPOINTS                   AGE
-
-# probe-demo   10.244.0.x:80,10.244.0.y:80  ...  &lt;-- both pods serving
+            <pre class="codehilite"><code class="language-bash">kubectl get endpointslices -l kubernetes.io/service-name=probe-demo
+# ENDPOINTS lists both Pod IPs while they are passing the readiness probe
 # Check probe configuration is applied
 </code></pre>
           </div>
@@ -7508,7 +7750,7 @@ spec:
 
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Watch the Endpoints as the probe state changes</span></div>
-            <pre class="codehilite"><code class="language-bash">kubectl get endpoints probe-demo -w
+            <pre class="codehilite"><code class="language-bash">kubectl get endpointslices -l kubernetes.io/service-name=probe-demo -w
 # === TERMINAL 1 ===
 # Break nginx by removing its index.html (causes 404, readiness probe will fail)
 </code></pre>
@@ -8350,17 +8592,10 @@ spec:
           <hr />
           <h3 id="lab6-job">Job: Run to Completion</h3>
 
-          <p>
-            A <strong>Job</strong> creates pods that are expected to <em>finish</em>. Unlike a Deployment or
-            StatefulSet, which
-            restarts a pod whenever it exits, a Job considers a pod that exits with code 0 as a
-            <strong>success</strong>. Once
-            enough pods have succeeded (controlled by <code>completions</code>), the Job is marked <code>Complete</code>
-            and no
-            new pods are started. Jobs are the right tool for database migrations, batch data processing, report
-            generation,
-            one-time data imports, and any task that has a defined end point.
-          </p>
+          <p>A Job creates pods that are meant to <em>finish</em>. A Deployment restarts a pod whenever it exits; a Job
+            treats exit code 0 as <strong>success</strong>. Once enough pods have succeeded (set by
+            <code>completions</code>), the Job is marked <code>Complete</code> and starts no more. Use Jobs for database
+            migrations, batch processing, report generation, one-time imports, and anything with a defined end.</p>
 
           <h4 id="lab6-job-fields">Key Job Fields</h4>
           <ol class="sec2-indented">
@@ -8499,11 +8734,11 @@ spec:
               <path d="M134,44 V154 H214" class="kf-life" fill="none"/>
               <path d="M164,44 V184 H214" class="kf-life" fill="none"/>
 
-              <text x="222" y="68"  font-size="14" class="kf-subtle">minute <tspan class="kf-muted">(0–59)</tspan></text>
-              <text x="222" y="98"  font-size="14" class="kf-subtle">hour <tspan class="kf-muted">(0–23)</tspan></text>
-              <text x="222" y="128" font-size="14" class="kf-subtle">day of month <tspan class="kf-muted">(1–31)</tspan></text>
-              <text x="222" y="158" font-size="14" class="kf-subtle">month <tspan class="kf-muted">(1–12)</tspan></text>
-              <text x="222" y="188" font-size="14" class="kf-subtle">day of week <tspan class="kf-muted">(0–6, Sunday = 0)</tspan></text>
+              <text x="222" y="68"  font-size="14" class="kf-subtle">minute <tspan class="kf-muted">(0-59)</tspan></text>
+              <text x="222" y="98"  font-size="14" class="kf-subtle">hour <tspan class="kf-muted">(0-23)</tspan></text>
+              <text x="222" y="128" font-size="14" class="kf-subtle">day of month <tspan class="kf-muted">(1-31)</tspan></text>
+              <text x="222" y="158" font-size="14" class="kf-subtle">month <tspan class="kf-muted">(1-12)</tspan></text>
+              <text x="222" y="188" font-size="14" class="kf-subtle">day of week <tspan class="kf-muted">(0-6, Sunday = 0)</tspan></text>
             </svg>
             <figcaption id="fig1-16-cap">Figure 1.16: The five fields of a cron schedule.</figcaption>
           </figure>
