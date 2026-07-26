@@ -541,12 +541,21 @@ source ~/.zshrc
 
           <p>The annotated command below starts Minikube, with each flag explained inline.</p>
 
-          <pre class="codehilite"><code class="language-bash">minikube start \
-  --driver=docker \       # Use Docker containers as the cluster node substrate
-  # --cpus=4 \              # Allocate 4 CPU cores to the Minikube node
-  # --memory=4096 \         # Allocate 4096 MB (4 GB) of RAM to the Minikube node
-  #--disk-size=20g \       # Allocate 20 GB of virtual disk for images and volumes
-  #--kubernetes-version=stable   # Use the latest stable Kubernetes version
+          <pre class="codehilite"><code class="language-bash"># Minimal start: Docker containers act as the cluster node substrate.
+minikube start --driver=docker
+
+# Recommended start for this guide. Later labs (Prometheus, Argo CD, Falco)
+# need more headroom than the default, so ask for it up front:
+#   --cpus=4                     4 CPU cores for the Minikube node
+#   --memory=4096                4096 MB (4 GB) of RAM for the node
+#   --disk-size=20g              20 GB of virtual disk for images and volumes
+#   --kubernetes-version=stable  latest stable Kubernetes version
+minikube start \
+  --driver=docker \
+  --cpus=4 \
+  --memory=4096 \
+  --disk-size=20g \
+  --kubernetes-version=stable
 </code></pre>
 
           <blockquote class="gradient-border gc-black"><strong>Resource allocation matters a lot</strong>

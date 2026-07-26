@@ -66,21 +66,11 @@
         <article id="md-root" class="md-content page-markdown">
           <h1 id="section-2-production-operations">Section 2: Production Operations</h1>
 
-          <p>
-            Section 1 taught you the built-in Kubernetes primitives: Pods, Deployments, Services, ConfigMaps, Secrets,
-            Volumes,
-            and the workload controllers from Lab 6. Those objects are enough to run a simple application, but real
-            production
-            clusters require more: controlled HTTP routing, standardised packaging, visibility into what the cluster is
-            doing,
-            and a reliable way to ensure that what runs in production matches what the team agreed on in code review.
-            Section 2
-            covers the <strong>ecosystem tools</strong> that sit on top of Kubernetes to solve those problems. Each lab
-            starts
-            by explaining the tool conceptually before you use it, because knowing <em>why</em> a tool exists is more
-            durable
-            knowledge than any sequence of commands.
-          </p>
+          <p>Section 1 gave you the built-in primitives: Pods, Deployments, Services, ConfigMaps, Secrets, Volumes,
+            and the workload controllers. Those run an application. They do not route HTTP by hostname, package a
+            release, show you what the cluster is doing, or keep production matching what the team reviewed. Section 2
+            covers the ecosystem tools that fill those gaps. Each lab explains why the tool exists before showing you
+            the commands.</p>
           <ul>
             <li><strong>Lab 7:</strong> Route external HTTP traffic into the cluster with the Gateway API.</li>
             <li><strong>Lab 8:</strong> Package, version, and template your application with Helm charts.</li>
@@ -88,7 +78,7 @@
             <li><strong>Lab 10:</strong> Adopt GitOps so the running cluster continuously matches Git, using Argo CD.</li>
           </ul>
 
-          <blockquote><strong>INFO: Custom Resource Definitions (CRDs)</strong>
+          <blockquote><strong>Custom Resource Definitions (CRDs)</strong>
 
             Kubernetes ships with a fixed set of built-in object types: Pod, Deployment, Service, ConfigMap, and so on.
             A <strong>Custom Resource Definition (CRD)</strong> is a mechanism that lets any tool teach the cluster a
@@ -110,33 +100,25 @@
           <hr />
           <h2 id="10-lab-7-http-routing-with-the-gateway-api">10. Lab 7: HTTP Routing with the Gateway API</h2>
 
-          <p>
-            A <strong>Service</strong> (Section 1) gives a stable virtual IP to a group of pods and distributes TCP
-            connections
-            across them. That is all it does. Real HTTP applications need more: send <code>/api</code> requests to one
-            microservice and <code>/web</code> requests to another; route traffic by hostname (app.example.com vs
-            admin.example.com); terminate TLS so pods do not need certificates; redirect HTTP to HTTPS. This is called
-            <strong>Layer 7 (L7) routing</strong>, and it requires a proxy that understands the HTTP protocol, not just
-            TCP.
-          </p>
+          <p>A Service gives a group of pods one stable virtual IP and spreads TCP connections across them. That is all
+            it does. Real HTTP apps need more: send <code>/api</code> to one microservice and <code>/web</code> to
+            another, split traffic by hostname, terminate TLS so pods never handle certificates, redirect HTTP to
+            HTTPS. That is <strong>Layer 7 routing</strong>, and it needs a proxy that speaks HTTP, not just TCP.</p>
 
           <h3 id="lab7-history">History: From Ingress to Gateway API</h3>
-          <p>
-            The first Kubernetes answer to L7 routing was the <code>Ingress</code> object, introduced around 2016.
-            <code>Ingress</code> was always a partial solution: its specification was too minimal, so every controller
-            (nginx, Traefik, HAProxy) interpreted it slightly differently and added proprietary annotations.
-            The most widely used implementation, <strong>community ingress-nginx</strong>, reached
-            <strong>end of life in March 2026</strong> and receives no further releases, bug fixes, or CVE patches.
-            The Kubernetes Security Response Committee has stated plainly that running it past EOL leaves clusters
-            exposed. The <code>Ingress</code> API itself is effectively frozen.
-          </p>
+          <p>Kubernetes' first answer to L7 routing was the <code>Ingress</code> object, added around 2016. It was
+            always partial: the spec was so minimal that every controller (nginx, Traefik, HAProxy) read it differently
+            and filled the gaps with proprietary annotations. The most popular one, <strong>community
+              ingress-nginx</strong>, reached <strong>end of life in March 2026</strong> and gets no further releases,
+            bug fixes, or CVE patches. The Kubernetes Security Response Committee has said plainly that running it now
+            leaves clusters exposed. The <code>Ingress</code> API itself is frozen.</p>
           <p>
             The modern, actively developed replacement is the <strong>Gateway API</strong>: a set of CRDs maintained by
             the Kubernetes SIG-Network team that provides a richer, role-separated, standardised model for L7 routing.
             This lab teaches the Gateway API directly.
           </p>
 
-          <blockquote class="danger"><strong>WARNING: ingress-nginx is End of Life</strong>
+          <blockquote class="danger"><strong>ingress-nginx is End of Life</strong>
 
             The community <strong>ingress-nginx</strong> controller reached end of life in March 2026. It receives no
             further releases, no bug fixes, and no CVE patches. Do not use it in new setups. If you have inherited
@@ -208,7 +190,11 @@
           </figure>
 
 
-          <ol class="sec2-indented">
+
+          <details class="deep-dive">
+            <summary>GatewayClass, Gateway, and HTTPRoute in detail<span class="dd-tag">Optional depth</span></summary>
+
+<ol class="sec2-indented">
             <li><strong>GatewayClass:</strong> declares which controller implementation handles gateways of this class.
               Think of it like selecting a printer driver: it says "use Traefik" or "use Istio" without coupling the
               Gateway or Route objects to the specific product. The platform team creates one GatewayClass per
@@ -226,8 +212,9 @@
             This role separation is the main reason the Gateway API replaced Ingress. Platform teams control the entry
             point; development teams control their own routing rules. Neither group needs to modify the other's objects.
           </p>
+          </details>
 
-          <h3 id="lab7-traefik">Traefik as the Gateway Controller</h3>
+<h3 id="lab7-traefik">Traefik as the Gateway Controller</h3>
           <p>
             <strong>Traefik</strong> is a modern, actively maintained reverse proxy and load balancer with native
             Gateway
@@ -243,7 +230,7 @@
             cluster.</p>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Check https://github.com/kubernetes-sigs/gateway-api/releases for the latest stable tag and substitute it below. The &quot;standard&quot; channel includes Gateway, HTTPRoute, and related CRDs.</span></div>
-            <pre class="codehilite"><code class="language-bash">kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+            <pre class="codehilite"><code class="language-bash">kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/standard-install.yaml
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -519,7 +506,7 @@ kubectl delete service app1 app2
             <pre class="codehilite"><code class="language-bash">helm uninstall traefik -n traefik
 kubectl delete namespace traefik
 # Remove the Gateway API CRDs (optional; keep them if you plan to keep using the Gateway API)
-# kubectl delete -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+# kubectl delete -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/standard-install.yaml
 </code></pre>
           </div>
 
@@ -662,7 +649,7 @@ chmod 700 get_helm.sh
 
           <h3 id="lab8-step2">Step 2: Add a Repository and Install a Chart</h3>
 
-          <blockquote class="warning"><strong>WARNING: Bitnami Charts</strong>
+          <blockquote class="warning"><strong>Bitnami Charts</strong>
 
             As of late 2025, Broadcom moved the free Bitnami catalog (<code>docker.io/bitnami/*</code>) to an
             unmaintained
@@ -710,7 +697,7 @@ helm repo update
 </code></pre>
           </div>
 
-          <blockquote><strong>INFO: Always Pin --version</strong>
+          <blockquote><strong>Always Pin --version</strong>
 
             An unpinned <code>helm install</code> installs the latest chart version, making deployments
             non-reproducible.
@@ -883,7 +870,7 @@ helm pull oci://ghcr.io/argoproj/argo-helm/argo-cd --version 7.3.11
 
           <h3 id="lab8-secrets">Secrets and Helm</h3>
 
-          <blockquote class="danger"><strong>WARNING: Never Put Secrets in values.yaml</strong>
+          <blockquote class="danger"><strong>Never Put Secrets in values.yaml</strong>
 
             Helm values files are stored in Kubernetes as Secrets in the release namespace, but they are base64-encoded,
             not encrypted. Anyone with <code>kubectl get secret</code> access in that namespace can decode them. Never
@@ -999,13 +986,10 @@ helm pull oci://ghcr.io/argoproj/argo-helm/argo-cd --version 7.3.11
           <h3 id="lab9-prometheus-architecture">Prometheus Architecture</h3>
 
           <p>
-            <strong>Prometheus</strong> is the de facto metrics database for Kubernetes, and a CNCF graduated project.
-            Its architecture differs from traditional monitoring systems in one important way: it uses a
-            <strong>pull (scrape) model</strong>. Prometheus calls an HTTP endpoint (<code>/metrics</code>) on each
-            monitored target at a regular interval (typically every 15 or 30 seconds) and stores the data. Targets do
-            not
-            push data to Prometheus; Prometheus fetches it. This makes it easier to detect when a target has gone
-            silent.
+            <strong>Prometheus</strong> is the de facto metrics database for Kubernetes and a CNCF graduated project.
+            One thing sets it apart from older monitoring systems: it <strong>pulls</strong> rather than receives.
+            Prometheus calls an HTTP <code>/metrics</code> endpoint on each target every 15 or 30 seconds and stores
+            what comes back. Targets never push. That also makes it obvious when a target has gone silent.
           </p>
 
           <h4 id="lab9-data-model">Time-Series Data Model</h4>
@@ -1080,7 +1064,7 @@ kubectl top pods -A
 
           <h3 id="lab9-step2">Step 2: Install kube-prometheus-stack</h3>
 
-          <blockquote class="warning"><strong>WARNING: Memory Requirements</strong>
+          <blockquote class="warning"><strong>Memory Requirements</strong>
 
             The kube-prometheus-stack is resource-intensive. Ensure Minikube was started with at least 4096MB of memory:
             <code>minikube start --memory=4096 --cpus=2</code>. The stack includes Prometheus (which loads all
@@ -1354,25 +1338,16 @@ http_request_duration_seconds_count 14253
           <hr />
           <h2 id="13-lab-10-gitops-with-argo-cd">13. Lab 10: GitOps with Argo CD</h2>
 
+          <p>In Section 1 you changed the cluster by running <code>kubectl apply</code> from a terminal. That works for
+            learning and breaks at production scale. There is no record of who changed what or why. The live cluster
+            drifts from the YAML on somebody's laptop. Rebuilding after a disaster means remembering every command you
+            ran. And nothing reviews a change before it takes effect.</p>
           <p>
-            In Section 1, every change to the cluster was made by running <code>kubectl apply</code> from a terminal. This
-            works
-            for learning but fails at production scale for several reasons: there is no audit trail of who changed what
-            and
-            why; the live cluster can silently drift from whatever YAML files exist on a developer's laptop; rebuilding
-            a
-            cluster from scratch after a disaster requires someone to remember all the commands they ran; and there is
-            no
-            review gate before a change takes effect.
-          </p>
-          <p>
-            <strong>GitOps</strong> fixes all of these problems with one rule: <em>Git is the single source of truth for
-              all desired cluster state</em>. The cluster must always match what is in a specific Git repository and
-            branch.
-            Every change is a Git commit, meaning it is automatically recorded, peer-reviewed via a pull request, and
-            revertible with <code>git revert</code>. A software controller continuously compares the live cluster to Git
-            and corrects any difference, whether that difference was caused by a deployment, a manual kubectl command,
-            or a node crash.
+            <strong>GitOps</strong> fixes this with one rule: <em>Git is the single source of truth for desired cluster
+              state</em>. The cluster must match a specific repository and branch. Every change is a commit, so it is
+            recorded, reviewed through a pull request, and revertible with <code>git revert</code>. A controller
+            continuously compares the live cluster against Git and corrects any difference, whether it came from a
+            deployment, a stray <code>kubectl</code> command, or a node crash.
           </p>
 
           <h3 id="lab10-gitops-loop">The GitOps Control Loop</h3>
@@ -1490,10 +1465,10 @@ http_request_duration_seconds_count 14253
 
           <h3 id="lab10-step1">Step 1: Install Argo CD</h3>
 
-          <blockquote><strong>INFO: Argo CD Release Lines</strong>
+          <blockquote><strong>Argo CD Release Lines</strong>
 
-            Argo CD follows a release cadence with multiple active release lines. As of mid-2026, the v3.2, v3.3, and
-            v3.4 lines are supported; v3.1 reached EOL in May 2026. Check
+            Argo CD follows a release cadence with multiple active release lines, and only the three most recent minor
+            versions receive patches. As of mid-2026 the v3.2, v3.3, and v3.4 lines are supported. Check
             <a href="https://github.com/argoproj/argo-cd/releases">https://github.com/argoproj/argo-cd/releases</a>
             for the latest patch release in a supported line and substitute the tag below.
             Argo CD's images are signed with Cosign and ship SLSA Level 3 provenance, a real-world application of Lab
@@ -1504,13 +1479,16 @@ http_request_duration_seconds_count 14253
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create a dedicated namespace for Argo CD</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl create namespace argocd
 # Install Argo CD from the upstream manifests.
-# Substitute the actual release tag (e.g. v2.12.0) for &lt;vX.Y.Z&gt;
+# Substitute the current patch release for the tag below; v3.4.5 was current at
+# the time of writing. Check the releases page linked above.
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Install Argo CD into the argocd namespace</span></div>
-            <pre class="codehilite"><code class="language-bash">kubectl apply -n argocd \
-  -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.12.0/manifests/install.yaml
+            <pre class="codehilite"><code class="language-bash"># --server-side is required: the Argo CD CRDs exceed the annotation size limit
+# that client-side apply uses to store its last-applied configuration.
+kubectl apply -n argocd --server-side --force-conflicts \
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.4.5/manifests/install.yaml
 # Wait for all Argo CD deployments to become Available
 # This takes 2-4 minutes; several components start sequentially
 </code></pre>
@@ -1654,7 +1632,7 @@ spec:
 </code></pre>
           </div>
 
-          <blockquote class="success"><strong>INFO: This is the GitOps Payoff</strong>
+          <blockquote class="success"><strong>This is the GitOps Payoff</strong>
 
             The cluster cannot durably drift from Git when self-heal is enabled. An engineer running a kubectl command
             by mistake, or a script that makes a change for debugging, is automatically corrected. This property is

@@ -87,7 +87,6 @@ window.addEventListener('load', function () {
         label.appendChild(badge);
 
         // extract leading comments into a title if present
-        const code = pre.querySelector('code');
         const titleText = extractLeadingComments(code) || pre.dataset.title || null;
         const wrapper = document.createElement('div');
         wrapper.className = 'cmd-step';
