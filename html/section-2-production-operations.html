@@ -110,8 +110,9 @@
             always partial: the spec was so minimal that every controller (nginx, Traefik, HAProxy) read it differently
             and filled the gaps with proprietary annotations. The most popular one, <strong>community
               ingress-nginx</strong>, reached <strong>end of life in March 2026</strong> and gets no further releases,
-            bug fixes, or CVE patches. The Kubernetes Security Response Committee has said plainly that running it now
-            leaves clusters exposed. The <code>Ingress</code> API itself is frozen.</p>
+            bug fixes, or patches for CVEs (publicly catalogued security vulnerabilities). The Kubernetes Security
+            Response Committee has said plainly that running it now leaves clusters exposed. The <code>Ingress</code>
+            API itself is frozen.</p>
           <p>
             The modern, actively developed replacement is the <strong>Gateway API</strong>: a set of CRDs maintained by
             the Kubernetes SIG-Network team that provides a richer, role-separated, standardized model for L7 routing.
@@ -133,6 +134,18 @@
 
           <p>The Gateway API splits the responsibilities that Ingress crammed into one object across three distinct
             CRDs:</p>
+
+          <ol class="sec2-indented">
+            <li><strong>GatewayClass:</strong> names the controller implementation that handles gateways of this class,
+              and the platform team owns it.</li>
+            <li><strong>Gateway:</strong> opens the actual entry point on a chosen port and protocol, and the platform
+              team owns it too.</li>
+            <li><strong>HTTPRoute:</strong> maps a hostname and URL path to a backend Service, and the application team
+              owns it.</li>
+          </ol>
+
+          <p>That ownership split is the main reason the Gateway API replaced Ingress. Platform teams control the entry
+            point, application teams control their own routing rules, and neither group edits the other's objects.</p>
 
           <figure class="k8s-figure" id="fig2-1" aria-labelledby="fig2-1-cap">
             <svg viewBox="0 0 680 310" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig2-1-cap" font-family="'Caveat',cursive" font-size="14">
@@ -192,24 +205,19 @@
           <details class="deep-dive">
             <summary>GatewayClass, Gateway, and HTTPRoute in detail<span class="dd-tag">Optional depth</span></summary>
 
-          <ol class="sec2-indented">
-            <li><strong>GatewayClass:</strong> declares which controller implementation handles gateways of this class.
-              Think of it like selecting a printer driver: it says "use Traefik" or "use Istio" without coupling the
-              Gateway or Route objects to the specific product. The platform team creates one GatewayClass per
-              controller.</li>
-            <li><strong>Gateway:</strong> the actual entry point, owned by the platform or infrastructure team. It
-              defines
-              which port to listen on, which protocol (HTTP, HTTPS, TCP), and which namespaces are allowed to attach
-              HTTPRoutes. One Gateway can serve traffic for many applications.</li>
-            <li><strong>HTTPRoute:</strong> owned by the application team. It says "requests to this hostname and this
-              URL path should go to this backend Service." Application teams can create and modify HTTPRoutes without
-              touching the Gateway, and without needing cluster-admin access.</li>
-          </ol>
+          <p>Each of the three objects carries more configuration than its one-line summary above shows.</p>
 
-          <p>
-            This role separation is the main reason the Gateway API replaced Ingress. Platform teams control the entry
-            point; development teams control their own routing rules. Neither group needs to modify the other's objects.
-          </p>
+          <ol class="sec2-indented">
+            <li><strong>GatewayClass:</strong> works like selecting a printer driver. It says "use Traefik" or "use
+              Istio" without coupling the Gateway or Route objects to that specific product, so a cluster holds one
+              GatewayClass per installed controller.</li>
+            <li><strong>Gateway:</strong> lists the ports to listen on, the protocol for each one (HTTP, HTTPS, TCP),
+              and the namespaces that are allowed to attach HTTPRoutes to it. One Gateway serves traffic for many
+              applications, so a platform team maintains far fewer Gateways than the cluster has apps.</li>
+            <li><strong>HTTPRoute:</strong> attaches to a named Gateway and matches requests on hostname, path, header,
+              or method before forwarding them to a backend Service. Application teams write these in their own
+              namespace, without touching the Gateway and without needing cluster-admin access.</li>
+          </ol>
           </details>
 
           <h3 id="lab7-traefik">Traefik as the Gateway Controller</h3>
