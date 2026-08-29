@@ -26,7 +26,8 @@ The guide is split into a setup page, three main tiers, and a set of appendices:
 - **Appendices.** Cleanup cheat sheet, common errors and troubleshooting, where to go
   next, and a glossary.
 
-That is 22 chapters across the three main tiers, with 17 runnable labs.
+That is 22 numbered chapters (0 through 21) with 17 runnable labs: chapter 0 is
+setup, and chapters 1 to 21 make up the three main tiers.
 
 ## Project structure
 
