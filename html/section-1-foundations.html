@@ -603,10 +603,10 @@
               to prevent
               application workloads from being scheduled there.
             </p>
-            <pre class="codehilite"><code class="language-bash"># See taints on the Minikube node
-kubectl describe node minikube | grep -A5 Taints
-# In Minikube, the control-plane node has no taint (since it runs everything)
+            <pre class="codehilite"><code class="language-bash">kubectl describe node minikube | grep -A5 Taints
 
+# This lists the taints on the Minikube node.
+# In Minikube, the control-plane node has no taint (since it runs everything).
 # In a production cluster, control-plane nodes typically have:
 # Taints: node-role.kubernetes.io/control-plane:NoSchedule
 </code></pre>
@@ -1118,8 +1118,7 @@ kubectl expose deployment nginx --port=80 --type=NodePort
 
           <p>
             In the declarative approach, you write a YAML file describing the desired end state and tell Kubernetes to
-            make it
-            so:
+            make it so. Save it as <code>deployment.yaml</code>:
           </p>
 
           <pre class="codehilite"><code class="language-yaml">apiVersion: apps/v1
@@ -1250,6 +1249,8 @@ spec:
             pods
             matching a label selector.
           </p>
+
+          <p>The Service below finds its backends by the label <code>app: my-app</code> rather than by pod IP:</p>
 
           <pre class="codehilite"><code class="language-yaml">apiVersion: v1
 kind: Service
@@ -1434,9 +1435,10 @@ spec:
             manage
             the node IP yourself.</p>
 
-          <pre class="codehilite"><code class="language-bash"># On Minikube, access a NodePort service:
-minikube service my-app --url
-# This prints the URL including the correct node IP and nodePort
+          <pre class="codehilite"><code class="language-bash">minikube service my-app --url
+
+# On Minikube, this is how you reach a NodePort Service.
+# It prints the URL including the correct node IP and nodePort.
 </code></pre>
 
           <h4 id="service-loadbalancer">LoadBalancer</h4>
@@ -1456,9 +1458,10 @@ minikube service my-app --url
             cloud
             provider. Use <code>minikube tunnel</code> in a separate terminal to emulate a load balancer.</p>
 
-          <pre class="codehilite"><code class="language-bash"># On Minikube, to make LoadBalancer services work:
-minikube tunnel
-# Leave this running in a separate terminal.
+          <pre class="codehilite"><code class="language-bash">minikube tunnel
+
+# Run this to make LoadBalancer Services work on Minikube.
+# Leave it running in a separate terminal.
 # LoadBalancer services will then get 127.0.0.1 as their external IP.
 </code></pre>
 
@@ -1476,6 +1479,9 @@ minikube tunnel
             to reference by a Kubernetes-style DNS name from within the cluster, so you can easily swap it out later
             without
             changing application code.</p>
+
+          <p>The Service below resolves the in-cluster name <code>my-database</code> to an external hostname instead of
+            to any Pod:</p>
 
           <pre class="codehilite"><code class="language-yaml">apiVersion: v1
 kind: Service
@@ -1746,7 +1752,7 @@ kubectl get pods -l app=arch-demo
             desired (2) no longer matched actual (1) and closed the gap. Press <code>Ctrl+C</code> to stop the watch.</p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the replacement was recorded by the controller, not by you</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the controller made the replacement, not you</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl describe replicaset -l app=arch-demo | grep -A5 Events
 # Output: the ReplicaSet controller logs its own action
 #   Normal  SuccessfulCreate  replicaset-controller  Created pod: arch-demo-...
@@ -1883,7 +1889,8 @@ kubectl get pods -l app=arch-demo
           <ol class="sec2-indented">
             <li><strong>RBAC Boundaries:</strong> Kubernetes roles and role bindings are namespace-scoped by default.
               This means you can give a developer on Team Alpha full read/write access to the <code>team-alpha</code>
-              namespace while giving them zero access to the <code>team-beta</code> namespace.
+              namespace while giving them zero access to the <code>team-beta</code> namespace. The Role below grants
+              that access inside <code>team-alpha</code> and nowhere else:
               <pre class="codehilite"><code class="language-yaml">apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -2001,8 +2008,10 @@ kubectl get pods --all-namespaces
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Set team-alpha as the default namespace for the current context After this, all commands go to team-alpha unless you override with -n</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Make team-alpha the default namespace for this context</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl config set-context --current --namespace=team-alpha
+
+# After this, all commands go to team-alpha unless you override with -n.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -2022,7 +2031,7 @@ kubectl get pods -n team-alpha          # explicit, same result
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">vi</span><span class="cmd-step-title">Create a new named context for a namespace without changing the current one</span></div>
+            <div class="cmd-label"><span class="cmd-roman">vi</span><span class="cmd-step-title">Create a named context without changing the current one</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl config set-context team-alpha-ctx \
   --cluster=minikube \
   --user=minikube \
@@ -2118,8 +2127,10 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">What happens when you exceed a quota: the API server rejects the request</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">See what happens when you exceed the quota</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl apply -f big-deployment.yaml
+
+# The API server rejects the request because it would exceed the quota.
 </code></pre>
           </div>
 
@@ -2227,14 +2238,18 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Check the injected resource values: LimitRange fills them in automatically</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Check the resource values LimitRange injected</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get pod test-pod -n team-alpha -o jsonpath=&#x27;{.spec.containers[0].resources}&#x27;
+
+# The pod declared no resources, so the LimitRange filled them in automatically.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Try to exceed the max: this should be rejected by the API server</span></div>
+            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Try to exceed the max and watch it be rejected</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl run big-pod --image=nginx:alpine -n team-alpha \
   --requests=&#x27;cpu=3,memory=4Gi&#x27;
+
+# This should be rejected by the API server: it is above the LimitRange max.
 </code></pre>
           </div>
 
@@ -2493,7 +2508,7 @@ spec:
               <thead>
                 <tr>
                   <th>Resource</th>
-                  <th>Over-limit behaviour</th>
+                  <th>Over-limit behavior</th>
                 </tr>
               </thead>
               <tbody>
@@ -2528,6 +2543,9 @@ spec:
           <p><strong>Limits</strong> are enforced by the Linux kernel via cgroups on the node where the container
             actually runs. The kernel enforces CPU limits by throttling and memory limits by killing.</p>
 
+          <p>The container spec below sets both, so you can see which number the scheduler reads and which one the
+            kernel enforces:</p>
+
           <pre class="codehilite"><code class="language-yaml">containers:
 - name: my-app
   image: my-app:1.0
@@ -2541,6 +2559,9 @@ spec:
 </code></pre>
 
           <h4>Understanding CPU Units</h4>
+
+          <p>Kubernetes measures CPU in millicores, where <code>1000m</code> is one full core. The table below converts
+            the values you will write most often.</p>
 
           <div class="table-wrap">
             <table>
@@ -2582,6 +2603,9 @@ spec:
           </div>
 
           <h4>Understanding Memory Units</h4>
+
+          <p>Memory suffixes come in two families, binary and decimal, and they are not interchangeable. The table below
+            lists both so you can see the size difference.</p>
 
           <div class="table-wrap">
             <table>
@@ -2744,6 +2768,8 @@ spec:
             are used for grouping and selection. They are searchable, filterable, and used by other Kubernetes objects
             to find Pods they should manage.</p>
 
+          <p>The Pod below carries four labels describing its application, version, environment, and tier:</p>
+
           <pre class="codehilite"><code class="language-yaml">apiVersion: v1
 kind: Pod
 metadata:
@@ -2857,7 +2883,8 @@ kubectl get pods -l app==web
             <li><strong>In a manifest.</strong> Set-based selectors are used in <code>matchExpressions</code> inside
               <code>Deployment</code>, <code>ReplicaSet</code>, <code>DaemonSet</code>, <code>Job</code>, and
               <code>StatefulSet</code> specs. They can also be combined with <code>matchLabels</code> (shorthand for
-              equality) in the same selector block. All conditions across both must be satisfied simultaneously.
+              equality) in the same selector block. All conditions across both must be satisfied simultaneously. The
+              selector below combines one equality match with four set-based expressions:
               <pre class="codehilite"><code class="language-yaml"># Inside a Deployment, ReplicaSet, Job, DaemonSet spec:
 selector:
   matchLabels:
@@ -2988,6 +3015,9 @@ kubectl get pods -l 'app=web,environment in (prod, staging),!canary'
           <p>Annotations are also key-value pairs on Kubernetes objects, but they serve a completely different purpose
             from labels. Annotations are <em>not</em> used for selection. Instead, annotations are used to attach
             arbitrary metadata that tools, operators, and external systems can read.</p>
+
+          <p>The metadata block below carries scrape settings that Prometheus reads, alongside ordinary bookkeeping
+            fields that no controller acts on:</p>
 
           <pre class="codehilite"><code class="language-yaml">metadata:
   annotations:
@@ -3133,6 +3163,9 @@ kubectl taint nodes node-gpu-1 hardware=gpu:NoSchedule-
               You can omit the <code>value</code> field when using <code>Exists</code>.</li>
           </ol>
 
+          <p>The Pod spec below shows three shapes of toleration: an exact match, a key-only match, and one that expires
+            after a fixed number of seconds:</p>
+
           <pre class="codehilite"><code class="language-yaml">spec:
   tolerations:
   # Tolerate the specific taint hardware=gpu:NoSchedule
@@ -3193,10 +3226,14 @@ kubectl label nodes node-ssd-1 storage=nvme
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Remove a label from a node (trailing minus sign, same pattern as taints)</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Remove a label from a node</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl label nodes node-gpu-1 hardware-
+
+# The trailing minus sign removes the label, the same pattern as taints.
 </code></pre>
           </div>
+
+          <p>Once the node carries the label, a Pod asks for it with a <code>nodeSelector</code> block:</p>
 
           <pre class="codehilite"><code class="language-yaml">spec:
   nodeSelector:
@@ -3255,6 +3292,8 @@ kubectl label nodes node-ssd-1 storage=nvme
               to place the Pod on a matching node but falls back to other nodes if no match exists. Each preference has
               a <code>weight</code> from 1 to 100, where higher weight means stronger preference.</li>
           </ol>
+
+          <p>The Pod spec below uses both modes in a single <code>nodeAffinity</code> block:</p>
 
           <pre class="codehilite"><code class="language-yaml">spec:
   affinity:
@@ -3323,6 +3362,8 @@ kubectl label nodes node-ssd-1 storage=nvme
             same group as the target Pods.
           </p>
 
+          <p>The Pod spec below asks the scheduler to place this Pod on a node that already runs a cache Pod:</p>
+
           <pre class="codehilite"><code class="language-yaml">spec:
   affinity:
     podAffinity:
@@ -3362,6 +3403,8 @@ kubectl label nodes node-ssd-1 storage=nvme
           <p>Without anti-affinity, Kubernetes might place all three replicas of your web server on the same node if
             that node has the most free resources. If that node goes down, all three replicas are lost simultaneously.
             With anti-affinity, you can guarantee each replica lands on a different node.</p>
+
+          <p>The Pod spec below pushes every replica of the web Deployment onto a different node:</p>
 
           <pre class="codehilite"><code class="language-yaml">spec:
   affinity:
@@ -3552,7 +3595,7 @@ kubectl get pod multi-container-demo -w
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Read the sidecar's output to confirm it is tailing the shared volume</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm the sidecar is tailing the shared volume</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl logs multi-container-demo -c log-shipper --tail=5
 # Output: the "hello ..." lines the app container is writing.
 # -c selects a container; without it kubectl asks you to pick one.
@@ -3638,7 +3681,7 @@ kubectl delete pod multi-container-demo
 </code></pre>
           </div>
 
-          <p>Reading the default table output:</p>
+          <p>The table below explains each column of that default output.</p>
           <div class="table-wrap">
             <table>
               <thead>
@@ -3767,6 +3810,9 @@ Events:                               # THIS IS WHERE YOU LOOK FIRST
 </code></pre>
 
           <h4>Common Events and What They Mean</h4>
+
+          <p>The table below lists the events you will meet most often in that Events section, the condition each one
+            reports, and the fix.</p>
 
           <div class="table-wrap">
             <table>
@@ -3925,8 +3971,9 @@ kubectl exec my-pod -- curl -s http://other-service/health
           <p>Many production images are "distroless" (no shell, no tools). Use <code>kubectl debug</code> to attach an
             ephemeral debug container:</p>
 
-          <pre class="codehilite"><code class="language-bash"># Attach a debug container that shares the same network namespace
-kubectl debug -it my-pod --image=nicolaka/netshoot --target=my-app-container
+          <pre class="codehilite"><code class="language-bash">kubectl debug -it my-pod --image=nicolaka/netshoot --target=my-app-container
+
+# The ephemeral debug container shares the target container&#x27;s network namespace.
 </code></pre>
 
           <h3 id="35-kubectl-port-forward">3.5 kubectl port-forward: Tunneling to Services</h3>
@@ -4004,7 +4051,8 @@ kill %1
           <h3 id="37-kubectl-auth-can-i">3.7 kubectl auth can-i: Checking RBAC Permissions</h3>
 
           <p>These commands ask the API server whether a given action is allowed, which is the fastest way to debug RBAC
-            permission errors.</p>
+            permission errors. The <code>--as</code> flag runs the check as another identity, usually a
+            <strong>ServiceAccount</strong>: the in-cluster account a Pod presents when it calls the API server.</p>
 
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Can I create deployments?</span></div>
@@ -4059,7 +4107,8 @@ kubectl explain deployment.spec.template.spec.containers.resources
 
           <h3 id="39-three-step-debugging-workflow">3.9 The Three-Step Debugging Workflow: A Full Worked Example</h3>
 
-          <p>Scenario: "The payment service is down. Users cannot check out."</p>
+          <p>The scenario is a report from support: the payment service is down and users cannot check out. The three
+            steps below take that report to a root cause.</p>
 
           <h4>Step 1: GET</h4>
           <p>Start by surveying the namespace to spot which resource is unhealthy.</p>
@@ -4199,9 +4248,10 @@ kubectl get nodes
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Evict the Pods so they can be rescheduled</span></div>
-            <pre class="codehilite"><code class="language-bash"># --ignore-daemonsets   DaemonSet Pods are expected on every node, so skip them
+            <pre class="codehilite"><code class="language-bash">kubectl drain minikube --ignore-daemonsets --delete-emptydir-data
+
+# --ignore-daemonsets   DaemonSet Pods are expected on every node, so skip them
 # --delete-emptydir-data acknowledges that emptyDir contents will be lost
-kubectl drain minikube --ignore-daemonsets --delete-emptydir-data
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -4227,7 +4277,8 @@ kubectl get nodes
               <strong>PodDisruptionBudget</strong> (PDB).</p>
             <p>A PDB declares how much of an application may be down at once, for example "at least 2 of my 3 replicas
               must stay available." If evicting a Pod would breach that budget, the API server refuses the eviction and
-              <code>drain</code> waits rather than taking your service down. Save it as <code>pdb.yaml</code>:</p>
+              <code>drain</code> waits rather than taking your service down. The budget below keeps at least two
+              replicas of <code>web</code> running through any voluntary disruption:</p>
             <pre class="codehilite"><code class="language-yaml">apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -4493,7 +4544,7 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Configure kubectl view grep</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm you are in the expected namespace</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl config view --minify | grep namespace
 # Check for any leftover resources from previous runs
 </code></pre>
@@ -4671,7 +4722,7 @@ nginx-deployment-7c79c4bf97-r2bxn   1/1     Running   0          60s   10.244.0.
           </ol>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Inspect the ReplicaSet that the Deployment created automatically</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Inspect the ReplicaSet the Deployment created</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get replicasets
 </code></pre>
           </div>
@@ -4684,8 +4735,11 @@ nginx-deployment-7c79c4bf97   2         2         2       90s
             always trace a Pod back to its ReplicaSet and then to its Deployment.</p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Get the full detailed description of the Deployment (very useful for debugging)</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Read the full Deployment description for debugging</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl describe deployment nginx-deployment
+
+# describe is the first stop when debugging: it prints the spec, the
+# rollout status, and the recent events in one view.
 </code></pre>
           </div>
 
@@ -4702,8 +4756,10 @@ nginx-deployment-7c79c4bf97   2         2         2       90s
           </ol>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Read the full live manifest of the Deployment, including status written by Kubernetes</span></div>
+            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Read the full live manifest of the Deployment</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get deployment nginx-deployment -o yaml
+
+# The output includes the status block that Kubernetes writes back.
 </code></pre>
           </div>
 
@@ -4726,8 +4782,10 @@ nginx-deployment-7c79c4bf97   2         2         2       90s
           </p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">vii</span><span class="cmd-step-title">Read events across the whole namespace, shows the timeline of cluster activity</span></div>
+            <div class="cmd-label"><span class="cmd-roman">vii</span><span class="cmd-step-title">Read the namespace event timeline</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get events --sort-by=.lastTimestamp
+
+# Events across the whole namespace, in order: the timeline of cluster activity.
 </code></pre>
           </div>
 
@@ -4809,8 +4867,10 @@ nginx-deployment-7c79c4bf97   2         2         2       90s
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Delete one specific Pod (replace the name with one from your output)</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Terminal 1: delete one of the Pods</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl delete pod nginx-deployment-7c79c4bf97-8k4qj
+
+# Replace the Pod name with one from your own output.
 </code></pre>
           </div>
 
@@ -5134,7 +5194,7 @@ Events:                   &lt;none&gt;
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Send HTTP request</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm the Service answers on the Minikube URL</span></div>
             <pre class="codehilite"><code class="language-bash">curl $(minikube service nginx-service --url)
 </code></pre>
           </div>
@@ -5148,7 +5208,7 @@ Events:                   &lt;none&gt;
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Send HTTP request</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Reach the app on a node IP and the nodePort</span></div>
             <pre class="codehilite"><code class="language-bash">curl http://&lt;node-ip&gt;:30080
 </code></pre>
           </div>
@@ -5173,9 +5233,11 @@ Events:                   &lt;none&gt;
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Open a shell in the nginx container (use &#x27;sh&#x27; for alpine-based images, not &#x27;bash&#x27;)</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Open a shell inside the nginx container</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec -it nginx-deployment-7c79c4bf97-r2bxn -- sh
-# Inside the container, verify Nginx is running and listening
+
+# Inside the container, verify Nginx is running and listening.
+# Use &#x27;sh&#x27; for alpine-based images, not &#x27;bash&#x27;.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -5189,7 +5251,7 @@ curl localhost:80
           <p>While inside the container, you can also test connectivity to the Service using its DNS name:</p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Send HTTP request</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Resolve the Service by DNS from inside the Pod</span></div>
             <pre class="codehilite"><code class="language-bash">curl http://nginx-service
 curl http://nginx-service.default.svc.cluster.local
 </code></pre>
@@ -5357,8 +5419,9 @@ kubectl logs &lt;pod-name&gt;            # Step 3: read the container's own outp
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Edit nginx-deployment.yaml, fix the image name, then:</span></div>
-            <pre class="codehilite"><code class="language-bash">kubectl apply -f nginx-deployment.yaml
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Fix the image name and reapply the manifest</span></div>
+            <pre class="codehilite"><code class="language-bash"># Edit nginx-deployment.yaml and correct the image name first.
+kubectl apply -f nginx-deployment.yaml
 </code></pre>
           </div>
 
@@ -5426,13 +5489,13 @@ kubectl logs &lt;pod-name&gt;            # Step 3: read the container's own outp
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Compare the Service selector to the Pod labels side by side:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Compare the Service selector with the Pod labels</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get service nginx-service -o jsonpath=&#x27;{.spec.selector}&#x27;
 kubectl get pods -l app=web --show-labels
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Also check with describe:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Read the Selector and Endpoints fields directly</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl describe service nginx-service
 # Look at: Selector and Endpoints fields
 </code></pre>
@@ -5472,13 +5535,15 @@ kubectl get pods -l app=web --show-labels
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">View resource usage for pods</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Compare live memory usage against the limit</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl top pods
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Fix: increase the memory limit in the Deployment manifest In nginx-deployment.yaml, change: limits: memory: &quot;128Mi&quot; to a higher value, then:</span></div>
-            <pre class="codehilite"><code class="language-bash">kubectl apply -f nginx-deployment.yaml
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Fix: raise the memory limit and reapply</span></div>
+            <pre class="codehilite"><code class="language-bash"># In nginx-deployment.yaml, change limits: memory: &quot;128Mi&quot; to a higher value.
+# Then apply the edited manifest:
+kubectl apply -f nginx-deployment.yaml
 </code></pre>
           </div>
 
@@ -5506,8 +5571,10 @@ kubectl get pods -l app=web --show-labels
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Fix: create the missing ConfigMap or Secret, then the Pod will start automatically</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Fix: create the missing ConfigMap or Secret</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl create configmap app-config --from-literal=DB_HOST=postgres-service
+
+# Once it exists, the kubelet retries and the Pod starts automatically.
 </code></pre>
           </div>
 
@@ -5670,6 +5737,8 @@ kubectl get service nginx-service
           <hr />
 
           <h3 id="lab1-key-takeaways">Section D: Key Takeaways</h3>
+
+          <p>The summary below collects what this lab built and the mental model it was designed to leave you with.</p>
 
           <blockquote>
             <p><strong>What you built and what you learned:</strong>
@@ -5845,7 +5914,7 @@ kubectl get service nginx-service
             </ul>
           </blockquote>
 
-          <p><strong>Concrete example with 4 replicas and 25%:</strong></p>
+          <p>Take a Deployment with 4 replicas and both values left at their 25% default:</p>
           <ol class="sec2-indented">
             <li><code>maxUnavailable: 25%</code> rounds down to <strong>1</strong>: at most 1 pod may be unavailable at
               any time, so you always have at least 3 pods serving traffic.</li>
@@ -5989,10 +6058,12 @@ spec:
             change-cause first so it shows up in the rollout history:</p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Terminal 1: annotate the change-cause (do this before the update)</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Terminal 1: record the change-cause first</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl annotate deployment/nginx-deployment \
   kubernetes.io/change-cause=&quot;Update to nginx 1.27-alpine&quot; \
   --overwrite
+
+# Do this before the update, or the revision history row will be blank.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -6002,9 +6073,10 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Terminal 1: watch rollout progress (blocks until complete or --timeout is reached)</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Terminal 1: watch the rollout until it completes</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl rollout status deployment/nginx-deployment
 
+# This blocks until the rollout completes or --timeout is reached.
 # Expected output: Waiting for deployment &quot;nginx-deployment&quot; rollout to finish:
 #   1 out of 4 new replicas have been updated...
 #   2 out of 4 new replicas have been updated...
@@ -6035,13 +6107,17 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Inspect the pod template for a specific revision Shows the full pod template spec (including image) for revision 1</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Inspect the pod template for a specific revision</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl rollout history deployment/nginx-deployment --revision=1
+
+# Shows the full pod template spec (including image) for revision 1.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Shows revision 2&#x27;s spec with nginx:1.27-alpine</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Compare it against the next revision</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl rollout history deployment/nginx-deployment --revision=2
+
+# Revision 2 shows the same spec with nginx:1.27-alpine.
 </code></pre>
           </div>
 
@@ -6074,9 +6150,10 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Waiting for deployment &quot;nginx-deployment&quot; rollout to finish:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Watch the rollout time out instead of finishing</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl rollout status deployment/nginx-deployment --timeout=60s
 
+# Waiting for deployment &quot;nginx-deployment&quot; rollout to finish:
 #   1 out of 4 new replicas have been updated...
 # error: timed out waiting for the condition
 </code></pre>
@@ -6131,16 +6208,14 @@ spec:
             you should prefer the declarative approach: edit the YAML file and apply it. This keeps your source of truth
             (the YAML file) synchronized with the cluster state.</p>
 
-          <pre class="codehilite"><code class="language-bash"># Edit nginx-deployment.yaml:
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Edit the manifest, then apply only the diff</span></div>
+            <pre class="codehilite"><code class="language-bash"># Edit nginx-deployment.yaml first:
 #   - Change image: nginx:1.26-alpine  TO  image: nginx:1.27-alpine
 #   - Update the change-cause annotation to describe the change
-#   Then apply:
-</code></pre>
-          <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Apply the broken image to trigger a failure</span></div>
-            <pre class="codehilite"><code class="language-bash">kubectl apply -f nginx-deployment.yaml
-# kubectl apply performs a three-way merge:
+kubectl apply -f nginx-deployment.yaml
 
+# kubectl apply performs a three-way merge:
 #   1. Your new YAML (desired state)
 #   2. The last-applied configuration (stored as annotation)
 #   3. The live object in the cluster
@@ -6148,7 +6223,7 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Watch the rollout stall on the bad image</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Watch the declarative rollout finish</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl rollout status deployment/nginx-deployment
 </code></pre>
           </div>
@@ -6198,6 +6273,9 @@ spec:
 
           <h3 id="lab2-troubleshooting">Troubleshooting Stuck Rollouts</h3>
 
+          <p>A rollout can stop making progress and simply stay that way. The callout below explains how Kubernetes
+            reports that, and the commands after it trace the cause back to a Pod.</p>
+
           <blockquote class="danger">A rollout can get stuck with <code>DeadlineExceeded</code> if it does not progress
             within <code>progressDeadlineSeconds</code> (default: 600 seconds / 10 minutes). The Deployment condition
             <code>Progressing</code> will show <code>reason: ProgressDeadlineExceeded</code>. This does NOT
@@ -6205,7 +6283,7 @@ spec:
           </blockquote>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Diagnose a stuck rollout:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Diagnose a stuck rollout</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl describe deployment nginx-deployment
 # Look for Conditions section:
 # Type           Status  Reason
@@ -6253,9 +6331,10 @@ kubectl get pods -l app=nginx
             <li><strong>Blue-green deployment:</strong> maintain two full environments ("blue" = current, "green" =
               new). Switch all traffic at once by changing a Service selector. Instant rollback by switching back.
               Doubles resource usage while both environments exist.</li>
-            <li>These patterns are covered in Section 3 alongside service meshes and progressive delivery tools (Argo
-              Rollouts, Flagger).</li>
           </ol>
+
+          <p>Section 3 covers both patterns in full, alongside service meshes and the progressive delivery tools that
+            automate them (Argo Rollouts, Flagger).</p>
 
           <h3 id="lab2-cleanup">Cleanup</h3>
 
@@ -6345,15 +6424,18 @@ kubectl delete service nginx-deployment 2>/dev/null || true
               <li><strong>Audit logging:</strong> Secret reads should be logged so you know if credentials have been
                 accessed unexpectedly.</li>
             </ol>
-            For production systems, prefer <strong>External Secrets Operator</strong> (pulls from AWS Secrets Manager,
-            HashiCorp Vault, GCP Secret Manager) or <strong>Sealed Secrets</strong> (encrypted at rest in Git). These
-            tools are covered in Section 3.
+            For production systems, prefer an <strong>Operator</strong>: a controller a third party ships alongside a
+            custom resource type, which reconciles that resource the way built-in controllers reconcile Pods. The
+            <strong>External Secrets Operator</strong> pulls values from AWS Secrets Manager, HashiCorp Vault, or GCP
+            Secret Manager into Kubernetes Secrets on demand, and <strong>Sealed Secrets</strong> instead keeps an
+            encrypted copy in Git that a cluster controller decrypts at apply time. These tools are covered in
+            Section 3.
           </blockquote>
 
           <h3 id="lab3-injection-mechanism">How Injection Works Under the Hood</h3>
 
           <p>The same ConfigMap or Secret can reach a container in two fundamentally different ways, and the difference
-            explains the update behaviour you will see later in this lab. Understanding the mechanism removes the
+            explains the update behavior you will see later in this lab. Understanding the mechanism removes the
             mystery from "why did my env var not change?"</p>
 
           <p>When the kubelet on a node starts a pod, it reads the pod spec and resolves every
@@ -6394,7 +6476,7 @@ kubectl delete service nginx-deployment 2>/dev/null || true
 
           <p>Every Secret has a <code>type</code> field. <code>Opaque</code> (used throughout this lab) means "arbitrary
             key-value data with no special structure." Kubernetes also defines several typed Secrets that enforce a
-            required set of keys and let other components recognise the Secret's purpose. Using the correct type lets
+            required set of keys and let other components recognize the Secret's purpose. Using the correct type lets
             the kubelet, kubectl, and controllers validate and consume the Secret automatically.</p>
 
           <div class="table-wrap">
@@ -6447,13 +6529,14 @@ kubectl delete service nginx-deployment 2>/dev/null || true
           </p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create a registry-credentials Secret of type kubernetes.io/dockerconfigjson</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create a Secret holding private registry credentials</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl create secret docker-registry regcred \
   --docker-server=registry.example.com \
   --docker-username=myuser \
   --docker-password=&#x27;mypassword&#x27; \
   --docker-email=me@example.com
 
+# This creates a Secret of type kubernetes.io/dockerconfigjson.
 # Reference it from a pod (or a ServiceAccount) so the kubelet can pull images:
 #   spec:
 #     imagePullSecrets:
@@ -6495,7 +6578,7 @@ kubectl delete service nginx-deployment 2>/dev/null || true
           <h3 id="lab3-secrets-security">Securing Secrets in Production</h3>
 
           <p>As the danger callout above stressed, base64 is encoding, not encryption. A Secret object provides
-            <em>organisational</em> separation of sensitive data, but on its own it provides almost no
+            <em>organizational</em> separation of sensitive data, but on its own it provides almost no
             <em>confidentiality</em>. Production-grade secret handling layers several controls on top.
           </p>
 
@@ -6534,11 +6617,13 @@ kubectl delete service nginx-deployment 2>/dev/null || true
           <p>These commands create a ConfigMap by passing key-value pairs directly on the command line.</p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create a ConfigMap with individual key-value pairs from the command line</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create a ConfigMap from individual key-value pairs</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl create configmap app-config \
   --from-literal=APP_ENV=production \
   --from-literal=LOG_LEVEL=INFO \
   --from-literal=MAX_CONNECTIONS=100
+
+# --from-literal sets one key per flag, straight from the command line.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -6579,7 +6664,8 @@ EOF
 
           <h4 id="lab3-cm-from-yaml">Method 3: From YAML (declarative, preferred in production)</h4>
 
-          <p>Create <code>app-configmap.yaml</code>:</p>
+          <p>The ConfigMap below holds three simple values plus a full nginx configuration file as a multi-line
+            value. Save it as <code>app-configmap.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml">apiVersion: v1           # Core API group, version v1
 kind: ConfigMap          # Resource type: ConfigMap
@@ -6629,7 +6715,8 @@ echo -n "mysecretpassword" | base64
 </code></pre>
           </blockquote>
 
-          <p>Create <code>app-secret.yaml</code>:</p>
+          <p>The Secret below carries three sensitive values in <code>stringData</code>, so Kubernetes does the
+            base64 encoding for you. Save it as <code>app-secret.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml">apiVersion: v1           # Core API group
 kind: Secret             # Resource type: Secret
@@ -6675,6 +6762,8 @@ kubectl get secret app-secret
 
           <p>Best for: injecting specific keys as env vars when you want explicit control over env var names.</p>
 
+          <p>The Pod below takes one key from the ConfigMap and one from the Secret, naming each variable itself:</p>
+
           <pre class="codehilite"><code class="language-yaml">apiVersion: v1
 kind: Pod
 metadata:
@@ -6710,6 +6799,9 @@ spec:
             <code>envFrom</code> overrides earlier ones). Always audit key names to avoid hidden conflicts.
           </blockquote>
 
+          <p>The Pod below pulls every key from both objects in two <code>envFrom</code> entries. Save it as
+            <code>env-bulk-pod.yaml</code>:</p>
+
           <pre class="codehilite"><code class="language-yaml">apiVersion: v1
 kind: Pod
 metadata:
@@ -6735,6 +6827,9 @@ spec:
           <p>Best for: configuration files (nginx.conf, application.properties), or when the application reads from
             files rather than env vars. Each key in the ConfigMap becomes a separate file in the mounted directory. The
             filename is the key name; the file content is the value.</p>
+
+          <p>The Pod below mounts the ConfigMap and the Secret as two separate read-only directories. Save it as
+            <code>volume-mount-pod.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml">apiVersion: v1
 kind: Pod
@@ -6777,6 +6872,9 @@ spec:
           <p>Best for: applications that accept configuration only via command-line flags, not environment variables.
           </p>
 
+          <p>The Pod below injects two values as environment variables, then expands them into the container's
+            <code>args</code> with Kubernetes <code>$(VAR_NAME)</code> substitution:</p>
+
           <pre class="codehilite"><code class="language-yaml">apiVersion: v1
 kind: Pod
 metadata:
@@ -6816,7 +6914,7 @@ kubectl apply -f app-secret.yaml
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Verify</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm both objects were created</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl describe configmap app-config
 kubectl describe secret app-secret   # Values shown as &lt;redacted&gt; in describe output
 </code></pre>
@@ -6836,7 +6934,7 @@ kubectl wait --for=condition=Ready pod/volume-mount-pod --timeout=60s
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Execute command in pod</span></div>
+            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Open a shell to inspect the mounted files</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec -it volume-mount-pod -- sh
 # Inside the container:
 </code></pre>
@@ -6852,6 +6950,9 @@ exit
           </div>
 
           <h3 id="lab3-update-behavior">Update Behavior: A Critical Difference</h3>
+
+          <p>What happens when you edit a ConfigMap or Secret depends entirely on how the Pod consumes it. The two
+            callouts below cover each case.</p>
 
           <blockquote class="warning"><strong>Environment variables do not auto-update</strong>
             A value injected from a ConfigMap or Secret as an environment variable is read once, at container start
@@ -6872,7 +6973,7 @@ exit
           <h3 id="lab3-immutable">Immutable ConfigMaps and Secrets</h3>
 
           <p>The manifest below marks a ConfigMap immutable, which prevents accidental edits and lets the kubelet skip
-            watching it for changes.</p>
+            watching it for changes:</p>
 
           <pre class="codehilite"><code class="language-yaml">apiVersion: v1
 kind: ConfigMap
@@ -6893,8 +6994,11 @@ immutable: true    # Once set to true, data cannot be changed.
             a referenced key.</p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Problem: Pod stuck in &quot;CreateContainerConfigError&quot; Cause: ConfigMap or Secret referenced in the pod spec does not exist Diagnosis:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Diagnose a Pod in CreateContainerConfigError</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl describe pod my-pod | grep -A5 &quot;Events:&quot;
+
+# Problem: Pod stuck in &quot;CreateContainerConfigError&quot;.
+# Cause: a ConfigMap or Secret referenced in the pod spec does not exist.
 # Events show: Error: configmap &quot;app-config&quot; not found
 # Or:          Error: secret &quot;app-secret&quot; not found
 </code></pre>
@@ -6906,16 +7010,21 @@ kubectl get secret -n default
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Problem: Pod starts but env var is empty Cause: key name mismatch (case-sensitive) A ConfigMap key &quot;log_level&quot; is NOT the same as &quot;LOG_LEVEL&quot;</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Diagnose an env var that arrives empty in the Pod</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get configmap app-config -o jsonpath=&#x27;{.data}&#x27; | python3 -m json.tool
+
+# Problem: Pod starts but the env var is empty.
+# Cause: key name mismatch (key names are case-sensitive).
+# A ConfigMap key &quot;log_level&quot; is NOT the same as &quot;LOG_LEVEL&quot;.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Problem: Secret value has trailing newline causing auth failures Diagnosis:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Diagnose a Secret with a trailing newline</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get secret app-secret -o jsonpath=&#x27;{.data.DB_PASSWORD}&#x27; | base64 -d | xxd | head
-# If you see &#x27;0a&#x27; at the end of the hex dump, there is a trailing newline
 
-# Fix: recreate the secret using echo -n (no newline) or stringData
+# Problem: a Secret value with a trailing newline causes auth failures.
+# If you see &#x27;0a&#x27; at the end of the hex dump, there is a trailing newline.
+# Fix: recreate the secret using echo -n (no newline) or stringData.
 </code></pre>
           </div>
 
@@ -7108,7 +7217,8 @@ kubectl delete secret app-secret 2>/dev/null || true
 
           <h3 id="lab4-step1">Step 1: Create the PersistentVolumeClaim</h3>
 
-          <p>Create <code>my-pvc.yaml</code>:</p>
+          <p>The claim below asks for 1Gi of single-node read-write storage from Minikube's default StorageClass.
+            Save it as <code>my-pvc.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml">apiVersion: v1              # Core API group
 kind: PersistentVolumeClaim # Request for storage (not the storage itself)
@@ -7162,7 +7272,8 @@ spec:
 
           <h3 id="lab4-step2">Step 2: Deploy a Pod with the Volume Mounted</h3>
 
-          <p>Create <code>storage-pod.yaml</code>:</p>
+          <p>The Pod below mounts that claim at <code>/data</code>, so anything written there lands on the
+            PersistentVolume rather than in the container. Save it as <code>storage-pod.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml">apiVersion: v1
 kind: Pod
@@ -7214,7 +7325,7 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Execute command in storage-pod</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the volume is mounted at /data</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec storage-pod -- df -h /data
 # Filesystem      Size  Used Avail Use% Mounted on
 
@@ -7240,7 +7351,7 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Write &gt;</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Append two more lines to the file</span></div>
             <pre class="codehilite"><code class="language-bash">echo &quot;Line 1: This data will survive&quot; &gt;&gt; /data/evidence.txt
 echo &quot;Line 2: Even after pod deletion&quot; &gt;&gt; /data/evidence.txt
 cat /data/evidence.txt
@@ -7249,7 +7360,7 @@ exit
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Execute command in storage-pod</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Read the file back to confirm it was written</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec storage-pod -- cat /data/evidence.txt
 </code></pre>
           </div>
@@ -7295,8 +7406,8 @@ kubectl wait --for=condition=Ready pod/storage-pod --timeout=60s
 
           <h3 id="lab4-emptydir-contrast">Bonus: emptyDir Contrast (Data Does Not Survive)</h3>
 
-          <p>The manifest below uses an emptyDir volume instead of a PVC, to demonstrate the contrast: its data is lost
-            when the Pod is removed.</p>
+          <p>The manifest below uses an emptyDir volume instead of a PVC, so its data is lost the moment the Pod is
+            removed. Save it as <code>ephemeral-pod.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml">apiVersion: v1
 kind: Pod
@@ -7327,7 +7438,7 @@ kubectl wait --for=condition=Ready pod/ephemeral-pod --timeout=60s
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Write data</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Write a file into the emptyDir volume</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec ephemeral-pod -- sh -c &#x27;echo &quot;this will be lost&quot; &gt; /tmp/data/test.txt&#x27;
 kubectl exec ephemeral-pod -- cat /tmp/data/test.txt
 # Delete and recreate
@@ -7342,7 +7453,7 @@ kubectl wait --for=condition=Ready pod/ephemeral-pod --timeout=60s
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Execute command in ephemeral-pod</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Confirm the emptyDir data is gone</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec ephemeral-pod -- ls /tmp/data/
 # (empty - no test.txt)
 </code></pre>
@@ -7358,6 +7469,8 @@ kubectl wait --for=condition=Ready pod/ephemeral-pod --timeout=60s
           <p>When running multiple database replicas, each replica needs its own separate PVC. StatefulSets solve this
             with <code>volumeClaimTemplates</code>: each pod in the StatefulSet gets its own PVC automatically created
             from the template.</p>
+
+          <p>The StatefulSet below gives each of three PostgreSQL replicas its own 10Gi claim:</p>
 
           <pre class="codehilite"><code class="language-yaml">apiVersion: apps/v1
 kind: StatefulSet
@@ -7406,13 +7519,21 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">No matching StorageClass Events: no persistent volumes available for this claim Fix: check storageClassName matches an existing class:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Cause 1: no matching StorageClass</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get storageclass
+
+# 1. No matching StorageClass
+# Events: no persistent volumes available for this claim
+# Fix: check storageClassName matches an existing class
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Requested capacity exceeds available Events: no persistent volumes available for this claim Fix: reduce the storage request or check node disk space:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Cause 2: requested capacity exceeds available</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl describe nodes | grep -A5 &quot;Capacity:&quot;
+
+# 2. Requested capacity exceeds available
+# Events: no persistent volumes available for this claim
+# Fix: reduce the storage request or check node disk space
 
 # 3. AccessMode not supported by available PVs
 # Events: no persistent volumes available for this claim
@@ -7420,8 +7541,11 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Problem: PV in Released state (PVC was deleted but PV persists due to Retain policy)</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Diagnose a PV stuck in Released state</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get pv
+
+# Problem: PV in Released state. The PVC was deleted but the PV persists
+# because its reclaim policy is Retain.
 # STATUS: Released   CLAIM: default/old-pvc   &lt;-- bound to a deleted PVC
 </code></pre>
           </div>
@@ -7433,8 +7557,10 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">vi</span><span class="cmd-step-title">Problem: Pod stuck in ContainerCreating with volume mount error</span></div>
+            <div class="cmd-label"><span class="cmd-roman">vi</span><span class="cmd-step-title">Diagnose a Pod stuck in ContainerCreating</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl describe pod storage-pod | grep -A10 &quot;Events:&quot;
+
+# Problem: Pod stuck in ContainerCreating with a volume mount error.
 # Events: Unable to attach or mount volumes: unable to mount volumes for pod:
 # timeout expired waiting for volumes to attach
 
@@ -7628,7 +7754,7 @@ kubectl get pv
               <rect x="400" y="292" width="240" height="14" rx="7" class="kf-group-node"/>
               <text x="520" y="304" text-anchor="middle" font-size="12" font-weight="700" class="kf-net-t">Re-added to Service endpoints</text>
             </svg>
-            <figcaption id="fig1-15-cap">Figure 1.15: Probe lifecycle: startup gates liveness and readiness; each has distinct failure behaviour.</figcaption>
+            <figcaption id="fig1-15-cap">Figure 1.15: Probe lifecycle: startup gates liveness and readiness; each has distinct failure behavior.</figcaption>
           </figure>
 
           <h3 id="lab5-probe-mechanisms">Three Probe Mechanisms</h3>
@@ -7647,7 +7773,7 @@ kubectl get pv
 
           <h3 id="lab5-probe-parameters">Critical Probe Parameters</h3>
 
-          <p>The annotated reference below explains every probe tuning parameter and the trade-off each one controls.
+          <p>The annotated reference below explains every probe tuning parameter and the trade-off each one controls:
           </p>
 
           <pre class="codehilite"><code class="language-yaml"># Full parameter reference - applies to all three probe types
@@ -7684,7 +7810,8 @@ livenessProbe:
               sent to pods the moment their container process starts, before the app is ready. Users see errors during
               every deployment.</li>
             <li><strong>Checking database in liveness probe:</strong> database downtime causes all pods to restart
-              simultaneously, making a bad situation worse. Only liveness-probe internal application health.</li>
+              simultaneously, making a bad situation worse. A liveness probe should test only the health of the
+              application process itself.</li>
             <li><strong>Default timeoutSeconds: 1s:</strong> under load, a healthy application might take 2-3 seconds to
               respond. With a 1s timeout, your pods get spuriously restarted during traffic spikes. Always set
               <code>timeoutSeconds</code> to at least your application's 99th-percentile response time.
@@ -7695,7 +7822,8 @@ livenessProbe:
 
           <h4 id="lab5-probe-deploy">Deploy probe-demo.yaml with All Three Probes</h4>
 
-          <p>Create <code>probe-demo.yaml</code>:</p>
+          <p>The manifest below defines a two-replica nginx Deployment carrying all three probes, plus a Service in
+            front of it. Save it as <code>probe-demo.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml">apiVersion: apps/v1
 kind: Deployment
@@ -7836,7 +7964,7 @@ kubectl exec $POD -- mv /usr/share/nginx/html/index.html /tmp/index.html.bak
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Execute command in $POD</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Restore the health file and watch the Pod recover</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec $POD -- mv /tmp/index.html.bak /usr/share/nginx/html/index.html
 # Watch Terminal 2 - pod IP returns to endpoints
 # probe-demo   10.244.0.y:80
@@ -7915,7 +8043,7 @@ Pod uses 80m CPU, CPU request = NONE:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">View resource usage for nodes</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Check node CPU and memory headroom</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl top nodes
 # NAME       CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%
 # minikube   150m         7%     800Mi           40%
@@ -7923,7 +8051,7 @@ Pod uses 80m CPU, CPU request = NONE:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">View resource usage for pods</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Check per-pod CPU and memory</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl top pods -l app=probe-demo
 # NAME                   CPU(cores)   MEMORY(bytes)
 # probe-demo-xxx-aaa     1m           3Mi
@@ -7936,7 +8064,8 @@ Pod uses 80m CPU, CPU request = NONE:
 
           <h4 id="lab5-hpa-deploy">Deploy the HPA Demo Application</h4>
 
-          <p>Create <code>probe-hpa.yaml</code>:</p>
+          <p>The manifest below defines a deliberately CPU-hungry demo Deployment with a CPU request the HPA can
+            measure against, plus its Service. Save it as <code>probe-hpa.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml">apiVersion: apps/v1
 kind: Deployment
@@ -8002,13 +8131,16 @@ spec:
   type: ClusterIP                           # Internal-only; accessible within cluster
 </code></pre>
 
+          <p>Apply it and wait for the Deployment to report Available:</p>
+
           <pre class="codehilite"><code class="language-bash">kubectl apply -f probe-hpa.yaml
 kubectl wait --for=condition=Available deployment/hpa-demo --timeout=60s
 </code></pre>
 
           <h4 id="lab5-hpa-create">Create the HPA (autoscaling/v2)</h4>
 
-          <p>Create <code>hpa.yaml</code>:</p>
+          <p>The HorizontalPodAutoscaler below targets that Deployment and holds it between 1 and 10 replicas at 50%
+            average CPU. Save it as <code>hpa.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml">apiVersion: autoscaling/v2               # v2 supports multiple metrics and fine-grained behavior.
                                          # autoscaling/v1 is older and more limited.
@@ -8158,9 +8290,12 @@ spec:
             a pod crash-looping on a liveness probe.</p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Problem: HPA shows &lt;unknown&gt;/50% Cause 1: metrics-server not installed or not ready</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Cause 1: metrics-server missing or not ready</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get deployment metrics-server -n kube-system
 kubectl top pods -l app=hpa-demo   # If this fails, metrics-server is the problem
+
+# Problem: the HPA shows &lt;unknown&gt;/50% for the current metric.
+# Cause 1: metrics-server is not installed, or not ready yet.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -8187,23 +8322,28 @@ kubectl top pods -l app=hpa-demo   # If this fails, metrics-server is the proble
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Problem: Pod stuck in CrashLoopBackOff due to liveness probe Cause: initialDelaySeconds too short or probe path wrong</span></div>
+            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Diagnose CrashLoopBackOff from a liveness probe</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl describe pod &lt;pod-name&gt; | grep -A15 &quot;Liveness\|Events:&quot;
-# Events will show: &quot;Liveness probe failed: Get ... connection refused&quot;
 
+# Problem: Pod stuck in CrashLoopBackOff due to the liveness probe.
+# Cause: initialDelaySeconds too short, or the probe path is wrong.
+# Events will show: &quot;Liveness probe failed: Get ... connection refused&quot;
 # Or: &quot;Liveness probe failed: HTTP probe failed with statuscode: 404&quot;
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">vi</span><span class="cmd-step-title">Fix: increase initialDelaySeconds and verify the path exists Quick test - run the probe manually:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">vi</span><span class="cmd-step-title">Fix: run the probe by hand to check the path</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec &lt;pod-name&gt; -- wget -qO- http://localhost:80/healthz
+
+# Fix: increase initialDelaySeconds and verify the path exists.
+# This is the quick test: run the probe manually.
 
 # Problem: rolling update stuck because readiness probe never passes
 # This is intentional safety behavior (covered in Lab 2)
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">vii</span><span class="cmd-step-title">Diagnose: look at the new pod&#x27;s readiness probe failures</span></div>
+            <div class="cmd-label"><span class="cmd-roman">vii</span><span class="cmd-step-title">Diagnose the readiness probe failures on the new pod</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl describe pod -l app=my-app | grep -B2 &quot;Readiness probe failed&quot;
 </code></pre>
           </div>
@@ -8212,11 +8352,12 @@ kubectl top pods -l app=hpa-demo   # If this fails, metrics-server is the proble
 
           <p>These commands remove the HPA, Deployments, Services, and load generator created during the lab.</p>
 
-          <pre class="codehilite"><code class="language-bash"># Delete all Lab 5 resources
-kubectl delete hpa hpa-demo 2>/dev/null || true
+          <pre class="codehilite"><code class="language-bash">kubectl delete hpa hpa-demo 2>/dev/null || true
 kubectl delete deployment hpa-demo probe-demo 2>/dev/null || true
 kubectl delete service hpa-demo probe-demo 2>/dev/null || true
 kubectl delete pod load-generator 2>/dev/null || true
+
+# This removes every Lab 5 resource. The || true keeps going if one is gone.
 </code></pre>
 
           <blockquote class="success"><strong>Key Takeaways: Lab 5</strong>
@@ -8256,6 +8397,9 @@ kubectl delete pod load-generator 2>/dev/null || true
           </p>
 
           <h3 id="lab6-workload-comparison">Workload Controller Comparison</h3>
+
+          <p>The table below compares the five controllers on the properties that decide which one a workload needs:
+            pod identity, per-pod storage, and when the pods are expected to stop.</p>
 
           <div class="table-wrap">
             <table>
@@ -8383,9 +8527,8 @@ web-1.nginx.default.svc.cluster.local
             (<code>postgres-0</code>)
             must be fully available before followers (<code>postgres-1</code>, <code>postgres-2</code>) start attempting
             replication. During shutdown, followers must stop before the leader so there is no data loss from in-flight
-            replication packets. StatefulSet encoding this as a platform guarantee means you do not need to write
-            complex
-            init-container logic to handle it yourself.
+            replication packets. Because StatefulSet encodes that ordering as a platform guarantee, you do not have
+            to write init-container logic to reproduce it yourself.
           </p>
 
           <blockquote>When NOT to use StatefulSet: if you are running on a cloud provider (AWS, GCP, Azure), prefer
@@ -8536,7 +8679,7 @@ spec:
             taints that repel ordinary workloads. You can restrict a DaemonSet to a subset of nodes using
             <code>nodeSelector</code> (simple key-value match) or <code>nodeAffinity</code> (richer expressions). A
             common
-            example is a GPU workload DaemonSet that only runs on nodes labelled <code>accelerator: nvidia</code>.
+            example is a GPU workload DaemonSet that only runs on nodes labeled <code>accelerator: nvidia</code>.
           </p>
 
           <h4 id="lab6-ds-update">Update Strategy</h4>
@@ -8553,7 +8696,8 @@ spec:
           </ol>
 
           <h4 id="lab6-ds-yaml">Full Annotated DaemonSet YAML (Fluent Bit Log Collector)</h4>
-          <p>Save as <code>daemonset-fluentbit.yaml</code>:</p>
+          <p>The DaemonSet below runs a Fluent Bit log collector on every node, including the control plane, and
+            mounts the node's log directories read-only. Save it as <code>daemonset-fluentbit.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml">
 apiVersion: apps/v1
@@ -8628,9 +8772,11 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">On Minikube (one node), you will see exactly one Fluent Bit pod</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Confirm the DaemonSet placed its pods</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get pods -n kube-system -l name=fluent-bit
-# See which node each DaemonSet pod is running on
+
+# On Minikube (one node), you will see exactly one Fluent Bit pod.
+# See which node each DaemonSet pod is running on.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -8686,7 +8832,8 @@ spec:
           </blockquote>
 
           <h4 id="lab6-job-yaml">Full Annotated Job YAML</h4>
-          <p>Save as <code>job-pi.yaml</code>:</p>
+          <p>The Job below runs one pod that computes digits of pi and then exits. Save it as
+            <code>job-pi.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml">
 apiVersion: batch/v1                      # Jobs live in the batch API group
@@ -8799,7 +8946,7 @@ spec:
             <figcaption id="fig1-16-cap">Figure 1.16: The five fields of a cron schedule.</figcaption>
           </figure>
 
-          <p>Common examples:</p>
+          <p>The table below lists the schedules you are most likely to write:</p>
           <div class="table-wrap">
             <table>
               <thead>
@@ -8844,7 +8991,8 @@ spec:
           </ol>
 
           <h4 id="lab6-cron-yaml">Full Annotated CronJob YAML</h4>
-          <p>Save as <code>cronjob-hello.yaml</code>:</p>
+          <p>The CronJob below fires every two minutes and refuses to start a second run while the previous one is
+            still going. Save it as <code>cronjob-hello.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml">
 apiVersion: batch/v1
@@ -8927,6 +9075,8 @@ spec:
           <hr />
           <h3 id="lab6-troubleshooting">Troubleshooting Reference</h3>
 
+          <p>The table below maps the symptoms you are most likely to hit in this lab to their cause and their fix.</p>
+
           <div class="table-wrap">
             <table>
               <thead>
@@ -8980,14 +9130,14 @@ spec:
 
           <h3 id="lab6-cleanup">Cleanup</h3>
           <p>These commands remove all the workload objects created across this lab.</p>
-          <pre class="codehilite"><code class="language-bash">
-# Remove all resources created in this lab
-kubectl delete -f statefulset.yaml
+          <pre class="codehilite"><code class="language-bash">kubectl delete -f statefulset.yaml
 kubectl delete pvc -l app=nginx-sts        # PVCs are NOT deleted with the StatefulSet
 kubectl delete -f daemonset-fluentbit.yaml
 kubectl delete -f job-pi.yaml 2>/dev/null || true
 kubectl delete -f cronjob-hello.yaml
 kubectl delete jobs -l job-name           # clean up any leftover Jobs
+
+# This removes all resources created in this lab.
 </code></pre>
 
           <blockquote class="success">

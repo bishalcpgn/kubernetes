@@ -349,7 +349,9 @@
           <p>
             The <code>baseline</code> profile prevents the most obviously dangerous configurations while remaining
             compatible
-            with most containerized applications. It specifically blocks:
+            with most containerized applications. The fields it inspects live in the Pod spec and in
+            <code>securityContext</code>, the block where a Pod or a container declares its security settings. Baseline
+            specifically blocks:
           </p>
           <ol class="sec2-indented">
             <li><code>spec.hostProcess: true</code> (Windows host process containers)</li>
@@ -487,9 +489,9 @@
             responses going out). This is what people usually think of when they think of firewalls.
           </p>
           <p>
-            <strong>East-west traffic</strong> is traffic between services inside the cluster. Service A calling Service
-            B.
-            Frontend calling the database. This is equally important and often overlooked.
+            <strong>East-west traffic</strong> is traffic between services inside the cluster: Service A calls Service
+            B, and a frontend calls its database. This traffic matters just as much as north-south traffic, and teams
+            overlook it far more often.
           </p>
 
           <details class="deep-dive">
@@ -523,9 +525,9 @@
           </p>
           <ol class="sec2-indented">
             <li><strong>Malicious base images.</strong> A typosquatted Docker Hub image (<code>ubunut</code> for
-              <code>ubuntu</code>) that ships a backdoor.</li>
-            <li><strong>Dependency confusion.</strong> A public package published under an internal name, which your
-              build resolves in preference to the real one.</li>
+              <code>ubuntu</code>) ships a backdoor into every build that pulls it.</li>
+            <li><strong>Dependency confusion.</strong> An attacker publishes a public package under one of your internal
+              package names, and your build resolves it in preference to the real one.</li>
             <li><strong>Compromised build systems.</strong> An attacker with CI access injects code after review has
               passed, so the source looks clean and the artifact is not.</li>
             <li><strong>Registry tampering.</strong> A mutable tag such as <code>:latest</code> is repointed at a
@@ -556,6 +558,9 @@
           </p>
 
           <h3 id="the-security-tool-stack-what-layer-each-tool-operates-at">The Security Tool Stack: What Layer Each Tool Operates At</h3>
+
+          <p>Each tool in this section operates at exactly one stage of the pipeline, and the labs are ordered to follow
+            that pipeline from left to right. The table below is the map.</p>
 
           <p><strong>Tool-to-Layer Mapping</strong></p>
 
@@ -637,7 +642,7 @@
             them, and because it runs as a static Pod you can read its command line.</p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Read the admission plugin flags the API server was started with</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">See which admission plugins the API server enables</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl -n kube-system get pod kube-apiserver-minikube \
   -o jsonpath=&#x27;{.spec.containers[0].command}&#x27; | tr &#x27;,&#x27; &#x27;\n&#x27; | grep -i admission
 # Output: typically a single explicitly enabled plugin
@@ -659,7 +664,7 @@ kubectl get mutatingwebhookconfigurations
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the built-in Pod Security Admission controller is available</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Prove Pod Security Admission is available here</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl label --dry-run=server --overwrite ns default \
   pod-security.kubernetes.io/enforce=restricted
 # Output: namespace/default labeled (dry run)
@@ -693,10 +698,11 @@ kubectl get mutatingwebhookconfigurations
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Compare that against the default ServiceAccount every Pod gets</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Compare that with the default ServiceAccount</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl auth can-i --list --as=system:serviceaccount:default:default
 # Output: a very short list, mostly selfsubjectreviews and a few read verbs.
 # The default ServiceAccount is nearly powerless, which is the correct default.
+# Every Pod that does not name a ServiceAccount is given this one.
 </code></pre>
           </div>
 
@@ -822,7 +828,8 @@ kubectl wait --for=condition=Ready pod/posture-demo --timeout=60s
           <p><strong>What we are doing:</strong> installing Trivy natively, scanning a YAML manifest for
             misconfigurations,
             scanning a container image for CVEs, and scanning a directory for hardcoded secrets. We will then integrate
-            Trivy into a CI pipeline and explore the Trivy Operator for continuous cluster scanning.</p>
+            Trivy into a CI pipeline and explore the Trivy Operator, an in-cluster controller that rescans running
+            workloads on its own.</p>
           <p><strong>Real-world mapping:</strong> In a mature DevSecOps pipeline, every git push triggers a Trivy scan.
             If a developer accidentally commits a root-running container or a leaked API key, the build fails
             immediately,
@@ -897,7 +904,7 @@ kubectl wait --for=condition=Ready pod/posture-demo --timeout=60s
             vulnerability database cache (so you are not downloading the DB on every scan).
           </p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">On Debian/Ubuntu (the method used in this lab environment):</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Install Trivy from the Aqua apt repository</span></div>
             <pre class="codehilite"><code class="language-bash">sudo apt-get install -y wget apt-transport-https gnupg
 wget -qO - https://get.trivy.dev/deb/public.key | \
   sudo gpg --dearmor -o /usr/share/keyrings/trivy.gpg
@@ -906,6 +913,8 @@ echo &quot;deb [signed-by=/usr/share/keyrings/trivy.gpg] https://get.trivy.dev/d
   sudo tee /etc/apt/sources.list.d/trivy.list
 sudo apt-get update
 sudo apt-get install -y trivy
+
+# These steps are for Debian/Ubuntu, the method used in this lab environment.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -915,8 +924,10 @@ sudo apt-get install -y trivy
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Download the vulnerability database now (so later scans are fast):</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Pre-download the vulnerability database</span></div>
             <pre class="codehilite"><code class="language-bash">trivy image --download-db-only
+
+# Fetching the database once now keeps every later scan fast.
 </code></pre>
           </div>
 
@@ -1008,7 +1019,7 @@ HIGH: Container 'nginx' of Deployment 'nginx-deployment' should set
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Scan a current alpine-based image for comparison:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Scan a current alpine-based image for comparison</span></div>
             <pre class="codehilite"><code class="language-bash">trivy image nginx:1.29-alpine
 # Filter to only HIGH and CRITICAL findings:
 </code></pre>
@@ -1020,17 +1031,21 @@ HIGH: Container 'nginx' of Deployment 'nginx-deployment' should set
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">(this is how you fail a CI build):</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Fail the build when HIGH or CRITICAL findings exist</span></div>
             <pre class="codehilite"><code class="language-bash">trivy image --severity HIGH,CRITICAL --exit-code 1 nginx:1.20
 echo &quot;Exit code was: $?&quot;
 # Expected: exit code 1 (build would fail)
+
+# --exit-code 1 is how you fail a CI build on a vulnerable image.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Gate a build by failing with a non-zero exit code on HIGH/CRITICAL findings</span></div>
+            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Confirm the patched image passes the same gate</span></div>
             <pre class="codehilite"><code class="language-bash">trivy image --severity HIGH,CRITICAL --exit-code 1 nginx:1.29-alpine
 echo &quot;Exit code was: $?&quot;
 # Expected: exit code 0 (build passes)
+
+# Same non-zero exit gate as the previous step, run on a maintained image.
 </code></pre>
           </div>
 
@@ -1039,7 +1054,7 @@ echo &quot;Exit code was: $?&quot;
             <p>
               An image that has zero HIGH/CRITICAL CVEs today may have several next month when a new vulnerability is
               disclosed. This is why you scan on every build and also run continuous scanning in the cluster with the
-              Trivy Operator. A clean scan today is not a guarantee for tomorrow.
+              Trivy Operator, covered later in this lab. A clean scan today is not a guarantee for tomorrow.
             </p>
           </blockquote>
 
@@ -1105,7 +1120,7 @@ echo &quot;Exit code was: $?&quot;
             AWS access keys, GitHub tokens, private keys, and database passwords.
           </p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create a test file with a fake AWS key (safe - this is a well-known test key format). NEVER put real credentials in source files.</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Plant fake credentials for the scanner to find</span></div>
             <pre class="codehilite"><code class="language-bash">cat &gt; test-config.yaml &lt;&lt;&#x27;EOF&#x27;
 apiVersion: v1
 kind: ConfigMap
@@ -1117,10 +1132,13 @@ data:
   github_token: ghp_1234567890abcdefghijklmnopqrstuvwxyz12
   db_password: SuperSecret123!
 EOF
+
+# The AWS key above is safe: it is a well-known test key format.
+# NEVER put real credentials in source files.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Scan the current directory for secrets:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Scan the current directory for secrets</span></div>
             <pre class="codehilite"><code class="language-bash">trivy fs --scanners secret .
 # Expected: Trivy will flag the AWS key and GitHub token by recognizing their formats.
 </code></pre>
@@ -1131,7 +1149,7 @@ EOF
             GitHub personal access tokens, Stripe API keys, Slack webhooks, private RSA keys, and many more.
           </p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Clean up the test file:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Clean up the test file</span></div>
             <pre class="codehilite"><code class="language-bash">rm test-config.yaml
 </code></pre>
           </div>
@@ -1141,25 +1159,34 @@ EOF
             The default output is a human-readable table. Trivy supports other formats for different use cases:
           </p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Table (default): human-readable, good for reading in a terminal</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Read the findings as a table in the terminal</span></div>
             <pre class="codehilite"><code class="language-bash">trivy image nginx:1.20
+
+# Table is the default format: human-readable, good for reading in a terminal.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">JSON: machine-readable, good for post-processing with jq or feeding to a dashboard</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Emit JSON for another tool to consume</span></div>
             <pre class="codehilite"><code class="language-bash">trivy image --format json --output results.json nginx:1.20
 cat results.json | python3 -m json.tool | head -50
+
+# JSON is machine-readable: good for post-processing with jq,
+# or for feeding straight into a dashboard.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">SARIF: the standard format for uploading to GitHub&#x27;s Security tab</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Emit SARIF for the GitHub Security tab</span></div>
             <pre class="codehilite"><code class="language-bash">trivy image --format sarif --output trivy-results.sarif nginx:1.20
 # GitHub Actions can upload this to show findings in the PR Security tab
+
+# SARIF is the standard format for uploading to the GitHub Security tab.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Summary: just the counts, no full list (useful for quick CI status)</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Print just the counts for a quick CI status</span></div>
             <pre class="codehilite"><code class="language-bash">trivy image --format table --exit-code 0 nginx:1.20 2&gt;&amp;1 | tail -5
+
+# Summary output: just the counts, no full finding list.
 </code></pre>
           </div>
 
@@ -1201,6 +1228,10 @@ trivy image nginx:1.20
 
           <h3 id="step-7-integrating-trivy-in-github-actions-ci">Step 7: Integrating Trivy in GitHub Actions CI</h3>
 
+          <p>Running Trivy on your laptop proves that it works. Running it in CI is what stops a vulnerable image from
+            ever reaching a registry. One warning comes first, because it changes how you write every line of the
+            workflow.</p>
+
           <blockquote class="danger"><strong>Supply Chain Warning - Pin to Commit SHA</strong>
 
             <p>
@@ -1212,6 +1243,9 @@ trivy image nginx:1.20
               a full 40-character commit SHA. The SHA is immutable: it cannot be moved to point at a different commit.
             </p>
           </blockquote>
+
+          <p>The workflow below scans manifests for misconfigurations, builds and scans the image, and uploads the
+            findings to the GitHub Security tab. Save it as <code>.github/workflows/security.yml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml"># .github/workflows/security.yml
 name: Security Scan
@@ -1272,8 +1306,14 @@ jobs:
             already running in production. The Trivy Operator runs inside the cluster and continuously scans all running
             workloads, producing <code>VulnerabilityReport</code> custom resources that you can query with kubectl.
           </p>
+          <p>
+            An <strong>Operator</strong> is a Kubernetes pattern, not a Trivy invention: it is a controller that runs in
+            the cluster, watches objects through the API server, and manages one piece of software on your behalf. It
+            publishes its results as custom resources of its own, so you read them with <code>kubectl get</code> exactly
+            as you read a Pod or a Deployment.
+          </p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Add the Aqua Security Helm chart repository</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Install the Trivy Operator for continuous scanning</span></div>
             <pre class="codehilite"><code class="language-bash">helm repo add aqua https://aquasecurity.github.io/helm-charts/
 helm repo update
 helm install trivy-operator aqua/trivy-operator \
@@ -1289,12 +1329,14 @@ helm install trivy-operator aqua/trivy-operator \
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">After a few minutes, VulnerabilityReports appear automatically:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">List the reports the operator produced on its own</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get vulnerabilityreports -A
+
+# These appear automatically a few minutes after install. Nobody ran a scan.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Read a specific report:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Read one report in full</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get vulnerabilityreport -n default \
   replicaset-nginx-deployment-xxxxxxx-nginx \
   -o yaml
@@ -1331,9 +1373,11 @@ report:
             or has firewall restrictions, the download will fail.
           </p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Pre-download the vulnerability database so later scans are fast</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Warm the database cache before the real scans</span></div>
             <pre class="codehilite"><code class="language-bash">trivy image --download-db-only
 # The DB is stored at: ~/.cache/trivy/db/
+
+# Downloading it once up front is what makes the later scans fast.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -1414,7 +1458,7 @@ report:
             Pod Security Standards (PSS) replaced PSP with a simpler model: three fixed, well-documented profiles
             (Privileged, Baseline, Restricted) that are enforced by the built-in Pod Security Admission (PSA)
             controller.
-            No RBAC grants required. You simply label a namespace.
+            The model needs no RBAC grants at all. You label a namespace, and PSA does the rest.
           </p>
 
           <blockquote><strong>When you need more than the three fixed profiles: ValidatingAdmissionPolicy.</strong> PSS
@@ -1456,11 +1500,12 @@ report:
           <p>
             For example, to warn developers about baseline violations while strictly enforcing restricted:
           </p>
-          <pre class="codehilite"><code class="language-bash"># warn=baseline      prints a warning if baseline is violated
-# enforce=restricted  hard-rejects anything that violates restricted
-kubectl label namespace my-namespace \
+          <pre class="codehilite"><code class="language-bash">kubectl label namespace my-namespace \
   pod-security.kubernetes.io/warn=baseline \
   pod-security.kubernetes.io/enforce=restricted
+
+# warn=baseline      prints a warning if baseline is violated
+# enforce=restricted  hard-rejects anything that violates restricted
 </code></pre>
 
           <h3 id="securitycontext-fields-explained-one-by-one">securityContext Fields Explained One by One</h3>
@@ -1554,16 +1599,19 @@ kubectl label namespace my-namespace \
             This tells you which existing workloads would be affected if you enforce the policy.
           </p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create the secure-apps namespace from a generated manifest</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create a namespace to hold the lab Pods</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl create namespace secure-apps --dry-run=client -o yaml | kubectl apply -f -
 # Apply warn mode first - this will NOT reject any Pods, but will print warnings:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Label the namespace to enforce the restricted Pod Security Standard</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Turn on warn mode for the restricted profile</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl label --overwrite namespace secure-apps \
   pod-security.kubernetes.io/warn=restricted
 # Apply an insecure Pod and watch the warning:
+
+# The label names the restricted Pod Security Standard, in warn mode only.
+# Nothing is rejected yet.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -1582,14 +1630,17 @@ kubectl label namespace my-namespace \
           <p>These commands switch the namespace to enforce mode and confirm that a non-compliant Pod is now rejected
             outright.</p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Now add the enforce label (keeping warn as well):</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Switch the namespace to enforce mode</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl label --overwrite namespace secure-apps \
   pod-security.kubernetes.io/enforce=restricted \
   pod-security.kubernetes.io/warn=restricted
+
+# Keep the warn label alongside enforce, so violations still print a message.
 </code></pre>
           </div>
 
-          <p>Create <code>bad-pod.yaml</code> - this is a deliberately insecure Pod:</p>
+          <p>The Pod below sets no <code>securityContext</code> at all, so it breaks four separate rules of the
+            restricted profile at once. Save it as <code>bad-pod.yaml</code>:</p>
           <pre class="codehilite"><code class="language-yaml">apiVersion: v1
 kind: Pod
 metadata:
@@ -1651,7 +1702,8 @@ forbidden: violates PodSecurity "restricted:latest":
           </blockquote>
 
           <h3 id="step-3-deploy-a-fully-compliant-hardened-pod">Step 3: Deploy a Fully Compliant Hardened Pod</h3>
-          <p>Create <code>good-pod.yaml</code> with all required fields:</p>
+          <p>The Pod below sets every field the restricted profile requires, some at the Pod level and some at the
+            container level. Save it as <code>good-pod.yaml</code>:</p>
           <pre class="codehilite"><code class="language-yaml">apiVersion: v1
 kind: Pod
 metadata:
@@ -1698,17 +1750,18 @@ kubectl get pods -n secure-apps     # hardened-pod should be Running
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Wait for it to be fully ready:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Wait until the Pod reports Ready</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl wait --for=condition=Ready pod/hardened-pod -n secure-apps --timeout=60s
 </code></pre>
           </div>
 
           <h3 id="step-4-verify-the-pod-really-runs-as-non-root">Step 4: Verify the Pod Really Runs as Non-Root</h3>
           <p>
-            Trust but verify. Just because we set <code>runAsUser: 10001</code> does not mean it worked unless we check.
+            Setting <code>runAsUser: 10001</code> in a manifest is a request, not a result. The commands below ask the
+            running container who it actually is, and confirm that the read-only root filesystem took effect.
           </p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Execute &#x27;id&#x27; inside the running container:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Prove the process is not running as root</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec hardened-pod -n secure-apps -- id
 
 # Expected output:
@@ -1717,7 +1770,7 @@ kubectl get pods -n secure-apps     # hardened-pod should be Running
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Execute command in hardened-pod</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm the root filesystem is read-only</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec hardened-pod -n secure-apps -- sh -c &quot;touch /test-file 2&gt;&amp;1&quot;
 # Expected: touch: /test-file: Read-only file system
 
@@ -1726,7 +1779,7 @@ kubectl get pods -n secure-apps     # hardened-pod should be Running
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Execute command in hardened-pod</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the emptyDir mount is still writable</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec hardened-pod -n secure-apps -- sh -c &quot;touch /tmp/test-file &amp;&amp; echo &#x27;writable&#x27;&quot;
 # Expected: writable
 </code></pre>
@@ -1991,6 +2044,9 @@ kubectl get namespace secure-apps
 
           <h3 id="all-verbs-explained">All Verbs Explained</h3>
 
+          <p>Every RBAC rule is a list of verbs. The table below maps each verb to the HTTP request it authorizes and to
+            what a subject can actually do with it.</p>
+
           <div class="table-wrap">
             <table>
               <thead>
@@ -2075,6 +2131,9 @@ kubectl get namespace secure-apps
           </ol>
 
           <h3 id="built-in-clusterroles">Built-in ClusterRoles</h3>
+
+          <p>Kubernetes ships four general-purpose ClusterRoles so that you do not have to write the common permission
+            sets yourself. The table below shows how much access each one grants and who should hold it.</p>
 
           <div class="table-wrap">
             <table>
@@ -2172,7 +2231,8 @@ kubectl get serviceaccount -n rbac-lab  # verify it was created
 
           <h4 id="step-2-create-a-role-with-minimal-permissions">Step 2: Create a Role with Minimal Permissions</h4>
 
-          <p>The manifest below defines a Role granting only the specific verbs and resources this workload needs.</p>
+          <p>The manifest below defines a Role granting only the specific verbs and resources this workload needs.
+            Save it as <code>pod-reader-role.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml"># pod-reader-role.yaml
 apiVersion: rbac.authorization.k8s.io/v1   # RBAC API group
@@ -2195,7 +2255,7 @@ kubectl describe role pod-reader -n rbac-lab   # confirm rules look correct
           <h4 id="step-3-create-a-rolebinding-connecting-the-role-to-the-serviceaccount">Step 3: Create a RoleBinding Connecting the Role to the ServiceAccount</h4>
 
           <p>The manifest below binds the Role to the ServiceAccount, granting it those permissions in the namespace.
-          </p>
+            Save it as <code>pod-reader-binding.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml"># pod-reader-binding.yaml
 apiVersion: rbac.authorization.k8s.io/v1   # RBAC API group
@@ -2223,45 +2283,58 @@ kubectl describe rolebinding pod-reader-binding -n rbac-lab
             intended.</p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Should return &quot;yes&quot;: the ServiceAccount has list on pods in rbac-lab</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm the ServiceAccount can list Pods</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl auth can-i list pods \
   --as=system:serviceaccount:rbac-lab:pod-reader-sa \
   --namespace=rbac-lab
+
+# Should return "yes": the ServiceAccount has list on pods in rbac-lab.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Should return &quot;yes&quot;: get on pods is also granted</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm it can also get a single Pod</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl auth can-i get pods \
   --as=system:serviceaccount:rbac-lab:pod-reader-sa \
   --namespace=rbac-lab
+
+# Should return "yes": get on pods is also granted.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Should return &quot;no&quot;: secrets were never granted</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Check that reading Secrets is refused</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl auth can-i list secrets \
   --as=system:serviceaccount:rbac-lab:pod-reader-sa \
   --namespace=rbac-lab
+
+# Should return "no": secrets were never granted.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Should return &quot;no&quot;: deployments were never granted</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Check that listing Deployments is refused</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl auth can-i list deployments \
   --as=system:serviceaccount:rbac-lab:pod-reader-sa \
   --namespace=rbac-lab
+
+# Should return "no": deployments were never granted.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Should return &quot;no&quot;: delete on pods was not granted</span></div>
+            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Check that deleting a Pod is refused</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl auth can-i delete pods \
   --as=system:serviceaccount:rbac-lab:pod-reader-sa \
   --namespace=rbac-lab
+
+# Should return "no": delete on pods was not granted.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">vi</span><span class="cmd-step-title">Should return &quot;no&quot;: pods/exec is a separate subresource, not covered by &quot;pods&quot;</span></div>
+            <div class="cmd-label"><span class="cmd-roman">vi</span><span class="cmd-step-title">Check that exec into a Pod is refused</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl auth can-i create pods/exec \
   --as=system:serviceaccount:rbac-lab:pod-reader-sa \
   --namespace=rbac-lab
+
+# Should return "no".
+# pods/exec is a separate subresource, not covered by "pods".
 </code></pre>
           </div>
 
@@ -2275,11 +2348,12 @@ kubectl describe rolebinding pod-reader-binding -n rbac-lab
           <p>This command enumerates every verb and resource the ServiceAccount is allowed, giving a full picture of its
             access.</p>
 
-          <pre class="codehilite"><code class="language-bash"># The --list flag shows every verb+resource combination the subject is allowed to perform
-# This is your primary audit command for any ServiceAccount or user
-kubectl auth can-i --list \
+          <pre class="codehilite"><code class="language-bash">kubectl auth can-i --list \
   --as=system:serviceaccount:rbac-lab:pod-reader-sa \
   --namespace=rbac-lab
+
+# The --list flag shows every verb+resource combination the subject is allowed to perform
+# This is your primary audit command for any ServiceAccount or user
 </code></pre>
 
           <p>The output will show two non-system rows: <code>pods [] [get list]</code> and self-subject access review
@@ -2288,7 +2362,7 @@ kubectl auth can-i --list \
           <h4 id="step-6-deploy-a-pod-that-uses-the-serviceaccount">Step 6: Deploy a Pod That Uses the ServiceAccount</h4>
 
           <p>The manifest below runs a Pod under the restricted ServiceAccount so you can test its API access from
-            inside the cluster.</p>
+            inside the cluster. Save it as <code>pod-using-sa.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml"># pod-using-sa.yaml
 apiVersion: v1
@@ -2328,7 +2402,7 @@ kubectl logs -n rbac-lab api-reader
           <h4 id="step-7-show-automountserviceaccounttoken-false">Step 7: Show automountServiceAccountToken: false</h4>
 
           <p>The manifest below disables token automounting, which is the right default for Pods that never call the
-            Kubernetes API.</p>
+            Kubernetes API. Save it as <code>no-api-access-pod.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml"># no-api-access-pod.yaml
 apiVersion: v1
@@ -2389,7 +2463,7 @@ kubectl exec -n rbac-lab no-api-access -- ls /var/run/secrets/ 2>&1 || echo "No 
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Find which bindings grant this ServiceAccount its permissions</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Find which bindings grant the ServiceAccount access</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get rolebindings,clusterrolebindings -A -o wide | grep my-app
 # Find all subjects bound to cluster-admin (should be an empty or very short list)
 </code></pre>
@@ -2414,6 +2488,9 @@ for item in data[&#x27;items&#x27;]:
           </blockquote>
 
           <h3 id="troubleshooting-common-rbac-issues">Troubleshooting Common RBAC Issues</h3>
+
+          <p>Almost every RBAC failure comes from a small set of causes. The table below matches each symptom to its
+            likely cause and to the command that confirms it.</p>
 
           <div class="table-wrap">
             <table>
@@ -2515,6 +2592,9 @@ for item in data[&#x27;items&#x27;]:
           </blockquote>
 
           <h4 id="which-cni-plugins-enforce-networkpolicies">Which CNI Plugins Enforce NetworkPolicies</h4>
+
+          <p>Enforcement depends entirely on which CNI plugin the cluster runs. The table below lists the common plugins
+            and says whether a NetworkPolicy has any effect under each one.</p>
 
           <div class="table-wrap">
             <table>
@@ -2620,26 +2700,41 @@ spec:
             Calico. This matters because Minikube's default CNI does not enforce NetworkPolicies. Without Calico, every
             NetworkPolicy you write in this lab would be silently ignored and traffic would flow freely.</p>
 
+          <blockquote class="danger"><strong>This deletes the cluster you have used since Section 0</strong>
+
+            <p><code>minikube delete</code> destroys the whole cluster. Every namespace, Deployment, Service, Secret,
+              PersistentVolumeClaim, and tool you installed in an earlier lab goes with it, and none of it comes back.
+              Nothing in the remaining labs depends on that state, so recreating the cluster is safe. If you want to
+              keep a manifest you wrote by hand, save it to disk before you run the next command.</p>
+          </blockquote>
+
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Delete the existing cluster (its CNI cannot be changed while running, so we start fresh)</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Delete the existing cluster</span></div>
             <pre class="codehilite"><code class="language-bash">minikube delete
+
+# The CNI plugin cannot be changed while a cluster is running,
+# so we start fresh.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Start a new cluster with Calico CNI (4 CPUs and 4GB RAM required for Calico)</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Start a new cluster with the Calico CNI</span></div>
             <pre class="codehilite"><code class="language-bash">minikube start --cni=calico --cpus=4 --memory=4096
 # Wait for all Calico DaemonSet pods to be Running before proceeding
 # This can take 2-3 minutes on first start
+
+# Calico requires 4 CPUs and 4GB of RAM, which is why the flags are set above.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Watch the Calico node pods until every one reports Running (Calico must be ready before it can enforce policy)</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Watch the Calico pods until every one is Running</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get pods -n kube-system -l k8s-app=calico-node -w
 # Verify Calico is ready (should show Running status)
+
+# Calico must be ready before it can enforce any NetworkPolicy.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Confirm the calico-node DaemonSet is rolled out on every node</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Confirm calico-node is rolled out on every node</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get daemonset calico-node -n kube-system
 </code></pre>
           </div>
@@ -2698,14 +2793,18 @@ spec:
 </code></pre>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Deploy the frontend and database Pods, then wait until they are Ready</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Deploy the frontend and database Pods</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl apply -f deploy-pods.yaml
 kubectl wait --for=condition=Ready pod/frontend pod/database -n netpol-lab --timeout=90s
+
+# The wait blocks until both Pods report Ready.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Expose the database as a Service so frontend can reach it by DNS name</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Expose the database as a Service</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl expose pod database --port=6379 --name=database -n netpol-lab
+
+# A Service gives the database a stable DNS name the frontend can dial.
 </code></pre>
           </div>
 
@@ -2714,13 +2813,13 @@ kubectl wait --for=condition=Ready pod/frontend pod/database -n netpol-lab --tim
           <p>This command proves that, with no policy in place, the frontend can reach the database freely.</p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Execute command in frontend</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Prove frontend can reach the database today</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec -n netpol-lab frontend -- sh -c &quot;apk add --no-cache netcat-openbsd 2&gt;/dev/null; nc -zv database 6379&quot;
 # Expected: Connection succeeded - this confirms Calico is routing but no policies are applied yet
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Execute command in database</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Prove the reverse direction is open too</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec -n netpol-lab database -- sh -c &quot;nc -zv frontend 80&quot;
 # Expected: Connection succeeded
 </code></pre>
@@ -2728,8 +2827,8 @@ kubectl wait --for=condition=Ready pod/frontend pod/database -n netpol-lab --tim
 
           <h4 id="step-4-apply-default-deny-ingress-networkpolicy">Step 4: Apply Default-Deny-Ingress NetworkPolicy</h4>
 
-          <p>The manifest below applies a default-deny baseline so that no ingress traffic is allowed until explicitly
-            permitted.</p>
+          <p>The manifest below applies a default-deny baseline so that no ingress traffic is allowed until it is
+            explicitly permitted. Save it as <code>default-deny-ingress.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml"># default-deny-ingress.yaml
 apiVersion: networking.k8s.io/v1
@@ -2752,10 +2851,12 @@ kubectl get networkpolicy -n netpol-lab    # verify it was created
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Test: connection should now FAIL (timeout or refused)</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Watch the same connection fail now</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec -n netpol-lab frontend -- nc -zv -w 3 database 6379
 # Expected: nc: database (10.x.x.x:6379): Operation timed out
 echo &quot;Blocked as expected&quot;
+
+# The connection should now fail, either as a timeout or as a refusal.
 </code></pre>
           </div>
 
@@ -2766,8 +2867,8 @@ echo &quot;Blocked as expected&quot;
 
           <h4 id="step-5-allow-only-frontend-to-database-on-port-6379">Step 5: Allow Only Frontend to Database on Port 6379</h4>
 
-          <p>The manifest below adds a targeted allow rule so only the frontend can reach the database, and only on port
-            6379.</p>
+          <p>The manifest below adds a targeted allow rule so that only the frontend can reach the database, and only
+            on port 6379. Save it as <code>allow-frontend-to-db.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml"># allow-frontend-to-db.yaml
 apiVersion: networking.k8s.io/v1
@@ -2797,17 +2898,19 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Test 1: frontend SHOULD be able to reach database:6379</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Test 1: frontend can reach the database again</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec -n netpol-lab frontend -- nc -zv database 6379
 # Expected: Connection succeeded
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Test 2: deploy a third pod and verify it CANNOT reach the database</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Test 2: an unlabeled Pod is still blocked</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl run attacker --image=busybox:1.36 -n netpol-lab --restart=Never -- sleep 300
 kubectl wait --for=condition=Ready pod/attacker -n netpol-lab --timeout=60s
 kubectl exec -n netpol-lab attacker -- nc -zv -w 3 database 6379
 # Expected: Connection timed out (attacker does not have app=frontend label)
+
+# A third Pod is deployed here purely to verify it CANNOT reach the database.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -2818,9 +2921,10 @@ kubectl exec -n netpol-lab attacker -- nc -zv -w 3 database 6379
 
           <h4 id="step-6-write-an-egress-policy-allowing-only-dns">Step 6: Write an Egress Policy Allowing Only DNS</h4>
 
-          <p>Blocking all egress except DNS is essential when hardening a Pod that should not make outbound connections.
-            Without allowing DNS (UDP/TCP port 53), name resolution fails and the Pod cannot reach any service by
-            hostname.</p>
+          <p>Blocking all egress except DNS is essential when hardening a Pod that should not make outbound
+            connections. Without an allowance for DNS (UDP and TCP port 53), name resolution fails and the Pod cannot
+            reach any service by hostname. The policy below permits DNS and nothing else. Save it as
+            <code>deny-egress-except-dns.yaml</code>:</p>
 
           <pre class="codehilite"><code class="language-yaml"># deny-egress-except-dns.yaml
 apiVersion: networking.k8s.io/v1
@@ -2850,13 +2954,13 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Execute command in database</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm DNS still resolves from the database Pod</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec -n netpol-lab database -- nslookup kubernetes.default || echo &quot;DNS resolution result above&quot;
 # Database pod should NOT be able to reach external services
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Execute command in database</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm every other outbound connection is blocked</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec -n netpol-lab database -- nc -zv -w 3 1.1.1.1 80 || echo &quot;Egress blocked as expected&quot;
 </code></pre>
           </div>
@@ -2893,6 +2997,9 @@ spec:
           </ol>
 
           <h3 id="troubleshooting-networkpolicies">Troubleshooting NetworkPolicies</h3>
+
+          <p>A NetworkPolicy that appears to do nothing usually has one of four causes. The table below pairs each
+            symptom with the fix.</p>
 
           <div class="table-wrap">
             <table>
@@ -2980,6 +3087,9 @@ spec:
           </ol>
 
           <h3 id="kyverno-versus-opa-gatekeeper">Kyverno versus OPA/Gatekeeper</h3>
+
+          <p>Kyverno and OPA/Gatekeeper are the two policy engines you will meet most often. The table below compares
+            them on the attributes that usually decide which one a team adopts.</p>
 
           <div class="table-wrap">
             <table>
@@ -3094,6 +3204,9 @@ spec:
 
           <h3 id="audit-versus-enforce-mode">Audit versus Enforce Mode</h3>
 
+          <p>Every Kyverno validate policy runs in one of two modes. Audit records a violation and admits the resource
+            anyway; Enforce rejects the resource at admission and returns an error to the caller.</p>
+
           <blockquote class="warning">Always deploy new policies in Audit mode first. Enforce mode will immediately
             block non-compliant resources, including existing workloads that get restarted or updated. Audit mode lets
             you see the blast radius (how many existing resources would fail) before you commit to enforcement.
@@ -3103,7 +3216,8 @@ spec:
 
           <h4 id="step-1-install-kyverno-via-helm">Step 1: Install Kyverno via Helm</h4>
 
-          <p>These commands install the tool and verify it is ready.</p>
+          <p>These commands add the Kyverno chart repository, install the controller, and confirm that it registered
+            its admission webhooks with the API server.</p>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Add the Kyverno Helm chart repository</span></div>
             <pre class="codehilite"><code class="language-bash">helm repo add kyverno https://kyverno.github.io/kyverno/
@@ -3112,12 +3226,15 @@ helm repo update
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">This deploys: Kyverno controller, admission webhook, background scanner, CRDs (ClusterPolicy, PolicyReport, etc.)</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Install Kyverno into its own namespace</span></div>
             <pre class="codehilite"><code class="language-bash">helm install kyverno kyverno/kyverno \
   --namespace kyverno \
   --create-namespace \
   --set admissionController.replicas=1    # 1 replica is fine for a lab; use 3 in production for HA
 # Wait for Kyverno pods to be Running (usually 60-90 seconds)
+
+# This deploys the Kyverno controller, the admission webhook, the background
+# scanner, and the CRDs (ClusterPolicy, PolicyReport, and the rest).
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -3141,8 +3258,8 @@ kubectl get mutatingwebhookconfigurations | grep kyverno
 
           <h4 id="step-2-write-a-validate-policy-to-disallow-the-latest-tag-audit-mode">Step 2: Write a Validate Policy to Disallow the :latest Tag (Audit Mode)</h4>
 
-          <p>The ClusterPolicy below flags any Pod using the <code>:latest</code> image tag, running in audit mode so
-            violations are reported but not blocked.</p>
+          <p>The ClusterPolicy below flags any Pod using the <code>:latest</code> image tag. It runs in audit mode, so
+            violations are reported but not blocked. Save it as <code>disallow-latest-tag.yaml</code>:</p>
           <pre class="codehilite"><code class="language-yaml"># disallow-latest-tag.yaml
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy                        # ClusterPolicy applies across all namespaces
@@ -3181,10 +3298,12 @@ kubectl get clusterpolicy disallow-latest-tag    # should show READY=true after 
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Create a violating Pod: it WILL be admitted (Audit mode), but a violation will be recorded</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Create a violating Pod and watch it be admitted</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl run bad-pod --image=nginx:latest --restart=Never
 kubectl get pod bad-pod                          # pod is running (Audit mode does not block)
 # Check the PolicyReport for this namespace to see the violation recorded
+
+# In Audit mode the Pod IS admitted. Only the PolicyReport records the violation.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -3202,7 +3321,8 @@ kubectl describe policyreport -n default | grep -A 5 &quot;fail\|FAIL&quot;  # l
 
           <h4 id="step-3-background-scanning-of-existing-resources">Step 3: Background Scanning of Existing Resources</h4>
 
-          <p>These commands carry out this step.</p>
+          <p>Background scanning re-evaluates resources that already existed when a policy was applied, not just new
+            requests. The command below reads the reports it produced.</p>
           <pre class="codehilite"><code class="language-bash"># Because background: true is set, Kyverno scans existing Pods for compliance
 # even without any new admission events. Wait 30 seconds then check:
 kubectl get policyreport -A
@@ -3211,7 +3331,8 @@ kubectl get policyreport -A
 
           <h4 id="step-4-switch-to-enforce-mode-and-block-violations">Step 4: Switch to Enforce Mode and Block Violations</h4>
 
-          <p>These commands carry out this step.</p>
+          <p>These commands flip the policy from Audit to Enforce and prove that a violating Pod is now rejected
+            outright rather than merely recorded.</p>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Switch the policy from Audit to Enforce mode</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl patch clusterpolicy disallow-latest-tag \
@@ -3243,7 +3364,8 @@ kubectl delete pod good-pod
 
           <h4 id="step-5-write-a-mutation-policy-to-auto-add-labels">Step 5: Write a Mutation Policy to Auto-Add Labels</h4>
 
-          <p>The ClusterPolicy below mutates incoming Pods to automatically add standard labels.</p>
+          <p>The ClusterPolicy below mutates incoming Pods to add a standard ownership label automatically. Save it as
+            <code>mutate-add-managed-by.yaml</code>:</p>
           <pre class="codehilite"><code class="language-yaml"># mutate-add-managed-by.yaml
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -3290,7 +3412,8 @@ spec:
 
           <h4 id="step-6-write-a-validate-policy-to-require-resource-limits">Step 6: Write a Validate Policy to Require Resource Limits</h4>
 
-          <p>The ClusterPolicy below validates that every container declares CPU and memory limits.</p>
+          <p>The ClusterPolicy below validates that every container declares CPU and memory limits. Save it as
+            <code>require-resource-limits.yaml</code>:</p>
           <pre class="codehilite"><code class="language-yaml"># require-resource-limits.yaml
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -3331,8 +3454,11 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Create a pod WITHOUT limits: it will be admitted (Audit) but recorded as a violation</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Create a Pod with no resource limits</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl run no-limits-pod --image=nginx:1.29-alpine --restart=Never
+
+# This policy is in Audit mode, so the Pod will be admitted.
+# The violation is recorded in the PolicyReport instead of blocking it.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -3348,7 +3474,8 @@ spec:
 
           <h3 id="kyverno-exceptions-excluding-specific-resources-from-a-policy">Kyverno Exceptions: Excluding Specific Resources from a Policy</h3>
 
-          <p>The manifest below defines a PolicyException that exempts specific resources from a policy.</p>
+          <p>A ClusterPolicyException exempts named resources from a policy without weakening or deleting the policy
+            itself. The manifest below exempts two system namespaces from the resource-limits rule:</p>
           <pre class="codehilite"><code class="language-yaml"># exception-kube-system.yaml
 apiVersion: kyverno.io/v2beta1
 kind: ClusterPolicyException
@@ -3369,7 +3496,8 @@ spec:
 
           <h3 id="testing-policies-locally-with-the-kyverno-cli">Testing Policies Locally with the Kyverno CLI</h3>
 
-          <p>These commands exercise the behavior described in this step.</p>
+          <p>These commands install the Kyverno CLI and evaluate a policy against a manifest file offline, with no
+            cluster involved.</p>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Download and install the Kyverno CLI binary</span></div>
             <pre class="codehilite"><code class="language-bash"># Release assets are versioned and use x86_64 (not amd64) in the file name,
@@ -3383,13 +3511,18 @@ kyverno version
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Test a policy against a resource YAML file without a running cluster</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Test a policy without a running cluster</span></div>
             <pre class="codehilite"><code class="language-bash">kyverno apply disallow-latest-tag.yaml --resource bad-pod.yaml
 # Output shows whether the resource would pass or fail the policy
+
+# The CLI evaluates a policy against a resource YAML file, offline.
 </code></pre>
           </div>
 
           <h3 id="troubleshooting-kyverno">Troubleshooting Kyverno</h3>
+
+          <p>When a policy does not behave as written, the cause is usually the webhook registration or the match block.
+            The table below lists each symptom and what to check for it.</p>
 
           <div class="table-wrap">
             <table>
@@ -3450,8 +3583,11 @@ kubectl delete namespace kyverno
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Kyverno&#x27;s CRDs may remain; remove them if you want a completely clean slate</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Delete the CRDs the uninstall leaves behind</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get crd | grep kyverno | awk &#x27;{print $1}&#x27; | xargs kubectl delete crd
+
+# The Kyverno CRDs may remain after the uninstall.
+# Remove them if you want a completely clean slate.
 </code></pre>
           </div>
 
@@ -3614,6 +3750,9 @@ kubectl delete namespace kyverno
 
           <h4 id="sbom-formats">SBOM Formats</h4>
 
+          <p>Two SBOM formats dominate, and most tools can emit either one. The table below shows who maintains each
+            format and which tools produce it.</p>
+
           <div class="table-wrap">
             <table>
               <thead>
@@ -3645,9 +3784,9 @@ kubectl delete namespace kyverno
 
           <h4 id="step-1-install-cosign">Step 1: Install Cosign</h4>
 
-          <p>These commands install the tool and verify it is ready.</p>
+          <p>These commands download the Cosign binary, install it on your PATH, and confirm the version.</p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Send request to &quot;https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64&quot;</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Download the Cosign release binary</span></div>
             <pre class="codehilite"><code class="language-bash">curl -O -L &quot;https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64&quot;
 </code></pre>
           </div>
@@ -3671,9 +3810,10 @@ kubectl delete namespace kyverno
 
           <h4 id="step-2-prepare-an-image-to-sign">Step 2: Prepare an Image to Sign</h4>
 
-          <p>These commands carry out this step.</p>
+          <p>These commands point a shell variable at an image you can push to, publish it, and read back the digest
+            that Cosign will actually sign.</p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Export IMAGE</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Point IMAGE at a registry you can push to</span></div>
             <pre class="codehilite"><code class="language-bash">export IMAGE=&quot;ghcr.io/YOUR_GITHUB_USERNAME/demo-app:v1.0&quot;
 # If you don&#x27;t have an image, tag and push an existing one:
 </code></pre>
@@ -3695,17 +3835,20 @@ docker push ${IMAGE}
 
           <h4 id="step-3-sign-the-image-keylessly">Step 3: Sign the Image Keylessly</h4>
 
-          <p>These commands carry out this step.</p>
-          <pre class="codehilite"><code class="language-bash"># Keyless signing: opens browser for OIDC authentication
-# The signature is recorded to the public Rekor transparency log
-cosign sign ${IMAGE}
+          <p>The command below signs the image. Cosign opens a browser for OIDC authentication, then records the
+            signature in the public Rekor transparency log.</p>
+          <pre class="codehilite"><code class="language-bash">cosign sign ${IMAGE}
 # If running in CI (GitHub Actions), use OIDC token directly:
 # cosign sign --oidc-issuer=https://token.actions.githubusercontent.com ${IMAGE}
+
+# Keyless signing: opens browser for OIDC authentication
+# The signature is recorded to the public Rekor transparency log
 </code></pre>
 
           <h4 id="step-4-inspect-what-was-created-in-the-registry">Step 4: Inspect What Was Created in the Registry</h4>
 
-          <p>These commands inspect the result of the previous step.</p>
+          <p>The command below lists everything now attached to the image in the registry, including the signature
+            artifact Cosign just pushed.</p>
           <pre class="codehilite"><code class="language-bash">cosign tree ${IMAGE}
 # Expected output: a tree showing the image digest and attached signature artifacts
 # Signatures are stored as OCI artifacts with a tag derived from the image digest:
@@ -3715,19 +3858,23 @@ cosign sign ${IMAGE}
 
           <h4 id="step-5-verify-the-signature">Step 5: Verify the Signature</h4>
 
-          <p>These commands inspect the result of the previous step.</p>
+          <p>Verification checks the signature against a specific identity, so the identity you pass must match the one
+            that signed. There are two forms: one for a person who signed through the browser, one for a CI workflow.</p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">For a GitHub user signing interactively:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Verify an image a person signed interactively</span></div>
             <pre class="codehilite"><code class="language-bash">cosign verify ${IMAGE} \
   --certificate-identity=&quot;your-email@example.com&quot; \
   --certificate-oidc-issuer=&quot;https://accounts.google.com&quot;
+
+# Use this form for a GitHub user who signed through the browser flow.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">For a GitHub Actions workflow signing:</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Verify an image a CI workflow signed</span></div>
             <pre class="codehilite"><code class="language-bash">cosign verify ${IMAGE} \
   --certificate-identity=&quot;https://github.com/YOUR_ORG/YOUR_REPO/.github/workflows/build.yml@refs/heads/main&quot; \
   --certificate-oidc-issuer=&quot;https://token.actions.githubusercontent.com&quot;
+# Use this form when a GitHub Actions workflow did the signing.
 # Successful verification output includes:
 # [{&quot;critical&quot;: {&quot;image&quot;: {&quot;docker-manifest-digest&quot;: &quot;sha256:...&quot;}}, &quot;optional&quot;: {&quot;Issuer&quot;: &quot;...&quot;, &quot;Subject&quot;: &quot;...&quot;}}]
 </code></pre>
@@ -3740,16 +3887,17 @@ cosign sign ${IMAGE}
 
           <h4 id="step-6-generate-a-cyclonedx-sbom-with-trivy">Step 6: Generate a CycloneDX SBOM with Trivy</h4>
 
-          <p>These commands carry out this step.</p>
+          <p>These commands generate the SBOM with Trivy and print a short summary of what it found inside the image.</p>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Generate a CycloneDX SBOM (JSON format) for the image</span></div>
-            <pre class="codehilite"><code class="language-bash"># --format cyclonedx  emit CycloneDX JSON
-# --output sbom.json  write it to this file
-trivy image \
+            <pre class="codehilite"><code class="language-bash">trivy image \
   --format cyclonedx \
   --output sbom.json \
   ${IMAGE}
 # Inspect the SBOM (it will be a large JSON file)
+
+# --format cyclonedx  emit CycloneDX JSON
+# --output sbom.json  write it to this file
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -3761,32 +3909,37 @@ trivy image \
 
           <h4 id="step-7-attach-the-sbom-as-a-signed-attestation">Step 7: Attach the SBOM as a Signed Attestation</h4>
 
-          <p>These commands exercise the behavior described in this step.</p>
-          <pre class="codehilite"><code class="language-bash"># --predicate  the SBOM file generated by Trivy
-# --type       the predicate type: tells verifiers what format the payload is in
-cosign attest \
+          <p>The command below signs the SBOM and attaches it to the image as an attestation, so the inventory travels
+            with the artifact wherever it is pulled.</p>
+          <pre class="codehilite"><code class="language-bash">cosign attest \
   --predicate sbom.json \
   --type cyclonedx \
   ${IMAGE}
 # This also requires OIDC authentication (browser will open)
+
+# --predicate  the SBOM file generated by Trivy
+# --type       the predicate type: tells verifiers what format the payload is in
 </code></pre>
 
           <h4 id="step-8-verify-the-sbom-attestation">Step 8: Verify the SBOM Attestation</h4>
 
-          <p>These commands inspect the result of the previous step.</p>
-          <pre class="codehilite"><code class="language-bash"># --type must match the type used during attest
-cosign verify-attestation \
+          <p>The command below verifies that attestation and prints the component count straight out of the verified
+            payload.</p>
+          <pre class="codehilite"><code class="language-bash">cosign verify-attestation \
   --type cyclonedx \
   --certificate-identity="your-email@example.com" \
   --certificate-oidc-issuer="https://accounts.google.com" \
   ${IMAGE} \
   | python3 -c "import sys, json; d=json.load(sys.stdin); print('SBOM components:', len(d['payload']['components']))"
 # Confirms the attestation is valid and shows the component count from the SBOM
+
+# --type must match the type used during attest
 </code></pre>
 
           <h4 id="step-9-enforce-signed-images-at-admission-with-kyverno">Step 9: Enforce Signed Images at Admission with Kyverno</h4>
 
-          <p>The policy below makes Kyverno verify image signatures at admission and reject unsigned images.</p>
+          <p>The policy below makes Kyverno verify image signatures at admission and reject anything unsigned. Save it
+            as <code>require-signed-images.yaml</code>:</p>
           <pre class="codehilite"><code class="language-yaml"># require-signed-images.yaml
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -3841,7 +3994,8 @@ kubectl delete pod signed-test
 
           <h3 id="github-actions-integration-for-keyless-signing-in-ci">GitHub Actions Integration for Keyless Signing in CI</h3>
 
-          <p>The workflow below signs images keylessly from CI using the GitHub Actions OIDC identity.</p>
+          <p>The workflow below signs images keylessly from CI using the GitHub Actions OIDC identity, so no private
+            key is ever stored. Save it as <code>.github/workflows/build-and-sign.yml</code>:</p>
           <pre class="codehilite"><code class="language-yaml"># .github/workflows/build-and-sign.yml
 name: Build, Push, and Sign
 on:
@@ -3880,6 +4034,9 @@ jobs:
 </code></pre>
 
           <h3 id="troubleshooting-supply-chain-verification">Troubleshooting Supply Chain Verification</h3>
+
+          <p>Signing and verification fail in a handful of predictable ways. The table below maps each symptom to its
+            cause and to the command that diagnoses it.</p>
 
           <div class="table-wrap">
             <table>
@@ -4140,7 +4297,8 @@ rm -f sbom.json cosign-linux-amd64
 
           <h4 id="step-1-install-falco-via-helm-ebpf-driver">Step 1: Install Falco via Helm (Modern eBPF Driver)</h4>
 
-          <p>These commands install the tool and verify it is ready.</p>
+          <p>These commands add the Falco chart repository, install Falco as a DaemonSet with the eBPF driver, and
+            confirm that every pod started cleanly.</p>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Add the Falco Helm chart repository</span></div>
             <pre class="codehilite"><code class="language-bash">helm repo add falcosecurity https://falcosecurity.github.io/charts
@@ -4152,14 +4310,15 @@ helm repo update
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Install Falco with eBPF runtime monitoring enabled</span></div>
-            <pre class="codehilite"><code class="language-bash"># driver.kind=modern_ebpf  CO-RE eBPF probe compiled into the Falco binary
-# tty=true                  flush alerts immediately so kubectl logs shows them
-helm install falco falcosecurity/falco \
+            <pre class="codehilite"><code class="language-bash">helm install falco falcosecurity/falco \
   --namespace falco \
   --create-namespace \
   --set driver.kind=modern_ebpf \
   --set tty=true
 # Falco runs as a DaemonSet: one pod per node (requires privileged access to the kernel)
+
+# driver.kind=modern_ebpf  CO-RE eBPF probe compiled into the Falco binary
+# tty=true                  flush alerts immediately so kubectl logs shows them
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -4170,7 +4329,7 @@ kubectl get pods -n falco -o wide      # one pod per node
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Rollout status daemonset/falco</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Wait until every Falco pod is rolled out</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl rollout status daemonset/falco -n falco --timeout=300s
 # Verify Falco initialized successfully
 </code></pre>
@@ -4190,18 +4349,21 @@ kubectl get pods -n falco -o wide      # one pod per node
 
           <h4 id="step-2-deploy-a-victim-pod">Step 2: Deploy a Victim Pod</h4>
 
-          <p>These commands carry out this step.</p>
-          <pre class="codehilite"><code class="language-bash"># Create a simple nginx pod that will serve as our "compromised" container
-kubectl run victim --image=nginx:1.29-alpine --restart=Never
+          <p>The commands below create an ordinary nginx Pod. Nothing about it is special: it is simply the container
+            you will attack in the next three steps.</p>
+          <pre class="codehilite"><code class="language-bash">kubectl run victim --image=nginx:1.29-alpine --restart=Never
 kubectl wait --for=condition=Ready pod/victim --timeout=60s
 kubectl get pod victim
+
+# A simple nginx pod that will serve as our "compromised" container.
 </code></pre>
 
           <h4 id="step-3-trigger-detection-1-terminal-shell-in-container">Step 3: Trigger Detection 1 - Terminal Shell in Container</h4>
 
-          <p>These commands exercise the behavior described in this step.</p>
+          <p>These commands open an interactive shell inside the victim Pod, then read the Falco log on the node that
+            Pod is running on.</p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Execute command in &#x27;simulated-intrusion&#x27;;</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Simulate an attacker opening a shell in a Pod</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec -it victim -- sh -c &quot;echo &#x27;simulated-intrusion&#x27;; id; whoami; hostname&quot;
 # Immediately check Falco logs on the node running the victim pod
 # Get the Falco pod name (use the one on the same node as victim)
@@ -4221,23 +4383,29 @@ kubectl logs -n falco ${FALCO_POD} --tail=20 | grep -i &quot;shell\|Terminal&quo
 
           <h4 id="step-4-trigger-detection-2-read-a-sensitive-file">Step 4: Trigger Detection 2 - Read a Sensitive File</h4>
 
-          <p>These commands inspect the result of the previous step.</p>
+          <p>These commands read <code>/etc/shadow</code> from inside the container and then check whether Falco
+            noticed.</p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Attackers read /etc/shadow to get password hashes for offline cracking</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Read a sensitive file the way an attacker would</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec victim -- cat /etc/shadow
+
+# Attackers read /etc/shadow to get password hashes for offline cracking.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Check Falco logs for the &quot;Read sensitive file&quot; alert</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm Falco flagged the sensitive file read</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=50 | grep -i &quot;shadow\|sensitive&quot;
+
+# Look for the "Read sensitive file" alert in the output.
 </code></pre>
           </div>
 
           <h4 id="step-5-trigger-detection-3-write-a-binary-to-tmp">Step 5: Trigger Detection 3 - Write a Binary to /tmp</h4>
 
-          <p>These commands exercise the behavior described in this step.</p>
+          <p>These commands copy a shell binary into a writable directory, execute it from there, and look for the
+            alert that follows.</p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Execute command in victim</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Copy and run a shell from a writable directory</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec victim -- cp /bin/sh /tmp/sh
 kubectl exec victim -- /tmp/sh -c &quot;id&quot;
 # Check Falco logs for binary-related alerts
@@ -4251,9 +4419,11 @@ kubectl exec victim -- /tmp/sh -c &quot;id&quot;
 
           <h4 id="step-6-read-and-understand-a-falco-alert">Step 6: Read and Understand a Falco Alert</h4>
 
-          <p>These commands inspect the result of the previous step.</p>
-          <pre class="codehilite"><code class="language-bash"># Get the full Falco logs and find a specific alert to analyze
-kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=100
+          <p>The command below dumps the recent Falco output, so you have a real alert in front of you to read
+            field by field.</p>
+          <pre class="codehilite"><code class="language-bash">kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=100
+
+# Get the full Falco logs and find a specific alert to analyze.
 </code></pre>
 
           <p>A typical Falco alert looks like this:</p>
@@ -4324,7 +4494,8 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=100
 
           <h3 id="writing-a-custom-falco-rule">Writing a Custom Falco Rule</h3>
 
-          <p>The rule below defines a custom Falco detection for a specific suspicious behavior.</p>
+          <p>The file below defines two custom Falco rules: one for download tools running inside a container, one for
+            reads of credential files. Save it as <code>custom-rules.yaml</code>:</p>
           <pre class="codehilite"><code class="language-yaml"># custom-rules.yaml (loaded into Falco via ConfigMap or Helm values)
 - rule: Curl or Wget Executed in Container
   desc: >-
@@ -4376,7 +4547,7 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=100
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Test: trigger the curl rule</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Trigger the custom curl rule on purpose</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec victim -- sh -c &quot;curl -s http://example.com&quot; || true
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i &quot;curl\|Download&quot;
 </code></pre>
@@ -4384,13 +4555,11 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i &quot;
 
           <h3 id="falcosidekick-routing-alerts-to-your-observability-stack">Falcosidekick: Routing Alerts to Your Observability Stack</h3>
 
-          <p>These commands carry out this step.</p>
+          <p>Falcosidekick is a companion service that receives Falco alerts over gRPC and forwards them to other
+            systems. These commands enable it, point it at a Slack webhook, and open its web UI.</p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Upgrade Falco to load the custom rules</span></div>
-            <pre class="codehilite"><code class="language-bash"># falcosidekick.enabled        deploy the Falcosidekick router
-# falcosidekick.webui.enabled   deploy the Falcosidekick web UI
-# slack.minimumpriority         only send Warning and above to Slack
-helm upgrade falco falcosecurity/falco \
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Route alerts to Slack and the Falcosidekick UI</span></div>
+            <pre class="codehilite"><code class="language-bash">helm upgrade falco falcosecurity/falco \
   --namespace falco \
   --set driver.kind=modern_ebpf \
   --set falcosidekick.enabled=true \
@@ -4398,10 +4567,14 @@ helm upgrade falco falcosecurity/falco \
   --set &quot;falcosidekick.config.slack.webhookurl=https://hooks.slack.com/services/YOUR/WEBHOOK/URL&quot; \
   --set &quot;falcosidekick.config.slack.minimumpriority=warning&quot;
 # Access the Falcosidekick web UI
+
+# falcosidekick.enabled        deploy the Falcosidekick router
+# falcosidekick.webui.enabled   deploy the Falcosidekick web UI
+# slack.minimumpriority         only send Warning and above to Slack
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Port-forward to svc/falco-falcosidekick-ui</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Open the Falcosidekick UI in your browser</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl port-forward svc/falco-falcosidekick-ui -n falco 2802:2802
 # Open http://localhost:2802 in your browser
 </code></pre>
@@ -4411,6 +4584,9 @@ helm upgrade falco falcosecurity/falco \
             AWS S3, AWS CloudWatch, Google Cloud Pub/Sub, Datadog, and many more.</p>
 
           <h3 id="falco-versus-complementary-controls">Falco versus Complementary Controls</h3>
+
+          <p>Falco is not the only control that operates at syscall time, and it is the only one of the three that does
+            not block. The table below shows where each control sits.</p>
 
           <div class="table-wrap">
             <table>
@@ -4448,18 +4624,23 @@ helm upgrade falco falcosecurity/falco \
 
           <h3 id="managing-falco-rules-via-gitops">Managing Falco Rules via GitOps</h3>
 
-          <p>These commands carry out this step.</p>
-          <pre class="codehilite"><code class="language-bash"># rules-configmap.yaml (stored in Git)
-kubectl create configmap falco-custom-rules \
+          <p>The command below turns your rule file into a ConfigMap manifest you can commit, so detections are
+            reviewed and versioned like any other code.</p>
+          <pre class="codehilite"><code class="language-bash">kubectl create configmap falco-custom-rules \
   --from-file=custom-rules.yaml \
   -n falco \
   --dry-run=client -o yaml > rules-configmap.yaml
 # Commit rules-configmap.yaml to Git
 # Argo CD syncs it to the cluster automatically
 # Falco watches the ConfigMap and reloads rules without restart
+
+# The generated rules-configmap.yaml is the file stored in Git.
 </code></pre>
 
           <h3 id="troubleshooting-falco">Troubleshooting Falco</h3>
+
+          <p>Most Falco problems are driver problems or rule-loading problems. The table below lists the symptoms, their
+            usual cause, and the command that confirms which one you have.</p>
 
           <div class="table-wrap">
             <table>
