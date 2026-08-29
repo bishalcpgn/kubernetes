@@ -68,19 +68,27 @@
           <p>Run after finishing, or any time the cluster feels cluttered. On a single-node Minikube, leftover
             Prometheus/Argo CD/Falco pods will exhaust resources.</p>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Delete all</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Empty a namespace but keep the namespace</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl delete all --all -n &lt;namespace&gt;
+
+# Note: "all" does not mean everything. ConfigMaps, Secrets, PVCs, and
+# NetworkPolicies survive this. Delete the namespace itself to remove those.
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Delete a whole namespace (and everything in it)</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl delete namespace &lt;namespace&gt;
-# Uninstall all Helm releases in a namespace
+
+# This removes everything inside it, including the objects the command
+# above leaves behind. It can sit in Terminating for a while.
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Run helm list</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Uninstall every Helm release in a namespace</span></div>
             <pre class="codehilite"><code class="language-bash">helm list -n &lt;ns&gt; -q | xargs -r helm uninstall -n &lt;ns&gt;
+
+# helm list -q prints just the release names, which xargs feeds to
+# uninstall one at a time. -r stops xargs running if the list is empty.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -92,6 +100,10 @@ minikube start --driver=docker --cpus=4 --memory=4096
 
           <hr />
           <h1 id="appendix-b-common-errors-and-troubleshooting">Appendix B: Common Errors and Troubleshooting</h1>
+
+          <p>Nearly every failure in this guide announces itself through a Pod status. Find the status you are seeing
+            in the first column, and the table gives you the usual cause and the command that confirms it.</p>
+
           <div class="table-wrap">
             <table>
               <thead>
@@ -140,7 +152,7 @@ minikube start --driver=docker --cpus=4 --memory=4096
                   <td>restart with <code>--cni=calico</code></td>
                 </tr>
                 <tr>
-                  <td>Service unreachable</td>Follows the Juice Shop Trainee design language.
+                  <td>Service unreachable</td>
                   <td>Selector labels don't match Pod labels</td>
                   <td><code>kubectl get endpointslices -l kubernetes.io/service-name=&lt;svc&gt;</code> (empty = selector mismatch)</td>
                 </tr>
@@ -180,7 +192,6 @@ minikube start --driver=docker --cpus=4 --memory=4096
               signing → Argo CD deploys → Kyverno enforces signatures + PSS → Falco watches at runtime →
               Prometheus/Grafana observe. That end-to-end loop <em>is</em> production DevSecOps.</p>
           </blockquote>
-          <hr />
           <hr />
           <h1 id="appendix-d-glossary">Appendix D: Glossary</h1>
           <p>A quick lookup for every term and tool used in this guide. Where a concept has a full explanation, the
