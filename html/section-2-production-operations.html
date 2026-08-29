@@ -539,19 +539,27 @@ kubectl delete namespace traefik
 </code></pre>
           </div>
 
+          <h3 id="lab7-key-takeaways">Key Takeaways</h3>
+
           <blockquote class="success">
-            <ul>
-              <li>A <strong>Service</strong> does L4 (TCP) routing. L7 (HTTP) routing requires a Gateway controller.
-              </li>
-              <li>The <strong>Gateway API</strong> replaced the deprecated Ingress API. The ingress-nginx community
-                controller reached EOL in March 2026 and should not be used in new setups.</li>
-              <li>The three objects: <strong>GatewayClass</strong> (which controller), <strong>Gateway</strong> (which
-                port, which namespaces), <strong>HTTPRoute</strong> (which path goes where).</li>
-              <li>Role separation is intentional: the platform team owns GatewayClass and Gateway; application teams own
-                HTTPRoutes without needing cluster-admin privileges.</li>
-              <li>Traffic weighting, header routing, TLS termination, and redirects are all built into the Gateway API
-                specification without vendor-specific annotations.</li>
-            </ul>
+            <ol class="sec2-indented">
+              <li><strong>A Service routes TCP, so HTTP routing needs a proxy you install yourself.</strong> Nothing
+                built into Kubernetes reads a URL path, which is why this lab put Traefik in the cluster before any
+                route existed.</li>
+              <li><strong>GatewayClass names the controller, Gateway opens the port, HTTPRoute maps the path.</strong>
+                That split is the point of the API: the platform team owns the <code>traefik</code> GatewayClass and
+                <code>demo-gateway</code>, while an application team writes <code>app1-route</code> in its own
+                namespace without cluster-admin access.</li>
+              <li><strong>An HTTPRoute joins a Gateway through <code>parentRefs</code>, not by sitting near
+                it.</strong> The <code>ATTACHED=True</code> column in <code>kubectl get httproute</code> is the
+                cluster confirming that link, and a mistyped Gateway name shows up there first.</li>
+              <li><strong>A route matches on hostname and path together.</strong> The request that returned "Hello from
+                APP 1" with <code>-H "Host: demo.local"</code> returned 404 without it, because the HTTPRoute listed
+                <code>demo.local</code> under <code>hostnames</code>.</li>
+              <li><strong>The Ingress API is frozen and community ingress-nginx is end of life.</strong> New clusters
+                install the Gateway API CRDs as you did here, and inherited Ingress objects are converted with the
+                <code>ingress2gateway</code> CLI.</li>
+            </ol>
           </blockquote>
 
           <hr />
@@ -982,21 +990,27 @@ helm pull oci://ghcr.io/argoproj/argo-helm/argo-cd --version 7.3.11
 </code></pre>
           </div>
 
+          <h3 id="lab8-key-takeaways">Key Takeaways</h3>
+
           <blockquote class="success">
-            <ul>
-              <li><strong>Helm</strong> packages many YAML files into a single versioned chart with parameterized
-                values, solving copy-paste drift across environments.</li>
-              <li>A <strong>release</strong> is a named, versioned install of a chart. Every <code>helm upgrade</code>
-                creates a new revision tracked in history.</li>
-              <li><strong>Always pin <code>--version</code></strong> in scripts and GitOps configs for reproducibility.
-              </li>
-              <li><code>helm template</code> renders manifests locally without applying them: the foundation of
-                shift-left scanning in CI pipelines.</li>
-              <li>Never store secrets in <code>values.yaml</code>. Use sealed-secrets or external-secrets-operator
-                instead.</li>
-              <li>The Bitnami chart repository is no longer freely maintained. Use charts from their original vendors
-                (Traefik, prometheus-community, argoproj, etc.).</li>
-            </ul>
+            <ol class="sec2-indented">
+              <li><strong>A chart is the package and a release is one named install of it.</strong> You installed the
+                Traefik chart as <code>my-proxy</code>, upgraded it twice, and rolled it back, and
+                <code>helm history my-proxy</code> recorded each of those as another revision of the same
+                release.</li>
+              <li><strong>Values carry the per-environment difference, not the templates.</strong> You changed the
+                replica count with <code>--set</code> and then with <code>my-values.yaml</code> without editing a
+                single template, and <code>helm get values</code> reported the merged result.</li>
+              <li><strong>Pin <code>--version</code> on every install and upgrade.</strong> An unpinned command takes
+                whatever the repository publishes next, so the release you tested stops matching the release that
+                ships.</li>
+              <li><strong><code>helm template</code> renders the manifests locally without touching the
+                cluster.</strong> That is where CI inspects a chart, and Lab 11 pipes exactly that output into Trivy
+                before anything reaches the API server.</li>
+              <li><strong>Never put a password in <code>values.yaml</code>.</strong> Helm stores the values a release
+                installed with as a base64-encoded Secret in that namespace, so anyone who can read Secrets there can
+                read them.</li>
+            </ol>
           </blockquote>
 
           <hr />
@@ -1375,23 +1389,25 @@ http_request_duration_seconds_count 14253
 </code></pre>
           </div>
 
+          <h3 id="lab9-key-takeaways">Key Takeaways</h3>
+
           <blockquote class="success">
-            <ul>
-              <li>The three pillars of observability are <strong>metrics</strong> (what), <strong>logs</strong> (when
-                and exactly what), and <strong>traces</strong> (where in the call chain).</li>
-              <li><strong>Prometheus</strong> uses a pull (scrape) model: it calls <code>/metrics</code> endpoints on
-                targets, not the other way around.</li>
-              <li>The <strong>kube-prometheus-stack</strong> Helm chart bundles Prometheus, Grafana, Alertmanager,
-                node-exporter, and kube-state-metrics with pre-built Kubernetes dashboards.</li>
-              <li><strong>ServiceMonitor</strong> CRDs tell the Prometheus operator which Services to scrape without
-                editing Prometheus config files.</li>
-              <li><strong>PromQL</strong> is the query language for Prometheus: use <code>rate()</code> for counters,
-                <code>sum() by (label)</code> for aggregation, and <code>histogram_quantile()</code> for latency
-                percentiles.
-              </li>
-              <li><strong>Loki</strong> (logs) and <strong>Tempo</strong> (traces) complete the Grafana observability
-                stack alongside Prometheus.</li>
-            </ul>
+            <ol class="sec2-indented">
+              <li><strong>Prometheus pulls metrics and targets never push.</strong> It calls a <code>/metrics</code>
+                endpoint on every target every 15 to 30 seconds, so <strong>Status &gt; Targets</strong> is the first
+                page to open when a Grafana panel says "No data".</li>
+              <li><strong>The kube-prometheus-stack is one chart holding five components.</strong> Prometheus, Grafana,
+                Alertmanager, node-exporter, and kube-state-metrics arrived already wired to each other, which is why
+                the Kubernetes dashboards had data the moment you logged in.</li>
+              <li><strong>A metric is a name plus labels, and PromQL works on the labels.</strong> The queries you ran
+                grouped with <code>by (namespace)</code> and wrapped counters in <code>rate()</code>, because a counter
+                only ever increases and its raw value is a lifetime total.</li>
+              <li><strong>A ServiceMonitor is how your own application gets scraped.</strong> The Prometheus Operator
+                watches those objects and rewrites the scrape configuration itself, so the <code>release: kps</code>
+                label on the ServiceMonitor matters more than any Prometheus config file.</li>
+              <li><strong>Metrics say that something is wrong, not what happened.</strong> Logs (Loki) and traces
+                (Tempo) answer the other two questions, and Grafana queries all three from one place.</li>
+            </ol>
           </blockquote>
 
           <hr />
@@ -1844,21 +1860,26 @@ gitops-repo/
 </code></pre>
           </div>
 
+          <h3 id="lab10-key-takeaways">Key Takeaways</h3>
+
           <blockquote class="success">
-            <ul>
-              <li><strong>GitOps</strong> means Git is the single source of truth for all cluster state. Every change is
-                a commit: auditable, reviewable, and revertible.</li>
-              <li><strong>Argo CD</strong> runs a continuous control loop: compare Git to cluster, apply the diff,
-                repeat every few minutes.</li>
-              <li><strong>Self-heal</strong> reverts manual kubectl changes automatically. The cluster cannot durably
-                drift from Git when selfHeal is enabled.</li>
-              <li><strong>Prune</strong> ensures resources removed from Git are also removed from the cluster, keeping
-                Git as the complete and authoritative picture.</li>
-              <li>In a GitOps workflow, CI builds images and updates Git. Argo CD handles all kubectl operations. CI
-                systems do not need cluster credentials.</li>
-              <li>The <strong>App of Apps</strong> pattern scales GitOps to many applications: one root Application
-                manages the Application objects for all other apps.</li>
-            </ul>
+            <ol class="sec2-indented">
+              <li><strong>Argo CD runs a loop, not a deployment step.</strong> It polls Git every three minutes or on a
+                webhook, compares the declared state to the live cluster, applies the difference, and starts again,
+                which is how <code>guestbook</code> reached Synced without you applying its manifests.</li>
+              <li><strong>Self-heal makes drift temporary.</strong> Scaling <code>guestbook-ui</code> to zero replicas
+                held for under a minute before the controller restored the replica count Git declares, so a manual
+                <code>kubectl</code> change cannot durably survive.</li>
+              <li><strong>The Application object holds the entire configuration.</strong> <code>repoURL</code>,
+                <code>path</code>, and <code>targetRevision</code> say what to watch, <code>destination</code> says
+                where to put it, and <code>syncPolicy.automated</code> decides whether the loop acts without you.</li>
+              <li><strong>Prune is what keeps Git complete.</strong> Without <code>prune: true</code>, a resource you
+                delete from Git keeps running in the cluster, and the repository stops describing what is actually
+                there.</li>
+              <li><strong>CI writes to Git and only Argo CD writes to the cluster.</strong> No pipeline needs cluster
+                credentials, and <code>status.sync.revision</code> names the exact commit that every running Pod came
+                from.</li>
+            </ol>
           </blockquote>
 
           <hr /></article>

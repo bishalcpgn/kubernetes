@@ -765,7 +765,9 @@ section.page-section:first-child {
 }
 /* Dark mode label & copy */
 .code-block-label {
-  color: #585b70;
+  /* Theme token, not a hardcoded hex: the old #585b70 sat at 2.63 contrast on
+     the dark code header, below the 4.5 AA threshold. */
+  color: var(--text-muted);
   font-weight: 500;
   letter-spacing: 0;
   flex: 1;
@@ -805,10 +807,6 @@ section.page-section:first-child {
 }
 
 /* Light mode label & copy overrides */
-[data-theme="light"] .code-block-label {
-  color: #5a6a7a;
-}
-
 [data-theme="light"] .copy-btn {
   border-color: #c8d0da;
   color: #5a6a7a;

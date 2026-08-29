@@ -994,6 +994,36 @@ minikube tunnel                        # expose LoadBalancer services locally
 minikube ssh                           # shell into the Minikube node
 minikube logs --file=minikube.log      # capture startup logs to a file</code></pre>
 
+          <h3 id="chapter-0-key-takeaways">Key Takeaways</h3>
+
+          <blockquote class="success">
+            <ol class="sec2-indented">
+              <li><strong>Docker, Minikube, and kubectl each do one job.</strong> Docker runs the container, Minikube
+                boots the Kubernetes control plane and the node processes inside that container, and kubectl turns the
+                commands you type into HTTPS requests to the API server.</li>
+              <li><strong>Your cluster is one container, not one machine.</strong> That single container plays the
+                control-plane role and the worker-node role at the same time, which is why
+                <code>kubectl get nodes</code> lists exactly one node and labels it <code>control-plane</code>.</li>
+              <li><strong>kubectl finds the cluster through kubeconfig, not through anything you type.</strong>
+                <code>minikube start</code> wrote the API server address and your client certificate into
+                <code>~/.kube/config</code> and set the current context to <code>minikube</code>, so every command in
+                this guide reaches that cluster until you switch contexts.</li>
+              <li><strong>Four checks prove the setup is healthy.</strong> <code>minikube status</code>,
+                <code>kubectl get nodes</code>, <code>kubectl get pods -A</code>, and a throwaway pod that reaches
+                <code>Running</code> test the host container, the node, the system pods, and scheduling, in that
+                order.</li>
+              <li><strong>Stopping the cluster is not the same as deleting it.</strong> <code>minikube stop</code>
+                suspends the node container and preserves its state, while <code>minikube delete</code> destroys the
+                cluster and makes the next start rebuild it from scratch.</li>
+            </ol>
+          </blockquote>
+
+          <p>
+            Section 1 explains the components you just watched start. It covers what the API server, etcd, the
+            scheduler, and the controller manager each do, and how they keep the cluster matching the state you ask
+            for.
+          </p>
+
           <hr /></article>
       </div>
     </main>

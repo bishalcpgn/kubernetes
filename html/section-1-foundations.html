@@ -1821,6 +1821,30 @@ kubectl get pods -l app=arch-demo
             </p>
           </blockquote>
 
+          <h3 id="ch1-key-takeaways">Key Takeaways</h3>
+
+          <blockquote class="success">
+            <ol class="sec2-indented">
+              <li><strong>The control plane decides and the worker nodes run.</strong> You listed kube-apiserver, etcd,
+                kube-scheduler, and kube-controller-manager as Pods in <code>kube-system</code>, and you found kubelet
+                and containerd on the node itself rather than in that list.</li>
+              <li><strong>Every component reaches the cluster through the API server.</strong> The API server
+                authenticates the caller, authorizes it through RBAC, passes the request through admission controllers,
+                validates it against the schema, and only then writes to etcd, so no component ever talks to etcd or to
+                another component directly.</li>
+              <li><strong>Controllers reconcile continuously rather than running once.</strong> A controller compares
+                the desired state stored in etcd against the actual state the kubelet reports and closes the gap on
+                every pass, which is the whole reason a deleted Pod comes back without anyone asking.</li>
+              <li><strong>etcd holds all cluster state and the API server holds none.</strong> That split is why you can
+                run several API server replicas behind one load balancer, and why etcd is the component you size for
+                quorum (3, 5, or 7 members) and back up.</li>
+              <li><strong>One <code>kubectl apply</code> travels the whole architecture.</strong> Your call reaches
+                the API server, the API server writes the object to etcd, the controller-manager creates the ReplicaSet
+                and its Pods, the scheduler assigns each Pod a node, and kubelet asks containerd to start the container
+                you later listed with <code>crictl</code>.</li>
+            </ol>
+          </blockquote>
+
           <hr />
           <h2 id="2-core-working-concepts">2. Core Working Concepts</h2>
 
@@ -3631,6 +3655,35 @@ kubectl delete pod multi-container-demo
               affect scheduling and QoS class exactly like an app container's.</p>
           </details>
 
+          <h3 id="ch2-key-takeaways">Key Takeaways</h3>
+
+          <blockquote class="success">
+            <ol class="sec2-indented">
+              <li><strong>A namespace scopes names, not network traffic.</strong> The API server filters objects by
+                their <code>metadata.namespace</code>, so two teams can each own a Service called <code>api</code>, but
+                a Pod in one namespace still reaches <code>api.other-team.svc.cluster.local</code> until you write a
+                NetworkPolicy.</li>
+              <li><strong>Requests are for the scheduler and limits are for the kernel.</strong> The scheduler places a
+                Pod by summing its requests against a node's free capacity, while cgroups on the chosen node enforce the
+                limits, so a Pod with no requests at all is scheduled as though it needs nothing and can crowd a node
+                that has no room for it.</li>
+              <li><strong>Memory over its limit kills the container; CPU over its limit only slows it.</strong> An OOM
+                kill surfaces as <code>OOMKilled</code> and exit code 137 in <code>kubectl describe pod</code> and
+                leaves nothing in the application log, so read describe before you read logs.</li>
+              <li><strong>Kubernetes computes a Pod's QoS class from its requests and limits.</strong> You never set the
+                class directly, and under memory pressure the kubelet evicts BestEffort Pods first and Guaranteed Pods
+                last, so setting a critical Pod's requests equal to its limits is what earns it the Guaranteed class
+                and the last place in that order.</li>
+              <li><strong>Labels are the wiring between objects.</strong> A Service, a Deployment, and a NetworkPolicy
+                all find Pods through a label selector rather than a name or an IP, and a Deployment's
+                <code>selector</code> cannot be changed after creation, so a careless selector means deleting and
+                recreating the Deployment.</li>
+              <li><strong>Taints repel, tolerations permit, and affinity attracts.</strong> Taints go on nodes and
+                tolerations go on Pods, node affinity states which nodes a Pod prefers or requires, and pod
+                anti-affinity or <code>topologySpreadConstraints</code> push replicas apart for fault tolerance.</li>
+            </ol>
+          </blockquote>
+
           <hr />
           <h2 id="3-the-kubectl-debugging-toolkit">3. The kubectl Debugging Toolkit</h2>
 
@@ -4302,6 +4355,29 @@ spec:
               <code>kubectl get pdb</code>. Note that a PDB only protects against <em>voluntary</em> disruption like a
               drain; it cannot stop a node from crashing.</p>
           </details>
+
+          <h3 id="ch3-key-takeaways">Key Takeaways</h3>
+
+          <blockquote class="success">
+            <ol class="sec2-indented">
+              <li><strong>The workflow is <code>get</code>, then <code>describe</code>, then <code>logs</code>.</strong>
+                <code>get</code> tells you which object is unhealthy, <code>describe</code> tells you why Kubernetes
+                thinks so, and <code>logs</code> tells you what the application itself said, which is the path that
+                took the payment-api outage to a wrong database password in three commands.</li>
+              <li><strong>The Events section of <code>describe</code> holds the cause of most Pod failures.</strong>
+                Image pull errors, unschedulable Pods, failed probes, and OOM kills all announce themselves there, so
+                reading Events first stops you from guessing at application code that was never the problem.</li>
+              <li><strong>A crash-looping Pod needs <code>logs --previous</code>.</strong> The container running right
+                now was started after the failure and has nothing to say, while the previous run holds the error that
+                caused the exit.</li>
+              <li><strong><code>exec</code> is the last step, not the first.</strong> A shell inside the container
+                rarely shows you anything describe and logs have not already shown you, so save it for what you cannot
+                see from outside, such as whether a mounted config file really holds the value you expect.</li>
+              <li><strong><code>drain</code> evicts Pods rather than deleting them.</strong> Eviction respects a
+                PodDisruptionBudget, so a drain that appears to hang is usually honoring a budget, and on a single-node
+                cluster it leaves every Pod Pending until you run <code>uncordon</code>.</li>
+            </ol>
+          </blockquote>
 
           <hr />
           <h2 id="4-lab-1-deploying-your-first-pod-and-service">4. Lab 1: Deploying Your First Pod and Service</h2>
@@ -5745,23 +5821,7 @@ kubectl get service nginx-service
 
           <hr />
 
-          <h3 id="lab1-key-takeaways">Section D: Key Takeaways</h3>
-
-          <p>The summary below collects what this lab built and the mental model it was designed to leave you with.</p>
-
-          <blockquote>
-            <p><strong>What you built and what you learned:</strong>
-              You deployed a production-grade Nginx application to Kubernetes using the correct object hierarchy. You
-              observed the reconciliation loop self-heal a deleted Pod in real time. You scaled the application
-              horizontally without any downtime. You exposed the application through a stable Service endpoint and
-              verified it received traffic. You inspected the Endpoints object that bridges the Service to Pod IPs. You
-              learned the three-command debugging workflow (get → describe → logs) and the five most common failure
-              modes every Kubernetes operator encounters.
-              The mental model you built here, Deployment owns ReplicaSet, ReplicaSet manages Pods, Service selects Pods
-              by labels, kube-proxy enforces routing rules, the reconciliation loop continuously closes the gap between
-              desired and actual state, is the foundation of everything else in Kubernetes. Every other lab in this
-              guide builds directly on top of this foundation.</p>
-          </blockquote>
+          <h3 id="lab1-key-takeaways">Key Takeaways</h3>
 
           <p><strong>Commands covered in this lab:</strong></p>
           <ol class="sec2-indented">
@@ -5785,27 +5845,28 @@ kubectl get service nginx-service
             <li><code>minikube service &lt;name&gt; --url</code>, get the externally-reachable URL on Minikube</li>
           </ol>
 
-          <p><strong>Concepts mastered:</strong></p>
-          <ol class="sec2-indented">
-            <li>Pod: ephemeral, single-IP, shared-network-namespace unit of scheduling. Never create naked Pods in
-              production.</li>
-            <li>ReplicaSet: maintains N identical Pod replicas. Created automatically by Deployments. Rarely created
-              manually.</li>
-            <li>Deployment: desired-state controller for stateless apps. Adds rolling updates and rollbacks on top of
-              ReplicaSet.</li>
-            <li>Reconciliation loop: the continuous Kubernetes process of comparing desired state to actual state and
-              taking corrective action.</li>
-            <li>Service: stable ClusterIP + DNS name that load-balances across matching Pods. Uses Endpoints to track
-              live Pod IPs.</li>
-            <li>kube-proxy: programs per-node iptables/ipvs rules to implement Service routing. Updates rules within
-              milliseconds of Pod changes.</li>
-            <li>Labels and selectors: the coupling mechanism between all Kubernetes objects. Consistency is mandatory.
-            </li>
-            <li>Three-port model (port / targetPort / nodePort): understand which port lives on which layer of the
-              network stack.</li>
-            <li>The three-command debugging workflow: <code>get</code> (find the problem) → <code>describe</code> (read
-              Events for the cause) → <code>logs</code> (read the application's own error output).</li>
-          </ol>
+          <blockquote class="success">
+            <ol class="sec2-indented">
+              <li><strong>You create Deployments, not Pods.</strong> The Deployment owns a ReplicaSet, the ReplicaSet
+                owns the Pods, and that chain is why a Pod you create by hand has nothing above it to bring it back.
+              </li>
+              <li><strong>The reconciliation loop repairs the cluster while you watch.</strong> You deleted a running
+                Pod and a replacement appeared within seconds, because the ReplicaSet controller saw two Pods where
+                three were wanted and created the difference.</li>
+              <li><strong>A Service finds Pods by label, never by IP.</strong> The selector matches Pod labels, the
+                Endpoints object lists the IPs that currently match, and kube-proxy turns that list into routing rules
+                on every node, so Pod IPs can change without breaking a single caller.</li>
+              <li><strong>The three ports sit on three different layers.</strong> <code>port</code> belongs to the
+                Service, <code>targetPort</code> belongs to the container, and <code>nodePort</code> belongs to the
+                node. Confusing them is the most common reason a Service answers with nothing.</li>
+              <li><strong>Scaling is a number you change, not a procedure you run.</strong> You raised
+                <code>replicas</code> and Kubernetes added Pods while the Service kept the same ClusterIP and the same
+                DNS name, so callers never noticed.</li>
+              <li><strong>Three commands diagnose almost everything.</strong> <code>get</code> finds the unhealthy
+                object, <code>describe</code> shows the Events that explain it, and <code>logs</code> shows what the
+                application said, which is the order you used on every failure mode in the troubleshooting guide.</li>
+            </ol>
+          </blockquote>
           <hr />
           <h2 id="5-lab-2-rolling-updates-and-rollbacks">5. Lab 2: Rolling Updates and Rollbacks</h2>
 
@@ -6353,25 +6414,26 @@ kubectl get pods -l app=nginx
 kubectl delete service nginx-deployment 2>/dev/null || true
 </code></pre>
 
-          <blockquote class="success"><strong>Key Takeaways: Lab 2</strong>
-            <ul>
-              <li>The <code>RollingUpdate</code> strategy replaces pods gradually, keeping the service available
-                throughout.</li>
-              <li><code>maxUnavailable</code> (rounds down) controls minimum available capacity; <code>maxSurge</code>
-                (rounds up) controls maximum temporary pod count.</li>
-              <li>Kubernetes implements updates via ReplicaSets: old RS scales down, new RS scales up; old RSes are
-                retained as rollback targets.</li>
-              <li>A broken image causes <code>ImagePullBackOff</code> on new pods; old pods continue serving because the
-                new pods never become Ready.</li>
-              <li><code>kubectl rollout undo</code> rolls back one revision; <code>--to-revision=N</code> jumps to any
-                recorded revision.</li>
-              <li>The declarative approach (edit YAML, then <code>kubectl apply</code>) is preferred in production to
-                keep cluster state and source of truth synchronized.</li>
-              <li><code>minReadySeconds</code> adds an extra safety buffer after readiness passes before marking a pod
-                available.</li>
-              <li>Readiness probes (Lab 5) are what make rolling updates actually safe: without them, Kubernetes cannot
-                tell when a pod is genuinely ready.</li>
-            </ul>
+          <h3 id="lab2-key-takeaways">Key Takeaways</h3>
+
+          <blockquote class="success">
+            <ol class="sec2-indented">
+              <li><strong>A RollingUpdate replaces Pods a few at a time so the Service stays up.</strong> Kubernetes
+                starts new Pods, waits for them to report Ready, and only then terminates old ones, which is why the
+                rollout you watched never dropped below serving capacity.</li>
+              <li><strong><code>maxUnavailable</code> sets the floor and <code>maxSurge</code> sets the
+                ceiling.</strong> <code>maxUnavailable</code> rounds down and <code>maxSurge</code> rounds up, so the
+                pair decides how fast the rollout moves and how much extra capacity it borrows while it moves.</li>
+              <li><strong>A rollout is two ReplicaSets, not one set that changes.</strong> The old ReplicaSet scales
+                down as the new one scales up, and Kubernetes keeps the old one at zero replicas so that
+                <code>kubectl rollout undo</code> has something to scale back up.</li>
+              <li><strong>A broken image cannot take a running application down.</strong> You pointed the Deployment at
+                <code>nginx:99.99-does-not-exist</code> and the new Pods stalled in <code>ImagePullBackOff</code> while
+                the old Pods kept serving, because a Pod that never becomes Ready never joins the Service.</li>
+              <li><strong>Readiness probes are what make any of this safe.</strong> Without one, Kubernetes counts a
+                container as ready the moment it starts and sends traffic to a process that is not listening yet, so
+                Lab 5 completes what this lab began.</li>
+            </ol>
           </blockquote>
 
           <hr />
@@ -7046,24 +7108,27 @@ kubectl delete configmap app-config app-config-file immutable-config 2>/dev/null
 kubectl delete secret app-secret 2>/dev/null || true
 </code></pre>
 
-          <blockquote class="success"><strong>Key Takeaways: Lab 3</strong>
-            <ul>
-              <li>Hardcoding configuration in images prevents image promotion across environments and leaks secrets into
-                registries.</li>
-              <li>ConfigMaps store non-sensitive config; Secrets store sensitive values. Both are structurally
-                identical; Secrets add base64 encoding, tmpfs delivery, and a signal to apply stricter access controls.
-              </li>
-              <li>Base64 is encoding, not encryption. Secrets are only secure if combined with encryption-at-rest, tight
-                RBAC, and (ideally) an external secret manager.</li>
-              <li>Always use <code>echo -n</code> when base64-encoding secret values to avoid trailing-newline bugs.
-              </li>
-              <li>Four injection methods: individual env vars (explicit), <code>envFrom</code> (all keys, beware
-                conflicts), volume mounts (files, auto-update), and args substitution.</li>
-              <li>Env var injection is static (requires pod restart after change); volume-mounted files auto-update
-                within about 2 minutes.</li>
-              <li>Use <code>immutable: true</code> for config tied to a specific image version to reduce API server load
-                at scale.</li>
-            </ul>
+          <h3 id="lab3-key-takeaways">Key Takeaways</h3>
+
+          <blockquote class="success">
+            <ol class="sec2-indented">
+              <li><strong>Configuration belongs outside the image.</strong> An image with values baked in cannot be
+                promoted from staging to production unchanged, and any credential inside it is readable by everyone who
+                can pull that image.</li>
+              <li><strong>A Secret is a ConfigMap with base64 and stricter handling, not encryption.</strong> Anyone who
+                can read the Secret can decode it in one command, so a Secret is only private once you add encryption
+                at rest, tight RBAC, or an external secret manager.</li>
+              <li><strong>Encode secret values with <code>echo -n</code>.</strong> A plain <code>echo</code> appends a
+                newline and that newline survives base64, so the application fails to authenticate with a password that
+                looks correct in every dump you read.</li>
+              <li><strong>Environment variables are a snapshot and mounted files are live.</strong> A value injected as
+                an env var is read once at container start and needs <code>kubectl rollout restart</code> to change,
+                while a volume-mounted key refreshes in place within roughly 2 minutes.</li>
+              <li><strong>Pick the injection method by what the application reads.</strong> Individual env vars are
+                explicit, <code>envFrom</code> pulls in every key at once and can collide with names already in the
+                container, volume mounts suit files and certificates, and argument substitution suits a command
+                line.</li>
+            </ol>
           </blockquote>
 
           <hr />
@@ -7618,23 +7683,26 @@ kubectl get pv
 </code></pre>
           </div>
 
-          <blockquote class="success"><strong>Key Takeaways: Lab 4</strong>
-            <ul>
-              <li>Container filesystems are ephemeral: data is lost when a container exits. PersistentVolumes decouple
-                storage lifecycle from pod lifecycle.</li>
-              <li>The hierarchy: StorageClass (provisioner template) creates PV (actual storage) bound to PVC
-                (developer's claim) mounted into Pod containers.</li>
-              <li>Dynamic provisioning (StorageClass automatically creates PV on PVC creation) is the standard approach
-                in cloud environments.</li>
-              <li>Access modes: RWO (one node, most block storage), ROX (many nodes read-only), RWX (many nodes
-                read-write, needs NFS/CephFS/EFS), RWOP (one pod only).</li>
-              <li>Reclaim policies: Delete (data gone with PVC, safe for dev), Retain (PV preserved, must manually
-                manage).</li>
-              <li><code>emptyDir</code> is ephemeral and pod-scoped; use it for scratch space and inter-container
-                sharing within a pod.</li>
-              <li>StatefulSets use <code>volumeClaimTemplates</code> to give each replica its own dedicated PVC
-                automatically.</li>
-            </ul>
+          <h3 id="lab4-key-takeaways">Key Takeaways</h3>
+
+          <blockquote class="success">
+            <ol class="sec2-indented">
+              <li><strong>A container filesystem dies with the container; a PersistentVolume does not.</strong> You
+                deleted <code>storage-pod</code>, recreated it against the same claim, and the file you had written was
+                still there.</li>
+              <li><strong>The chain is StorageClass, then PersistentVolume, then PersistentVolumeClaim, then
+                mount.</strong> The StorageClass is the template a provisioner uses, the PV is the real storage it
+                creates, the PVC is the request that binds to it, and the Pod mounts the PVC by name.</li>
+              <li><strong>An access mode describes the storage, not your preference.</strong> RWO attaches to one node,
+                RWX needs a shared filesystem such as NFS, CephFS, or EFS, and asking a block-storage class for RWX
+                leaves the PVC <code>Pending</code> indefinitely.</li>
+              <li><strong>The reclaim policy decides whether the data outlives the claim.</strong> <code>Delete</code>
+                destroys the volume along with the PVC and suits development, while <code>Retain</code> keeps the
+                volume and hands you the cleanup.</li>
+              <li><strong><code>emptyDir</code> is scratch space, not storage.</strong> It lives exactly as long as the
+                Pod and is shared by every container in it, which the contrast exercise proved by deleting the Pod and
+                finding the file gone.</li>
+            </ol>
           </blockquote>
 
           <hr />
@@ -8369,26 +8437,27 @@ kubectl delete pod load-generator 2>/dev/null || true
 # This removes every Lab 5 resource. The || true keeps going if one is gone.
 </code></pre>
 
-          <blockquote class="success"><strong>Key Takeaways: Lab 5</strong>
-            <ul>
-              <li>Three probe types serve different purposes: liveness (restart on deadlock/corruption), readiness
-                (remove from endpoints during warmup or overload), startup (protect slow-starting apps during
-                initialization).</li>
-              <li>Never check external dependencies (database, external API) in a liveness probe: database downtime
-                would restart all your pods simultaneously.</li>
-              <li>Readiness probes are mandatory for zero-downtime rolling updates: without them, Kubernetes sends
-                traffic to pods that are not yet ready.</li>
-              <li>Key probe parameters: <code>initialDelaySeconds</code> (must be >= startup time),
-                <code>timeoutSeconds</code> (default 1s is often too short), <code>failureThreshold</code> (balance
-                between quick response and false positives).
-              </li>
-              <li>HPA requires metrics-server and CPU requests on pods. It measures CPU as a percentage of the request
-                value.</li>
-              <li>HPA scale-up is fast (immediate); scale-down has a 5-minute stabilization window to prevent flapping.
-              </li>
-              <li>KEDA extends HPA to support event-driven scaling (queues, Prometheus, cron) and can scale to zero.
-              </li>
-            </ul>
+          <h3 id="lab5-key-takeaways">Key Takeaways</h3>
+
+          <blockquote class="success">
+            <ol class="sec2-indented">
+              <li><strong>The three probes do three different jobs.</strong> A liveness probe restarts a container that
+                is stuck, a readiness probe pulls a Pod out of the Service endpoints while it is warming up or
+                overloaded, and a startup probe holds the other two back until a slow application has finished
+                booting.</li>
+              <li><strong>Never check an external dependency in a liveness probe.</strong> A liveness probe that queries
+                the database turns one database outage into a cluster-wide restart storm, because every replica fails
+                the same check at the same moment.</li>
+              <li><strong>Readiness is what makes a rolling update zero-downtime.</strong> You watched a Pod leave the
+                Endpoints list the moment its readiness probe failed and rejoin once it passed, which is the mechanism
+                Lab 2 depended on.</li>
+              <li><strong>An HPA needs metrics-server and a CPU request.</strong> The HPA reads current CPU as a
+                percentage of the request, so a Pod with no request gives it nothing to divide by and the TARGETS
+                column stays <code>&lt;unknown&gt;</code>.</li>
+              <li><strong>Scale up is immediate and scale down waits.</strong> The default 5-minute stabilization
+                window stops the HPA from removing replicas the instant load dips, which is why your replica count fell
+                well after the load generator stopped.</li>
+            </ol>
           </blockquote>
 
           <hr />
@@ -9149,20 +9218,29 @@ kubectl delete jobs -l job-name           # clean up any leftover Jobs
 # This removes all resources created in this lab.
 </code></pre>
 
+          <h3 id="lab6-key-takeaways">Key Takeaways</h3>
+
           <blockquote class="success">
-            <ul>
-              <li>Use <strong>StatefulSet</strong> when pods need a stable identity, per-pod DNS, and their own
-                persistent storage. Ordered startup and termination are guaranteed.</li>
-              <li>Use <strong>DaemonSet</strong> for node-level agents. The scheduler ensures one pod per matching node
-                automatically as nodes join and leave.</li>
-              <li>Use <strong>Job</strong> for run-to-completion batch work. Set <code>restartPolicy: Never</code> to
-                preserve failed pod logs for debugging.</li>
-              <li>Use <strong>CronJob</strong> for scheduled recurring Jobs. Set <code>concurrencyPolicy: Forbid</code>
-                for tasks that must not overlap, and always set <code>startingDeadlineSeconds</code> to prevent catch-up
-                storms.</li>
-              <li>On cloud providers, prefer managed databases over StatefulSets for production relational databases.
-              </li>
-            </ul>
+            <ol class="sec2-indented">
+              <li><strong>Deployment is the default, and the other four controllers exist for what it cannot
+                do.</strong> Reach past a Deployment only when the workload needs a stable identity, one Pod on every
+                node, or a defined end.</li>
+              <li><strong>StatefulSet is the only controller that gives a Pod a permanent name.</strong>
+                <code>web-0</code> comes back as <code>web-0</code> with the same PVC and the same per-pod DNS record
+                from the headless Service, which is how database replicas and Kafka brokers address each other.</li>
+              <li><strong>A StatefulSet's PVCs outlive the StatefulSet.</strong> Deleting the StatefulSet leaves
+                <code>data-web-0</code> and <code>data-web-1</code> behind on purpose, so the cleanup step has to delete
+                the claims itself.</li>
+              <li><strong>A DaemonSet has no replica count.</strong> The controller runs one Pod per matching node and
+                adds one automatically when a node joins, and a toleration is what lets an agent onto a tainted control
+                plane node.</li>
+              <li><strong>A Job is finished when enough of its Pods exit 0.</strong> Set <code>restartPolicy:
+                Never</code> so a failed Pod stays around for <code>kubectl logs</code>, and set
+                <code>backoffLimit</code> to bound how many times Kubernetes retries.</li>
+              <li><strong>A CronJob is a schedule wrapper around a Job.</strong> Each firing creates a new Job,
+                <code>concurrencyPolicy: Forbid</code> keeps two runs from overlapping, and
+                <code>startingDeadlineSeconds</code> stops a restarted controller from launching a catch-up storm.</li>
+            </ol>
           </blockquote>
 
           <hr /></article>
