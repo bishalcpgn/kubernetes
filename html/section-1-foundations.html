@@ -99,24 +99,31 @@
 
           <h4 id="era-1-bare-metal">Era 1: Bare Metal Servers</h4>
 
-          <p>You deployed software straight onto physical servers. Need more RAM than the box had? It crashed. Another
-            app on the same box leaked memory? Yours suffered. Isolation meant buying another server, which took weeks
-            and left most machines idling at 10-20% capacity.</p>
+          <p>In the earliest era you deployed software directly onto physical servers, and the machine's limits were
+            your application's limits. If your application needed more RAM than the server had, it crashed. If a
+            neighbouring application on the same server leaked memory, yours suffered for it. The only way to isolate
+            two applications was to buy a second server, which took weeks to arrive and then sat at 10-20% utilization
+            for the rest of its life.</p>
 
           <h4 id="era-2-virtual-machines">Era 2: Virtual Machines</h4>
 
-          <p>Hypervisors (VMware, Xen, KVM) let several virtual computers share one physical host, each with its own
-            OS, kernel, and network stack. Five isolated applications on one server. Utilization improved, provisioning
-            dropped from weeks to minutes, and you could snapshot and migrate workloads.</p>
+          <p>Hypervisors such as VMware, Xen, and KVM solved the isolation problem by letting several virtual
+            computers share one physical host. Each <strong>virtual machine</strong> got its own operating system, its
+            own kernel, and its own network stack, so you could now run five isolated applications on a single server.
+            Utilization improved, provisioning fell from weeks to minutes, and for the first time you could snapshot a
+            workload and migrate it somewhere else.</p>
 
-          <p>VMs were still heavy, though. Each carried a full OS kernel, 512 MB to 2 GB before your application even
-            started, took 30-60 seconds to boot, and shipped as a multi-gigabyte image.</p>
+          <p>But a virtual machine is a heavy thing to move around. Each one carries a full operating system kernel,
+            which costs 512 MB to 2 GB of memory before your application starts, takes 30-60 seconds to boot, and ships
+            as a multi-gigabyte image.</p>
 
           <h4 id="era-3-containers">Era 3: Containers</h4>
 
-          <p>Containers lean on two Linux kernel features: <strong>namespaces</strong> give each container its own
-            process tree, network, and mounts, and <strong>cgroups</strong> cap its CPU and RAM. Crucially they share
-            the host kernel instead of shipping their own, which means:</p>
+          <p>A container is built from two Linux kernel features working together. <strong>Namespaces</strong> provide
+            the isolation: each container sees only its own process tree, its own network interfaces, and its own
+            filesystem mount points. <strong>Cgroups</strong> provide the resource limits: a ceiling on how much CPU and
+            memory the container may consume. The decisive difference from a virtual machine is that containers share
+            the host's kernel rather than shipping one of their own, and that single change cascades:</p>
 
           <ol class="sec2-indented">
             <li>A container image might be 50-200 MB instead of 2 GB.</li>
@@ -141,17 +148,23 @@
           </p>
 
           <ol class="sec2-indented">
-            <li><strong>No self-healing.</strong> If a container crashes, <code>docker run</code> will not bring it
-              back. You end up writing brittle watchdog scripts.</li>
-            <li><strong>No automated scaling.</strong> Ten times the traffic means you launch containers by hand.</li>
-            <li><strong>No scheduling intelligence.</strong> Given 50 machines and 200 containers, something has to
-              know each machine's free CPU and RAM and place the containers well.</li>
-            <li><strong>No zero-downtime updates.</strong> Stopping the old container and starting the new one drops
-              requests in between. Rolling updates need an orchestrator.</li>
-            <li><strong>No service discovery.</strong> Containers get a new IP every start, so nothing has a stable
-              address to talk to.</li>
-            <li><strong>No secret management.</strong> Getting passwords and API keys into a container without baking
-              them into the image needs infrastructure Docker does not provide.</li>
+            <li><strong>No self-healing:</strong> when a container crashes, <code>docker run</code> does not bring it
+              back. You have to write monitoring and restart scripts yourself, and in practice those scripts are brittle
+              and become a maintenance burden of their own.</li>
+            <li><strong>No automated scaling:</strong> when traffic grows tenfold, you launch more containers by hand.
+              Doing it automatically needs something that watches metrics, decides when to scale, and starts or stops
+              containers on its own.</li>
+            <li><strong>No scheduling intelligence:</strong> given 50 machines and 200 containers to place, which
+              container goes where? Answering that needs something that tracks the free CPU and memory on every machine
+              and places each container where it fits.</li>
+            <li><strong>No zero-downtime updates:</strong> to move to a new version you stop the old container and start
+              the new one, and requests fail in the gap between the two. Rolling out gradually instead requires an
+              orchestrator.</li>
+            <li><strong>No service discovery:</strong> a container gets a different IP address every time it starts, so
+              nothing else can hold a stable address for it. You need a layer that provides steady names no matter which
+              containers happen to be running.</li>
+            <li><strong>No secret management:</strong> getting passwords and API keys into a container without baking
+              them into the image requires infrastructure that Docker alone does not provide.</li>
           </ol>
 
           <blockquote><strong>Kubernetes is the answer to all of these problems</strong>
@@ -393,16 +406,22 @@
           <p>Why this design? It provides a single point for:</p>
 
           <ol class="sec2-indented">
-            <li><strong>Authentication.</strong> Every request must prove who it is, via client certificate, bearer
-              token, or similar. Anonymous requests are rejected unless you opt in.</li>
-            <li><strong>Authorization.</strong> Now that it knows who is asking, the API server checks whether they may
-              do it. That is RBAC, covered in Lab 13.</li>
-            <li><strong>Admission control.</strong> A chain of controllers can still modify or reject the request.
-              PodSecurity enforces security profiles; LimitRanger applies default resource limits.</li>
-            <li><strong>Validation.</strong> The object is checked against the API schema, so a typo in a field name is
-              rejected before anything changes.</li>
-            <li><strong>Storage.</strong> Accepted objects are written to etcd, and the API server notifies watchers of
-              the change.</li>
+            <li><strong>Authentication:</strong> every request must prove who it is. The API server validates client
+              certificates, bearer tokens, and other credential types, and it rejects anonymous requests unless you have
+              explicitly configured otherwise.</li>
+            <li><strong>Authorization:</strong> once the API server knows who is asking, it checks whether that identity
+              is <em>allowed</em> to perform the action. That check is <strong>RBAC</strong> (Role-Based Access
+              Control), which Lab 13 covers in full.</li>
+            <li><strong>Admission control:</strong> even an authenticated, authorized request then passes through a
+              chain of <strong>admission controllers</strong>, each of which may modify it or reject it outright. The
+              PodSecurity controller enforces security profiles on Pods, and LimitRanger fills in default resource
+              limits.</li>
+            <li><strong>Validation:</strong> the submitted YAML or JSON is checked for well-formedness and against the
+              API schema, so a typo in a field name is rejected before any cluster state changes.</li>
+            <li><strong>Serialization and storage:</strong> accepted objects are serialized into etcd's key-value format
+              and written there. The API server also watches etcd for changes and pushes them to every component that
+              has registered a <strong>watch</strong>, which is how the rest of the cluster learns that anything
+              happened.</li>
           </ol>
 
           <blockquote><strong>The API server is stateless</strong>
@@ -547,15 +566,18 @@
           <p>The scheduler applies a series of filter predicates to eliminate nodes that cannot run the pod:</p>
 
           <ol class="sec2-indented">
-            <li><strong>Resource fit.</strong> Does the node have enough allocatable CPU and memory for the pod's
-              <em>requests</em>?</li>
-            <li><strong>Node selector and affinity.</strong> Does the node carry the labels the pod insists on?</li>
-            <li><strong>Taints and tolerations.</strong> Does a taint on the node repel this pod, and does the pod
-              tolerate it?</li>
-            <li><strong>Volume constraints.</strong> If the pod needs a persistent volume, is a compatible one
-              reachable from this node's zone?</li>
-            <li><strong>Pod anti-affinity.</strong> Has the pod asked not to sit beside another pod that is already
-              here?</li>
+            <li><strong>Resource fit:</strong> the node is eliminated unless its allocatable CPU and memory can
+              satisfy the pod's <code>requests</code>.</li>
+            <li><strong>Node selector:</strong> if the pod sets a <code>nodeSelector</code>, the node must carry every
+              label it names. This is an exact match, and there is no way to soften it.</li>
+            <li><strong>Node affinity:</strong> if the pod sets affinity rules instead, the node must satisfy those.
+              They are more expressive than <code>nodeSelector</code>, and section 2.5 covers the difference.</li>
+            <li><strong>Taints and tolerations:</strong> a taint on the node repels pods, so the node is eliminated
+              unless the pod carries a matching toleration.</li>
+            <li><strong>Volume constraints:</strong> if the pod needs a persistent volume, a compatible volume has to be
+              reachable from this node's zone.</li>
+            <li><strong>Pod anti-affinity:</strong> the node is eliminated if the pod has declared that it must not sit
+              beside a pod that is already running there.</li>
           </ol>
 
           <p><strong>Phase 2: Scoring (rank the feasible nodes)</strong></p>
@@ -593,9 +615,11 @@ kubectl describe node minikube | grep -A5 Taints
 
           <h4 id="kube-controller-manager">kube-controller-manager: The Reconciliation Engine</h4>
 
-          <p>One binary running dozens of independent control loops. Each watches one kind of object and works to make
-            reality match the spec: the Deployment controller creates ReplicaSets, the ReplicaSet controller creates
-            Pods, the Node controller reacts when a node goes silent.</p>
+          <p>The controller manager is a single binary that runs dozens of independent control loops side by side.
+            Each loop watches one kind of object and works continuously to make reality match the spec you declared:
+            the Deployment controller creates ReplicaSets, the ReplicaSet controller creates Pods, and the Node
+            controller reacts when a node stops answering. Every one of them follows the same observe, compare, act
+            pattern from 1.2.</p>
 
           <details class="deep-dive">
             <summary>Inside the controller manager: what each controller does<span class="dd-tag">Optional depth</span></summary>
@@ -611,15 +635,21 @@ kubectl describe node minikube | grep -A5 Taints
           <ol class="sec2-indented">
             <li><strong>Deployment controller.</strong> Turns a Deployment into a ReplicaSet matching its pod template
               and replica count.</li>
-            <li><strong>ReplicaSet controller.</strong> Keeps the pod count exact, creating replacements and deleting
-              surplus.</li>
-            <li><strong>Node controller.</strong> Marks a node <code>NotReady</code> when heartbeats stop and, after a
-              timeout, evicts its pods so they can be rescheduled.</li>
-            <li><strong>Endpoints controller.</strong> Maintains each Service's list of matching pod IPs, which is what
-              kube-proxy turns into routing rules.</li>
-            <li><strong>Job controller.</strong> Runs batch pods to completion, retrying failures up to a limit.</li>
-            <li><strong>ServiceAccount and Namespace controllers.</strong> Create the default ServiceAccount in each new
-              namespace, and garbage-collect everything inside a namespace when it is deleted.</li>
+            <li><strong>ReplicaSet controller:</strong> keeps the pod count exact. If a pod is deleted or crashes it
+              creates a replacement, and if there are too many it deletes the surplus.</li>
+            <li><strong>Node controller:</strong> marks a node <code>NotReady</code> when its heartbeats stop, which
+              usually means the kubelet there has died. After a timeout it evicts every pod from that node so the
+              ReplicaSet controller can reschedule them elsewhere.</li>
+            <li><strong>Endpoints controller:</strong> maintains the <strong>Endpoints</strong> object for each Service,
+              which is the list of pod IP addresses currently matching that Service's label selector. kube-proxy reads
+              those Endpoints to program its routing rules.</li>
+            <li><strong>Job controller:</strong> creates the pods needed to run a batch task to completion, retrying
+              failed pods up to a configured limit.</li>
+            <li><strong>ServiceAccount controller:</strong> creates the default ServiceAccount in every new namespace,
+              along with the API token that goes with it. That token is what a pod presents to the API server, and Lab
+              13 builds on it.</li>
+            <li><strong>Namespace controller:</strong> garbage-collects every resource inside a namespace when the
+              namespace is deleted.</li>
           </ol>
           </details>
 
@@ -2224,8 +2254,10 @@ spec:
 
           <h3 id="22-imperative-vs-declarative">2.2 Imperative vs Declarative</h3>
 
-          <p>Section 1.8 introduced these two styles. This section is the practical version: when to reach for each, and
-            the commands that go with them.</p>
+          <p>Section 1.8 introduced these two styles. This section is the practical half: which one to reach for, the
+            commands that go with each, and why the choice matters more than it first appears. It shapes how you work
+            day to day, how you hand changes to a teammate, and whether your cluster is auditable when something breaks
+            in production.</p>
 
           <h4>The Analogy: Building a House</h4>
 
@@ -2237,9 +2269,10 @@ spec:
             the order, and rebuilds a collapsed wall without phoning you. You describe the end state, not the route to
             it.</p>
 
-          <p>Kubernetes is built the second way. The API server holds your desired state and controllers work continuously
-            to make reality match it, which is the reconciliation loop from 1.2.
-          </p>
+          <p>Kubernetes is built around the declarative model. The API server holds the desired state you submitted,
+            and controllers work continuously to make reality match it. That is the <strong>reconciliation loop</strong>
+            from 1.2, and it is the mechanism that makes the cluster self-healing: nobody has to notice a failure and
+            react to it, because the loop is already comparing and correcting.</p>
 
           <h4>Imperative: Telling Kubernetes What to Do Right Now</h4>
 
@@ -2333,11 +2366,13 @@ spec:
 
           <h4>Why Declarative is Essential for Production</h4>
 
-          <p>Three things follow once your YAML lives in Git. <strong>GitOps</strong>: every infrastructure change
-            becomes a pull request, with review and one-commit rollback. <strong>Auditability</strong>: when something
-            breaks at 2am, the Git log tells you what changed and who changed it. <strong>Reproducibility</strong>: you
-            can rebuild a staging cluster with <code>kubectl apply -f ./</code>. Imperative clusters give you none of
-            these. Lab 10 turns this into an automated loop.</p>
+          <p>Three things follow once your manifests live in Git. The first is <strong>GitOps</strong>: every
+            infrastructure change becomes a pull request, so it gets reviewed before it lands and can be rolled back
+            with a single commit. The second is <strong>auditability</strong>: when something breaks at 2am, the Git log
+            tells you exactly what changed and who changed it. The third is <strong>reproducibility</strong>: you can
+            rebuild an entire staging cluster with <code>kubectl apply -f ./</code>. A cluster built by imperative
+            commands offers none of these, because all you have when it breaks is the broken cluster and no history of
+            how it got that way. Lab 10 turns this into an automated loop.</p>
 
           <blockquote class="success"><strong>Always Use Declarative for Anything That Matters</strong>
 
@@ -2973,8 +3008,9 @@ kubectl get pods -l 'app=web,environment in (prod, staging),!canary'
 
           <h3 id="25-node-scheduling-taints-tolerations-and-affinity">2.5 Node Scheduling: Taints, Tolerations, and Affinity</h3>
 
-          <p>By default the scheduler drops a Pod on any node with enough free CPU and memory for its requests. Often
-            that is fine. But production nodes are not interchangeable: some have GPUs, some have fast NVMe disks, some
+          <p>By default the scheduler drops a Pod on any node with enough free CPU and memory for its requests, and
+            for many workloads that is exactly what you want. Production nodes are not interchangeable, though: some
+            have GPUs, some have fast NVMe disks, some
             are reserved for system components, some sit in other availability zones. You need to say things like "only
             run this on GPU nodes" or "never put two replicas on one node." Four tools do that: <strong>taints</strong>,
             <strong>tolerations</strong>, <strong>nodeSelector</strong>, and <strong>affinity/anti-affinity</strong>.</p>
@@ -4323,7 +4359,9 @@ spec:
                 <tr>
                   <td><strong>Pod</strong></td>
                   <td>Wraps one or more containers that share an IP, volumes, and a lifecycle</td>
-                  <td>It is ephemeral. If its node dies, a naked Pod is gone for good and nothing replaces it.</td>
+                  <td>It is ephemeral. A <strong>naked Pod</strong>, meaning one you created directly with
+                    <code>kubectl run</code> or a raw Pod manifest, has no controller watching it. If its node dies it
+                    is gone for good and nothing brings it back.</td>
                 </tr>
                 <tr>
                   <td><strong>ReplicaSet</strong></td>
@@ -4333,12 +4371,14 @@ spec:
                 <tr>
                   <td><strong>Deployment</strong></td>
                   <td>Owns a ReplicaSet and adds rolling updates and rollbacks</td>
-                  <td>This is the one you create.</td>
+                  <td>You do create this one. It is the object you normally write for a stateless workload.</td>
                 </tr>
                 <tr>
                   <td><strong>Service</strong></td>
-                  <td>Puts a stable IP and DNS name in front of Pods that come and go</td>
-                  <td>This is the other one you create.</td>
+                  <td>Gives a changing set of Pods three stable things: a ClusterIP, a DNS name, and load balancing
+                    across whichever Pods are currently healthy</td>
+                  <td>You do create this one too. A Deployment alone has no stable address, so almost every Deployment
+                    is paired with a Service.</td>
                 </tr>
               </tbody>
             </table>
@@ -4350,16 +4390,33 @@ spec:
 
           <blockquote><strong>Pod IPs are temporary</strong>
 
-            <p>A Pod gets a cluster-internal address such as <code>10.244.0.5</code>. Delete it and the replacement
-              comes back on a different one. Nothing should ever connect to a Pod IP directly, and that is the whole
-              reason Services exist.</p>
+            <p>Every Pod gets a private address from the cluster's <strong>Pod CIDR</strong>, the block of IPs reserved
+              for Pods, so it looks like <code>10.244.0.5</code>. These addresses are reachable only from inside the
+              cluster, and they do not survive a restart: delete a Pod and its replacement comes back on a different
+              one. Nothing should ever connect to a Pod IP directly, and that is the whole reason Services exist.</p>
+          </blockquote>
+
+          <p>The object that bridges a Service to those Pod IPs is called an <strong>Endpoints</strong> object, or an
+            <strong>EndpointSlice</strong> in current clusters, which is the same idea split across several smaller
+            objects so it scales. It holds the list of Pod IPs that currently match the Service's selector, and
+            kube-proxy turns that list into the routing rules in the kernel. You will see it in this lab's
+            <code>kubectl describe</code> output.</p>
+
+          <blockquote><strong>In production you rarely expose Services one by one</strong>
+
+            <p>NodePort opens a high-numbered port on every node in the cluster, which is convenient for a lab and
+              awkward for security. Real clusters put one HTTP entry point in front of everything and route by hostname
+              and path, using an <strong>Ingress Controller</strong> or its successor the <strong>Gateway API</strong>.
+              Lab 7 builds exactly that. For this lab, NodePort keeps the moving parts down.</p>
           </blockquote>
 
           <h4 id="lab1-labels-selectors">Labels: the Three Rules That Break Labs</h4>
 
-          <p>A label is a key-value pair on an object. A selector is a query against those labels. That is the entire
-            idea, and 2.4 goes deeper into it. What matters right now is that three specific mismatches cause most
-            first-lab failures.</p>
+          <p>A label is a key-value pair attached to an object, such as <code>app: web</code> or
+            <code>environment: production</code>. A selector is a query against those labels. That is the entire idea,
+            and 2.4 goes deeper into it, but the stakes are worth stating plainly: without labels a Deployment cannot
+            find its Pods, a Service cannot route to them, and an autoscaler cannot find the Deployment to scale. Three
+            specific mismatches cause most first-lab failures.</p>
 
           <ol class="sec2-indented">
             <li>A Deployment's <code>spec.selector.matchLabels</code> must exactly match the labels under
@@ -4386,8 +4443,10 @@ spec:
               <tbody>
                 <tr>
                   <td><code>apiVersion</code></td>
-                  <td>API group and version, such as <code>apps/v1</code>. Core objects (Pod, Service, ConfigMap) use a
-                    bare <code>v1</code>. Unsure which? Run <code>kubectl api-resources</code>.</td>
+                  <td>API group and version. <code>apps/v1</code> means the <code>apps</code> group at stable version
+                    <code>v1</code>. Core objects (Pod, Service, ConfigMap) live in the group-less core API and so use a
+                    bare <code>v1</code>. If you are unsure which a given kind needs, run
+                    <code>kubectl api-resources | grep Deployment</code>.</td>
                 </tr>
                 <tr>
                   <td><code>kind</code></td>
@@ -4396,7 +4455,8 @@ spec:
                 </tr>
                 <tr>
                   <td><code>metadata</code></td>
-                  <td>Name (required), namespace, labels, annotations.</td>
+                  <td>Name (required), namespace (defaults to <code>default</code>), labels, and annotations. The name
+                    has to be unique within its namespace for a given kind.</td>
                 </tr>
                 <tr>
                   <td><code>spec</code></td>
