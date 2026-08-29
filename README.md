@@ -40,9 +40,9 @@ html/
   section-3-devsecops-deep-dive.html      Security + Labs 11-17.
   appendices.html                         Cleanup, troubleshooting, glossary.
 css/
-  style.css       Base theme, typography, callouts, tables, code blocks.
+  style.css       Theme tokens (light/dark, via the data-theme attribute),
+                  typography, callouts, tables, code blocks.
   app.css         Section reading layout, SVG figures, command steps, headings.
-  themes.css      Light/dark palette tokens (toggled via the data-theme attribute).
 js/
   app.js          Builds the sidebar and the "On this page" rail, the prev/next nav,
                   and enhances code blocks and callouts.

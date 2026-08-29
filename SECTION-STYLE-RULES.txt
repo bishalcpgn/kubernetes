@@ -47,8 +47,9 @@
                                 html/section-3-devsecops-deep-dive.html
                                 html/appendices.html
   Layout CSS .................. css/app.css   (the ".styled-section" block)
-  Base theme, tokens, lists ... css/style.css
-  Theme palette ............... css/themes.css
+  Base theme, tokens, lists ... css/style.css  (this is also where the
+                                light/dark palette lives; there is no
+                                separate theme file)
   Page-build JS ............... js/app.js     (builds sections + sidebar,
                                 enhances code blocks, converts <blockquote>
                                 into callouts, builds the right-rail menu and
