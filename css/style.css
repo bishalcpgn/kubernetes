@@ -165,7 +165,11 @@ body {
   font-feature-settings: 'ss01', 'ss02', 'cv11';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  /* No transition on background-color/color here. Both resolve from custom
+     properties that the theme toggle swaps, and a transition on such a
+     property leaves the OLD computed value stuck: light mode kept the dark
+     background and dark-theme text, giving a 1.33 contrast ratio. The theme
+     switch is instant instead, which is correct and cannot regress. */
   min-height: 100vh;
 }
 
@@ -262,7 +266,8 @@ p+p {
 a {
   color: var(--link);
   text-decoration: none;
-  transition: color 0.15s ease;
+  /* See the note on body: no transition on a property whose value comes from a
+     swapped theme token, or the old computed value sticks after a theme switch. */
 }
 
 a:hover {
@@ -519,7 +524,8 @@ hr {
   font-size: 0.85rem;
   font-weight: 500;
   outline: none;
-  transition: border 0.15s, box-shadow 0.15s;
+  /* See the note on body: no transition on a property whose value comes from a
+     swapped theme token, or the old computed value sticks after a theme switch. */
 }
 
 .sidebar-search input::placeholder {
@@ -574,7 +580,8 @@ hr {
   color: var(--text-muted);
   text-decoration: none;
   border-left: 2px solid transparent;
-  transition: all 0.15s ease;
+  /* See the note on body: no transition on a property whose value comes from a
+     swapped theme token, or the old computed value sticks after a theme switch. */
   font-weight: 500;
 }
 
@@ -617,7 +624,8 @@ hr {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  /* See the note on body: no transition on a property whose value comes from a
+     swapped theme token, or the old computed value sticks after a theme switch. */
 }
 
 .icon-btn:hover {
@@ -776,7 +784,8 @@ section.page-section:first-child {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  transition: all 0.15s ease;
+  /* See the note on body: no transition on a property whose value comes from a
+     swapped theme token, or the old computed value sticks after a theme switch. */
 }
 
 .copy-btn:hover {
@@ -1135,7 +1144,8 @@ tbody tr:hover {
   border-radius: 8px;
   text-decoration: none;
   color: var(--text);
-  transition: border-color 0.15s ease, background 0.15s ease;
+  /* See the note on body: no transition on a property whose value comes from a
+     swapped theme token, or the old computed value sticks after a theme switch. */
   min-width: 0;
 }
 
@@ -1177,7 +1187,8 @@ tbody tr:hover {
   font-size: 0.82rem;
   color: var(--text-muted);
   text-decoration: none;
-  transition: color 0.15s ease;
+  /* See the note on body: no transition on a property whose value comes from a
+     swapped theme token, or the old computed value sticks after a theme switch. */
 }
 
 .edit-on-github:hover {
