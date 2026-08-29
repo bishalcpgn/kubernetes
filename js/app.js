@@ -537,8 +537,10 @@
 
         const subLinks = [];
         desc.h3s.forEach(h3 => {
-          // Strip a leading "N.N " or "Section X:" number prefix for a clean label.
-          const label = h3.textContent.replace(/^\s*(\d+(\.\d+)*|Section\s+[A-Z]|Step\s+\d+)[:.\s-]+/i, '').trim() || h3.textContent.trim();
+          // Strip a leading "N.N " or "Section X:" prefix for a clean label, but KEEP
+          // "Step N:". A lab's steps are an ordered sequence, and dropping the ordinal
+          // leaves the rail listing them with no indication of what order to run them in.
+          const label = h3.textContent.replace(/^\s*(\d+(\.\d+)*|Section\s+[A-Z])[:.\s-]+/i, '').trim() || h3.textContent.trim();
           const li = document.createElement('li');
           const a = document.createElement('a');
           a.href = '#' + h3.id;

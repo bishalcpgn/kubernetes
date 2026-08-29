@@ -650,7 +650,7 @@
               enabled. Each empty result below is filled in by a later lab, and the step notes which one.</p>
           </blockquote>
 
-          <h4 id="lab14-admission-plugins">See Which Admission Plugins the API Server Runs</h4>
+          <h3 id="lab14-admission-plugins">See Which Admission Plugins the API Server Runs</h3>
 
           <p>Admission controllers are the gateway described above. The API server is started with an explicit list of
             them, and because it runs as a static Pod you can read its command line.</p>
@@ -687,7 +687,7 @@ kubectl get mutatingwebhookconfigurations
 </code></pre>
           </div>
 
-          <h4 id="lab14-psa-labels">Check Which Namespaces Enforce a Pod Security Standard</h4>
+          <h3 id="lab14-psa-labels">Check Which Namespaces Enforce a Pod Security Standard</h3>
 
           <p>PSA is enabled per namespace with a label. No label means no profile is enforced, which is the default
             everywhere.</p>
@@ -698,7 +698,7 @@ kubectl get mutatingwebhookconfigurations
 # Lab 12 applies these labels properly.
 </code></pre>
 
-          <h4 id="lab14-rbac-check">Ask the Cluster What You Are Allowed to Do</h4>
+          <h3 id="lab14-rbac-check">Ask the Cluster What You Are Allowed to Do</h3>
 
           <p>RBAC answers questions of the form "can this subject perform this verb on this resource". You can ask it
             directly about yourself, and about any ServiceAccount.</p>
@@ -720,7 +720,7 @@ kubectl get mutatingwebhookconfigurations
 </code></pre>
           </div>
 
-          <h4 id="lab14-workload-posture">Inspect the Security Posture of an Ordinary Pod</h4>
+          <h3 id="lab14-workload-posture">Inspect the Security Posture of an Ordinary Pod</h3>
 
           <p>Deploy a completely normal Pod and look at what it was granted. Nothing here is malicious; this is what a
             standard manifest produces when nobody has thought about security.</p>
@@ -755,7 +755,7 @@ kubectl wait --for=condition=Ready pod/posture-demo --timeout=60s
 </code></pre>
           </div>
 
-          <h4 id="lab14-network-check">Check Whether Anything Restricts Pod-to-Pod Traffic</h4>
+          <h3 id="lab14-network-check">Check Whether Anything Restricts Pod-to-Pod Traffic</h3>
 
           <p>The east-west traffic problem described above is not theoretical. By default there is nothing in the way
             of any Pod talking to any other Pod.</p>
@@ -766,7 +766,7 @@ kubectl wait --for=condition=Ready pod/posture-demo --timeout=60s
 # Lab 14 builds the default-deny baseline that closes this.
 </code></pre>
 
-          <h4 id="lab14-baseline-summary">Record Your Baseline</h4>
+          <h3 id="lab14-baseline-summary">Record Your Baseline</h3>
 
           <p>Before cleaning up, note what you found. Every row is a layer from the defense-in-depth discussion above,
             and the right-hand column is the lab that closes it.</p>
@@ -820,7 +820,7 @@ kubectl wait --for=condition=Ready pod/posture-demo --timeout=60s
             </table>
           </div>
 
-          <h4 id="lab14-lab-cleanup">Clean Up</h4>
+          <h3 id="lab14-lab-cleanup">Clean Up</h3>
 
           <p>Remove the demo Pod. Nothing else in this lab changed cluster state.</p>
 
@@ -868,8 +868,7 @@ kubectl wait --for=condition=Ready pod/posture-demo --timeout=60s
 
           <p><strong>What we are doing:</strong> installing Trivy natively, scanning a YAML manifest for
             misconfigurations,
-            scanning a container image for CVEs, and scanning a directory for hardcoded secrets. We will then integrate
-            Trivy into a CI pipeline and explore the Trivy Operator, an in-cluster controller that rescans running
+            scanning a container image for CVEs, and scanning a directory for hardcoded secrets. You will then integrate Trivy into a CI pipeline and explore the Trivy Operator, an in-cluster controller that rescans running
             workloads on its own.</p>
           <p><strong>Real-world mapping:</strong> In a mature DevSecOps pipeline, every git push triggers a Trivy scan.
             If a developer accidentally commits a root-running container or a leaked API key, the build fails
@@ -976,7 +975,7 @@ sudo apt-get install -y trivy
 
           <h3 id="step-1-scan-a-manifest-for-misconfigurations">Step 1: Scan a Manifest for Misconfigurations</h3>
           <p>
-            We will scan the <code>nginx-deployment.yaml</code> you created in Lab 1. The <code>config</code> scan type
+            You will scan the <code>nginx-deployment.yaml</code> you created in Lab 1. The <code>config</code> scan type
             reads Kubernetes YAML and checks it against a ruleset based on CIS Benchmarks, NSA hardening guides, and
             common best practices.
           </p>
@@ -1015,7 +1014,7 @@ HIGH: Container 'nginx' of Deployment 'nginx-deployment' should set
       Container should drop all capabilities.
 </code></pre>
 
-          <p>Let us understand each finding:</p>
+          <p>Read each finding:</p>
           <ol class="sec2-indented">
             <li>
               <strong>allowPrivilegeEscalation: false is missing.</strong> If a container does not explicitly disable
@@ -1045,7 +1044,7 @@ HIGH: Container 'nginx' of Deployment 'nginx-deployment' should set
 
           <h3 id="step-2-scan-an-image-for-cves">Step 2: Scan an Image for CVEs</h3>
           <p>
-            Now we scan a container image for known vulnerabilities. We will compare an old image (full of CVEs) with
+            Now scan a container image for known vulnerabilities. You will compare an old image (full of CVEs) with
             a current Alpine-based image (far fewer CVEs).
           </p>
           <div class="cmd-step">
@@ -1721,7 +1720,7 @@ forbidden: violates PodSecurity "restricted:latest":
     securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
 </code></pre>
 
-          <p>Let us read each violation:</p>
+          <p>Read each violation:</p>
           <ol class="sec2-indented">
             <li><strong>allowPrivilegeEscalation != false:</strong> the container did not set
               <code>allowPrivilegeEscalation: false</code>. PSA requires it explicitly.
@@ -1995,7 +1994,7 @@ kubectl get namespace secure-apps
           <h2 id="17-lab-13-least-privilege-rbac">17. Lab 13: Least-Privilege RBAC</h2>
 
           <p><strong>What we are doing:</strong> building a complete RBAC chain from scratch: ServiceAccount, Role with
-            minimal verbs, and RoleBinding. We then verify the permission boundary with <code>kubectl auth can-i</code>
+            minimal verbs, and RoleBinding. You then verify the permission boundary with <code>kubectl auth can-i</code>
             from multiple angles and deploy a Pod that uses the ServiceAccount.</p>
           <p><strong>Real-world mapping: IAM Governance.</strong> CI/CD agents (Argo CD), logging sidecars, and
             developer tooling should hold only the permissions they need. A stolen token with cluster-admin access can
@@ -2617,8 +2616,8 @@ for item in data[&#x27;items&#x27;]:
 
           <p><strong>What we are doing:</strong> starting a Calico-enabled cluster, deploying a frontend and a database
             Pod, confirming the default open connectivity, applying a default-deny NetworkPolicy, verifying that
-            connectivity is broken, then restoring only the specific path we need with a targeted allow policy. We also
-            write an egress policy that permits only DNS.</p>
+            connectivity is broken, then restoring only the path the application actually needs with a targeted allow
+            policy, and finally writing an egress policy that permits nothing but DNS.</p>
           <p><strong>Real-world mapping: Zero-Trust East-West.</strong> Perimeter firewalls protect the north-south
             boundary (internet to cluster) but do nothing about east-west traffic (service to service inside the
             cluster). If an attacker exploits a public-facing web pod, they can freely reach every database, internal

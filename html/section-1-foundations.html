@@ -90,7 +90,7 @@
           <p>
             This section builds the mental model you need to work effectively with Kubernetes. Rather than jumping
             straight into
-            commands, we start from the problem that Kubernetes solves and work upward through the architecture.
+            commands, this section starts from the problem that Kubernetes solves and works upward through the architecture.
             Understanding
             <em>why</em> each component exists makes every kubectl command feel logical rather than magical.
           </p>
@@ -867,7 +867,7 @@
           <h3 id="16-request-lifecycle">1.6 The Full Request Lifecycle: kubectl apply to Container Running</h3>
 
           <p>
-            To cement your understanding of all these components, let us trace exactly what happens when you run
+            To cement your understanding of all these components, trace exactly what happens when you run
             <code>kubectl apply -f deployment.yaml</code> all the way through to a container starting on a worker node.
           </p>
 
@@ -1647,7 +1647,7 @@ spec:
               <code>Ready</code> state, you are set. If not, run <code>minikube start</code> first.</p>
           </blockquote>
 
-          <h4 id="lab0-find-control-plane">Find the Control Plane</h4>
+          <h3 id="lab0-find-control-plane">Find the Control Plane</h3>
 
           <p>Every control plane component runs as an ordinary Pod in the <code>kube-system</code> namespace. The four
             you read about in 1.4 are all there under their own names.</p>
@@ -1676,7 +1676,7 @@ spec:
             whatever it finds there directly. These are called <strong>static Pods</strong>: kubelet owns them, not the
             scheduler. That is why you cannot delete them with <code>kubectl delete</code> and make them stay gone.</p>
 
-          <h4 id="lab0-ask-api-server">Ask the API Server Whether It Is Healthy</h4>
+          <h3 id="lab0-ask-api-server">Ask the API Server Whether It Is Healthy</h3>
 
           <p>Every <code>kubectl</code> command is an HTTP request. You can skip the friendly output and talk to the
             REST API directly, which is the clearest way to see that the API server is just a web server in front of
@@ -1708,7 +1708,7 @@ spec:
               and nothing else will work. This single line is why 1.4 insisted that etcd backups are not optional.</p>
           </blockquote>
 
-          <h4 id="lab0-watch-scheduler">Watch the Scheduler Make a Decision</h4>
+          <h3 id="lab0-watch-scheduler">Watch the Scheduler Make a Decision</h3>
 
           <p>The scheduler does one job: it picks a node for a Pod that does not have one yet. It records that decision
             as an Event, so you can read the decision after the fact.</p>
@@ -1732,7 +1732,7 @@ kubectl get pods -l app=arch-demo
             the component described in 1.4. On a single-node cluster the decision is easy, but the mechanism is
             identical on a 500-node cluster.</p>
 
-          <h4 id="lab0-watch-reconciliation">Watch the Reconciliation Loop Close a Gap</h4>
+          <h3 id="lab0-watch-reconciliation">Watch the Reconciliation Loop Close a Gap</h3>
 
           <p>Section 1.2 described desired state versus actual state as a loop that never stops running. Here you break
             the actual state on purpose and watch the loop repair it.</p>
@@ -1768,7 +1768,7 @@ kubectl get pods -l app=arch-demo
 </code></pre>
           </div>
 
-          <h4 id="lab0-node-components">See kubelet and the Container Runtime on the Node</h4>
+          <h3 id="lab0-node-components">See kubelet and the Container Runtime on the Node</h3>
 
           <p>Section 1.5 described two things that do not run as Pods: kubelet and the container runtime. Both are
             ordinary Linux services on the node, so you have to log into the node to see them.</p>
@@ -1793,7 +1793,7 @@ kubectl get pods -l app=arch-demo
             became a ReplicaSet, which became Pods, which the scheduler assigned to a node, which kubelet turned into a
             request to containerd, which started the container you just listed. That is the full path from 1.6.</p>
 
-          <h4 id="lab0-cleanup">Clean Up</h4>
+          <h3 id="lab0-cleanup">Clean Up</h3>
 
           <p>Remove the Deployment so it does not consume memory during later labs.</p>
 
@@ -1849,8 +1849,7 @@ kubectl get pods -l app=arch-demo
           <h2 id="2-core-working-concepts">2. Core Working Concepts</h2>
 
           <p>This section covers the foundational concepts you will use every single day when working with Kubernetes.
-            Understanding these deeply will save you hours of debugging and confusion. We will start with how Kubernetes
-            organizes resources, then move into how you tell Kubernetes what you want, how it allocates compute
+            Understanding these deeply will save you hours of debugging and confusion. Start with how Kubernetes organizes resources, then move into how you tell Kubernetes what you want, how it allocates compute
             resources, and finally how it finds and groups things together.</p>
 
           <h3 id="21-namespaces">2.1 Namespaces</h3>
@@ -2084,7 +2083,7 @@ kubens -                  # switch back to the previously active namespace</code
             standard in most Kubernetes engineers' toolkits.
           </blockquote>
 
-          <h4>ResourceQuota: Capping Resource Usage Per Namespace</h4>
+          <h3 id="resourcequota">2.2 ResourceQuota: Capping Usage Per Namespace</h3>
 
           <p>A <strong>ResourceQuota</strong> is a Kubernetes object that sets hard upper limits on the total resources
             a namespace can consume. Once a quota is applied, the API server tracks running totals across all Pods,
@@ -2180,7 +2179,7 @@ spec:
             namespace.
           </blockquote>
 
-          <h4>LimitRange: Setting Defaults and Maximums Per Container</h4>
+          <h3 id="limitrange">2.3 LimitRange: Defaults and Maximums Per Container</h3>
 
           <p>A <strong>LimitRange</strong> operates at the container level, not the namespace level. While ResourceQuota
             controls the aggregate total across the whole namespace, LimitRange sets boundaries and defaults for
@@ -2294,7 +2293,7 @@ spec:
             Pods that collectively exhaust the cluster.
           </blockquote>
 
-          <h3 id="22-imperative-vs-declarative">2.2 Imperative vs Declarative</h3>
+          <h3 id="22-imperative-vs-declarative">2.4 Imperative vs Declarative</h3>
 
           <p>Section 1.8 introduced these two styles. This section is the practical half: which one to reach for, the
             commands that go with each, and why the choice matters more than it first appears. It shapes how you work
@@ -2513,7 +2512,7 @@ spec:
           </blockquote>
           </details>
 
-          <h3 id="23-resource-requests-limits-and-qos">2.3 Resource Requests, Limits, and QoS</h3>
+          <h3 id="23-resource-requests-limits-and-qos">2.5 Resource Requests and Limits</h3>
 
           <p>One of the most common sources of mysterious failures in Kubernetes clusters is incorrect or missing
             resource configuration. Pods get evicted, crash-looping, or throttled in ways that seem unpredictable until
@@ -2722,7 +2721,7 @@ spec:
             be scheduled on it. Why? Because the running Pods have high requests even though they are not actively using
             all that CPU. The scheduler works on reservations, not actual usage.</p>
 
-          <h4 id="qos-classes">QoS Classes: Who Gets Evicted First</h4>
+          <h3 id="qos-classes">2.6 QoS Classes: Who Gets Evicted First</h3>
 
           <p>From the requests and limits you set, Kubernetes derives a <strong>Quality of Service class</strong> for
             each Pod: <code>Guaranteed</code>, <code>Burstable</code>, or <code>BestEffort</code>. You never set it
@@ -2784,7 +2783,7 @@ spec:
 
           </details>
 
-          <h3 id="24-labels-annotations-and-selectors">2.4 Labels, Annotations, and Selectors</h3>
+          <h3 id="24-labels-annotations-and-selectors">2.7 Labels: The Grouping Mechanism</h3>
 
           <p>Kubernetes manages thousands of objects in a cluster. It needs a way to group, filter, and connect these
             objects to each other. Labels and selectors are the mechanism Kubernetes uses for this.</p>
@@ -2844,7 +2843,7 @@ spec:
     targetPort: 8080
 </code></pre>
 
-          <h4 id="selector-styles">Two Styles of Selector</h4>
+          <h3 id="selector-styles">2.8 Selectors: Equality-Based and Set-Based</h3>
 
           <p>Kubernetes supports two distinct styles of label selector. Both answer the question "which Pods match
             these label conditions?", but they differ in how much they can express, and, more importantly, in which API
@@ -3037,7 +3036,7 @@ kubectl get pods -l 'app=web,environment in (prod, staging),!canary'
             </ol>
           </blockquote>
 
-          <h4>Annotations: Metadata for Tools, Not for Selection</h4>
+          <h3 id="annotations">2.9 Annotations: Metadata for Tools</h3>
 
           <p>Annotations are also key-value pairs on Kubernetes objects, but they serve a completely different purpose
             from labels. Annotations are <em>not</em> used for selection. Instead, annotations are used to attach
@@ -3063,7 +3062,7 @@ kubectl get pods -l 'app=web,environment in (prod, staging),!canary'
             a ticket number, a long description).
           </blockquote>
 
-          <h3 id="25-node-scheduling-taints-tolerations-and-affinity">2.5 Node Scheduling: Taints, Tolerations, and Affinity</h3>
+          <h3 id="25-node-scheduling-taints-tolerations-and-affinity">2.10 Node Scheduling: Taints and Tolerations</h3>
 
           <p>By default the scheduler drops a Pod on any node with enough free CPU and memory for its requests, and
             for many workloads that is exactly what you want. Production nodes are not interchangeable, though: some
@@ -3280,7 +3279,7 @@ kubectl label nodes node-ssd-1 storage=nvme
             always a hard requirement. Node affinity can be either hard (required) or soft (preferred).
           </blockquote>
 
-          <h4 id="affinity-overview">Affinity: More Expressive Placement Rules</h4>
+          <h3 id="affinity-overview">2.11 Affinity: More Expressive Placement Rules</h3>
 
           <p><code>nodeSelector</code> only does exact label matches. <strong>Affinity</strong> rules go further: they
             can express preferences as well as requirements, match on sets of values, and place a Pod relative to
@@ -3548,7 +3547,7 @@ kubectl label nodes node-ssd-1 storage=nvme
             </ol>
           </blockquote>
 
-          <h3 id="26-multi-container-pods">2.6 Multi-Container Pods: Init Containers and Sidecars</h3>
+          <h3 id="26-multi-container-pods">2.12 Multi-Container Pods: Init Containers and Sidecars</h3>
 
           <p>Most Pods hold one container. When a Pod holds more, the extras almost always fall into one of two roles,
             and Kubernetes has a separate mechanism for each.</p>
@@ -4670,7 +4669,7 @@ kubectl get services
 
           <h3 id="step-1-create-the-deployment">Step 1: Create the Deployment</h3>
 
-          <p>We will write a Deployment manifest line by line and understand exactly what every field means and why it
+          <p>You will write a Deployment manifest line by line and see exactly what every field means and why it
             is there. This is more important than simply copying and pasting, once you understand the structure, you can
             write any Deployment from scratch.</p>
 
@@ -5028,7 +5027,7 @@ nginx-deployment-7c79c4bf97-8k4qj   0/0     Terminating         0          3m
 
           <p>There are two kinds of scaling in Kubernetes:</p>
           <ol class="sec2-indented">
-            <li><strong>Horizontal scaling</strong> (what we are doing here): add more Pod replicas. This is the
+            <li><strong>Horizontal scaling</strong> (what you are doing here): add more Pod replicas. This is the
               Kubernetes-native scaling approach. It works well for stateless applications where each Pod is identical
               and independent. The <code>kubectl scale</code> command and the Horizontal Pod Autoscaler (HPA) both do
               horizontal scaling.</li>
@@ -5087,8 +5086,7 @@ nginx-deployment   4/4     4            4           8m
             when thresholds are crossed. For example, an HPA might say "keep CPU utilization below 70%, scale up if it
             goes higher, scale down when load drops."</p>
 
-          <p>HPA requires the <code>metrics-server</code> to be installed in the cluster. We cover HPA configuration in
-            Lab 5. For now, scale back down to 2 so we are working with a manageable number of Pods:</p>
+          <p>HPA requires the <code>metrics-server</code> to be installed in the cluster. Lab 5 covers HPA configuration. For now, scale back down to 2 so you are working with a manageable number of Pods:</p>
 
           <pre class="codehilite"><code class="language-bash">kubectl scale deployment nginx-deployment --replicas=2
 kubectl get pods -l app=web
@@ -5098,9 +5096,9 @@ kubectl get pods -l app=web
 
           <h3 id="step-4-expose-with-a-service">Step 4: Expose with a Service</h3>
 
-          <p>Our Pods are running and healthy, but they are completely unreachable from outside the cluster. Each Pod
+          <p>Your Pods are running and healthy, but they are completely unreachable from outside the cluster. Each Pod
             has a private cluster IP address, but those addresses are ephemeral and not accessible from your laptop or
-            from the internet. We need a Service to create a stable, durable network endpoint.</p>
+            from the internet. You need a Service to create a stable, durable network endpoint.</p>
 
           <h4 id="lab1-step4-theory">4.1 The Three-Port Model</h4>
 
@@ -7895,9 +7893,7 @@ livenessProbe:
             </li>
           </ol>
 
-          <h3 id="lab5-probe-lab">Step-by-Step Probe Lab</h3>
-
-          <h4 id="lab5-probe-deploy">Deploy probe-demo.yaml with All Three Probes</h4>
+          <h3 id="lab5-probe-deploy">Deploy probe-demo.yaml with All Three Probes</h3>
 
           <p>The manifest below defines a two-replica nginx Deployment carrying all three probes, plus a Service in
             front of it. Save it as <code>probe-demo.yaml</code>:</p>
@@ -8005,7 +8001,7 @@ spec:
 </code></pre>
           </div>
 
-          <h4 id="lab5-probe-break">Simulate Readiness Failure and Observe Endpoint Removal</h4>
+          <h3 id="lab5-probe-break">Simulate Readiness Failure and Observe Endpoint Removal</h3>
 
           <p>These commands deliberately break one pod's health check and watch Kubernetes pull it out of the Service
             endpoints, then restore it.</p>
@@ -8137,9 +8133,7 @@ Pod uses 80m CPU, CPU request = NONE:
 </code></pre>
           </div>
 
-          <h3 id="lab5-hpa-lab">HPA Lab: Deploy, Scale, Watch</h3>
-
-          <h4 id="lab5-hpa-deploy">Deploy the HPA Demo Application</h4>
+          <h3 id="lab5-hpa-deploy">Deploy the HPA Demo Application</h3>
 
           <p>The manifest below defines a deliberately CPU-hungry demo Deployment with a CPU request the HPA can
             measure against, plus its Service. Save it as <code>probe-hpa.yaml</code>:</p>
@@ -8214,7 +8208,7 @@ spec:
 kubectl wait --for=condition=Available deployment/hpa-demo --timeout=60s
 </code></pre>
 
-          <h4 id="lab5-hpa-create">Create the HPA (autoscaling/v2)</h4>
+          <h3 id="lab5-hpa-create">Create the HPA (autoscaling/v2)</h3>
 
           <p>The HorizontalPodAutoscaler below targets that Deployment and holds it between 1 and 10 replicas at 50%
             average CPU. Save it as <code>hpa.yaml</code>:</p>
@@ -8283,7 +8277,7 @@ spec:
 </code></pre>
           </div>
 
-          <h4 id="lab5-hpa-load">Generate Load and Watch Autoscaling</h4>
+          <h3 id="lab5-hpa-load">Generate Load and Watch Autoscaling</h3>
 
           <p>These commands drive sustained CPU load at the demo app and watch the HPA add replicas in response, then
             remove the load to see it scale back down.</p>
