@@ -619,7 +619,8 @@
             Each loop watches one kind of object and works continuously to make reality match the spec you declared:
             the Deployment controller creates ReplicaSets, the ReplicaSet controller creates Pods, and the Node
             controller reacts when a node stops answering. Every one of them follows the same observe, compare, act
-            pattern from 1.2.</p>
+            pattern from 1.2. Section 1.9 defines the Deployment, ReplicaSet, and Pod objects themselves; what matters
+            here is that each one has a controller whose entire job is keeping it true.</p>
 
           <details class="deep-dive">
             <summary>Inside the controller manager: what each controller does<span class="dd-tag">Optional depth</span></summary>
@@ -694,8 +695,8 @@
               <strong>Liveness and readiness probes:</strong> the kubelet periodically executes the pod's health probes.
               If a
               liveness probe fails, the kubelet restarts the container. If a readiness probe fails, the kubelet removes
-              the pod
-              from the Endpoints list so no traffic is sent to it.
+              the pod from the <strong>Endpoints</strong> list, the set of pod IPs a Service is currently willing to
+              send traffic to, so the pod stops receiving requests.
             </li>
             <li>
               <strong>Reporting status:</strong> the kubelet periodically sends status updates about the node and its
@@ -985,7 +986,9 @@
             Namespaces,
             ConfigMaps) has no group name. Its <code>apiVersion</code> is just a version number like <code>v1</code>.
             All other
-            groups have names:
+            groups have names. The table below is about where each object lives, not what it does: most of these
+            objects get a full treatment in 1.9 or in a later lab, so read the Resources column as a list of names to
+            recognize rather than a list to learn now.
           </p>
 
           <div class="table-wrap">
@@ -2172,8 +2175,8 @@ spec:
 
           <p>LimitRange supports three types of targets, each with its own set of fields:</p>
           <ol class="sec2-indented">
-            <li><strong>Container</strong>: applies to every container (and init container) in every Pod in the
-              namespace.</li>
+            <li><strong>Container</strong>: applies to every container in every Pod in the namespace, including init
+              containers, the short-lived containers that run to completion before the main ones start.</li>
             <li><strong>Pod</strong>: applies to the sum of all containers within a single Pod.</li>
             <li><strong>PersistentVolumeClaim</strong>: applies to storage requests in PVCs.</li>
           </ol>
@@ -3348,6 +3351,9 @@ kubectl label nodes node-ssd-1 storage=nvme
           </blockquote>
           </details>
 
+          <p>Pod affinity is the one to reach for when latency between two services costs you more than the risk of
+            losing them together.</p>
+
           <details class="deep-dive">
             <summary>Pod affinity: co-locating Pods<span class="dd-tag">Optional depth</span></summary>
 
@@ -3392,6 +3398,9 @@ kubectl label nodes node-ssd-1 storage=nvme
             strict data locality requirements.
           </blockquote>
           </details>
+
+          <p>Anti-affinity is the reverse trade: you accept a worse packing of Pods onto nodes in exchange for
+            surviving the loss of any one node.</p>
 
           <details class="deep-dive">
             <summary>Pod anti-affinity: spreading replicas<span class="dd-tag">Optional depth</span></summary>
