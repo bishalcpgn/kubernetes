@@ -42,11 +42,9 @@ css/
   style.css       Base theme, typography, callouts, tables, code blocks.
   app.css         Section reading layout, SVG figures, command steps, headings.
   themes.css      Light/dark palette tokens (toggled via the data-theme attribute).
-  cmd-steps.css   Roman-numeral command-step styling.
 js/
   app.js          Builds the sidebar and the "On this page" rail, the prev/next nav,
                   and enhances code blocks and callouts.
-  cmd-steps.js    Generates the numbered command steps.
 SECTION-STYLE-RULES.txt   Formatting conventions that keep every page consistent.
 ```
 
