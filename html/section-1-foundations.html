@@ -132,8 +132,7 @@
             "it works everywhere the Docker image runs".
           </p>
 
-          <h4 id="era-4-why-containers-alone-are-not-enough">Era 4: Why Containers Alone Are Not Enough in Production
-          </h4>
+          <h4 id="era-4-why-containers-alone-are-not-enough">Era 4: Why Containers Alone Are Not Enough in Production</h4>
 
           <p>
             Running a container on your laptop is easy. Running hundreds of containers across dozens of machines in
@@ -168,8 +167,7 @@
             </p>
           </blockquote>
 
-          <h3 id="12-the-master-concept-desired-state-vs-actual-state">1.2 The Master Concept: Desired State vs. Actual
-            State</h3>
+          <h3 id="12-the-master-concept-desired-state-vs-actual-state">1.2 The Master Concept: Desired State vs. Actual State</h3>
 
           <p>
             The most important idea in all of Kubernetes is the distinction between <strong>desired state</strong> and
@@ -527,7 +525,7 @@
 </code></pre>
           </div>
 
-                    <h4 id="kube-scheduler">kube-scheduler: Placing Pods on Nodes</h4>
+          <h4 id="kube-scheduler">kube-scheduler: Placing Pods on Nodes</h4>
 
           <p>The scheduler watches for Pods that have no node yet and picks one for each. That is its whole job. It
             does not start anything; it writes a node name onto the Pod, and the kubelet on that node takes over from
@@ -535,8 +533,6 @@
 
           <details class="deep-dive">
             <summary>How the scheduler picks a node: filtering and scoring<span class="dd-tag">Optional depth</span></summary>
-
-
 
           <p>
             The scheduler's job is to watch the API server for pods that have been created but not yet assigned to a
@@ -604,8 +600,6 @@ kubectl describe node minikube | grep -A5 Taints
           <details class="deep-dive">
             <summary>Inside the controller manager: what each controller does<span class="dd-tag">Optional depth</span></summary>
 
-
-
           <p>
             The controller manager is a single binary that bundles dozens of individual controllers. Each controller is
             a
@@ -629,7 +623,7 @@ kubectl describe node minikube | grep -A5 Taints
           </ol>
           </details>
 
-<h3 id="15-worker-node-components-deep-dive">1.5 Worker Node Components: Deep Dive</h3>
+          <h3 id="15-worker-node-components-deep-dive">1.5 Worker Node Components: Deep Dive</h3>
 
           <h4 id="kubelet">kubelet: The Node Agent</h4>
 
@@ -771,7 +765,6 @@ kubectl describe node minikube | grep -A5 Taints
             <figcaption id="fig1-4-cap">Figure 1.4: iptables DNAT flow for a Service request in iptables proxy mode.</figcaption>
           </figure>
 
-
           <h4 id="container-runtime">Container Runtime: containerd and CRI-O</h4>
 
           <p>
@@ -839,7 +832,6 @@ kubectl describe node minikube | grep -A5 Taints
             </svg>
             <figcaption id="fig1-5-cap">Figure 1.5: kubelet to containerd to runc container startup sequence.</figcaption>
           </figure>
-
 
           <h3 id="16-request-lifecycle">1.6 The Full Request Lifecycle: kubectl apply to Container Running</h3>
 
@@ -1016,13 +1008,11 @@ kubectl describe node minikube | grep -A5 Taints
             </table>
           </div>
 
-                    <p>Each resource also carries a stability level in its version string, which tells you how much the field
+          <p>Each resource also carries a stability level in its version string, which tells you how much the field
             layout can still change under you.</p>
 
           <details class="deep-dive">
             <summary>API versions: alpha, beta, and stable<span class="dd-tag">Optional depth</span></summary>
-
-
 
           <p>
             Kubernetes uses semantic versioning suffixes to indicate the maturity and stability of an API:
@@ -1051,7 +1041,7 @@ kubectl api-versions
 </code></pre>
           </details>
 
-<h3 id="18-the-declarative-model">1.8 The Declarative Model: Why YAML + apply Beats Imperative Commands</h3>
+          <h3 id="18-the-declarative-model">1.8 The Declarative Model: Why YAML + apply Beats Imperative Commands</h3>
 
           <p>
             There are two ways to work with Kubernetes: <strong>imperative</strong> and <strong>declarative</strong>.
@@ -1389,7 +1379,6 @@ spec:
             <figcaption id="fig1-7-cap">Figure 1.7: ClusterIP (internal-only) vs NodePort (externally accessible) Service types.</figcaption>
           </figure>
 
-
           <h4 id="service-nodeport">NodePort</h4>
 
           <p>
@@ -1405,8 +1394,6 @@ spec:
             demos, and on-premises clusters. Not ideal for production because you expose a non-standard port and must
             manage
             the node IP yourself.</p>
-
-
 
           <pre class="codehilite"><code class="language-bash"># On Minikube, access a NodePort service:
 minikube service my-app --url
@@ -2407,13 +2394,11 @@ spec:
           <pre class="codehilite"><code class="language-bash">kubectl apply -f deployment.yaml
 </code></pre>
 
-                    <p>One more thing worth knowing about <code>apply</code>: it does not blindly overwrite. It reconciles three
+          <p>One more thing worth knowing about <code>apply</code>: it does not blindly overwrite. It reconciles three
             versions of the object, which is why it can leave fields set by other tools alone.</p>
 
           <details class="deep-dive">
             <summary>How kubectl apply computes a diff: the three-way merge<span class="dd-tag">Optional depth</span></summary>
-
-
 
           <p>When you run <code>kubectl apply</code>, Kubernetes uses a technique called a three-way strategic merge to
             figure out what to change. It compares three things:</p>
@@ -2439,7 +2424,7 @@ spec:
           </blockquote>
           </details>
 
-<h3 id="23-resource-requests-limits-and-qos">2.3 Resource Requests, Limits, and QoS</h3>
+          <h3 id="23-resource-requests-limits-and-qos">2.3 Resource Requests, Limits, and QoS</h3>
 
           <p>One of the most common sources of mysterious failures in Kubernetes clusters is incorrect or missing
             resource configuration. Pods get evicted, crash-looping, or throttled in ways that seem unpredictable until
@@ -2639,7 +2624,7 @@ spec:
             be scheduled on it. Why? Because the running Pods have high requests even though they are not actively using
             all that CPU. The scheduler works on reservations, not actual usage.</p>
 
-                    <h4 id="qos-classes">QoS Classes: Who Gets Evicted First</h4>
+          <h4 id="qos-classes">QoS Classes: Who Gets Evicted First</h4>
 
           <p>From the requests and limits you set, Kubernetes derives a <strong>Quality of Service class</strong> for
             each Pod: <code>Guaranteed</code>, <code>Burstable</code>, or <code>BestEffort</code>. You never set it
@@ -2648,8 +2633,6 @@ spec:
 
           <details class="deep-dive">
             <summary>QoS classes and eviction order<span class="dd-tag">Optional depth</span></summary>
-
-
 
           <p>Kubernetes automatically assigns every Pod one of three QoS classes based on the resource requests and
             limits you specify. This class determines the Pod's eviction priority when a node runs low on resources.</p>
@@ -2703,7 +2686,7 @@ kubectl get pod my-pod -o jsonpath='{.status.qosClass}'
           </blockquote>
           </details>
 
-<h3 id="24-labels-annotations-and-selectors">2.4 Labels, Annotations, and Selectors</h3>
+          <h3 id="24-labels-annotations-and-selectors">2.4 Labels, Annotations, and Selectors</h3>
 
           <p>Kubernetes manages thousands of objects in a cluster. It needs a way to group, filter, and connect these
             objects to each other. Labels and selectors are the mechanism Kubernetes uses for this.</p>
@@ -2761,17 +2744,15 @@ spec:
     targetPort: 8080
 </code></pre>
 
-                    <details class="deep-dive">
+          <details class="deep-dive">
             <summary>Equality-based versus set-based selectors<span class="dd-tag">Optional depth</span></summary>
-
-
 
           <p>Kubernetes supports two distinct styles of label selectors, and knowing the difference between them matters
             because different API objects support different styles. Both styles can express "find me all Pods that match
             these label conditions," but they have different expressiveness and syntax.</p>
           </details>
 
-<h4>Equality-Based Selectors</h4>
+          <h4>Equality-Based Selectors</h4>
 
           <p>Equality-based selectors are the simpler form. They test whether a label key has a specific value.</p>
 
@@ -2877,61 +2858,57 @@ kubectl get pods -l 'app=web,environment in (prod, staging),!canary'
 
           <h4>Side-by-Side Comparison</h4>
 
+          <p>The two styles differ in which operators they offer, which objects accept them, and how much they can
+            express. Read the table row by row to see where each one wins.</p>
+
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
+                  <th></th>
                   <th>Equality-Based</th>
                   <th>Set-Based</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td><strong>Operators:</strong> <code>=</code>, <code>==</code>, <code>!=</code></td>
-                  <td><strong>Operators:</strong> <code>In</code>, <code>NotIn</code>, <code>Exists</code>,
-                    <code>DoesNotExist</code>
+                  <td><strong>Operators</strong></td>
+                  <td><code>=</code>, <code>==</code>, <code>!=</code></td>
+                  <td><code>In</code>, <code>NotIn</code>, <code>Exists</code>, <code>DoesNotExist</code></td>
+                </tr>
+                <tr>
+                  <td><strong>Supported in</strong></td>
+                  <td>
+                    <ul>
+                      <li><code>Service.spec.selector</code></li>
+                      <li><code>ReplicationController</code></li>
+                      <li>the <code>kubectl -l</code> flag</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ul>
+                      <li><code>spec.selector.matchExpressions</code> on Deployment, ReplicaSet, DaemonSet, Job, and
+                        StatefulSet</li>
+                      <li>the <code>kubectl -l</code> flag, using quote syntax</li>
+                    </ul>
                   </td>
                 </tr>
                 <tr>
+                  <td><strong>Example</strong></td>
+                  <td><code>app=web,env!=staging</code></td>
                   <td>
-                    <strong>Supported in:</strong><br>
-                    <code>Service.spec.selector</code><br>
-                    <code>ReplicationController</code><br>
-                    <code>kubectl -l</code> flag
-                  </td>
-                  <td>
-                    <strong>Supported in:</strong><br>
-                    <code>Deployment.spec.selector.matchExpressions</code><br>
-                    <code>ReplicaSet.spec.selector.matchExpressions</code><br>
-                    <code>DaemonSet.spec.selector.matchExpressions</code><br>
-                    <code>Job.spec.selector.matchExpressions</code><br>
-                    <code>StatefulSet.spec.selector.matchExpressions</code><br>
-                    <code>kubectl -l</code> flag (with quote syntax)
+                    <ul>
+                      <li><code>environment in (prod, staging)</code></li>
+                      <li><code>version notin (0.1, 0.2)</code></li>
+                      <li><code>!canary</code></li>
+                    </ul>
                   </td>
                 </tr>
                 <tr>
-                  <td>
-                    <strong>Example:</strong><br>
-                    <code>app=web,env!=staging</code>
-                  </td>
-                  <td>
-                    <strong>Example:</strong><br>
-                    <code>environment in (prod, staging)</code><br>
-                    <code>version notin (0.1, 0.2)</code><br>
-                    <code>!canary</code>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <strong>Expressiveness:</strong><br>
-                    Single value match only<br>
-                    Simple and fast
-                  </td>
-                  <td>
-                    <strong>Expressiveness:</strong><br>
-                    Multi-value OR, absence checks<br>
-                    More flexible, slightly more verbose
-                  </td>
+                  <td><strong>Expressiveness</strong></td>
+                  <td>Matches a single value per key. Simple and fast.</td>
+                  <td>Matches a set of values, and can test for the presence or absence of a key. More flexible, and
+                    slightly more verbose.</td>
                 </tr>
               </tbody>
             </table>
@@ -2983,8 +2960,7 @@ kubectl get pods -l 'app=web,environment in (prod, staging),!canary'
             a ticket number, a long description).
           </blockquote>
 
-          <h3 id="25-node-scheduling-taints-tolerations-and-affinity">2.5 Node Scheduling: Taints, Tolerations, and
-            Affinity</h3>
+          <h3 id="25-node-scheduling-taints-tolerations-and-affinity">2.5 Node Scheduling: Taints, Tolerations, and Affinity</h3>
 
           <p>By default the scheduler drops a Pod on any node with enough free CPU and memory for its requests. Often
             that is fine. But production nodes are not interchangeable: some have GPUs, some have fast NVMe disks, some
@@ -3067,7 +3043,7 @@ kubectl get pods -l 'app=web,environment in (prod, staging),!canary'
           </ol>
 
           <pre class="codehilite"><code class="language-bash"># Add a taint to a node
-# Format: kubectl taint nodes <node-name> <key>=<value>:<effect>
+# Format: kubectl taint nodes &lt;node-name&gt; &lt;key&gt;=&lt;value&gt;:&lt;effect&gt;
 kubectl taint nodes node-gpu-1 hardware=gpu:NoSchedule
 #                               ^^^^^^^  ^^^  ^^^^^^^^^^^
 #                               key      val  effect
@@ -3193,7 +3169,7 @@ kubectl label nodes node-ssd-1 storage=nvme
             always a hard requirement. Node affinity can be either hard (required) or soft (preferred).
           </blockquote>
 
-                    <h4 id="affinity-overview">Affinity: More Expressive Placement Rules</h4>
+          <h4 id="affinity-overview">Affinity: More Expressive Placement Rules</h4>
 
           <p><code>nodeSelector</code> only does exact label matches. <strong>Affinity</strong> rules go further: they
             can express preferences as well as requirements, match on sets of values, and place Pods relative to
@@ -3202,8 +3178,6 @@ kubectl label nodes node-ssd-1 storage=nvme
 
           <details class="deep-dive">
             <summary>Node affinity: more expressive node selection<span class="dd-tag">Optional depth</span></summary>
-
-
 
           <p>Node affinity is a more powerful replacement for <code>nodeSelector</code>. It uses the same set-based
             selector operators you learned in section 2.4 (<code>In</code>, <code>NotIn</code>, <code>Exists</code>,
@@ -3275,8 +3249,6 @@ kubectl label nodes node-ssd-1 storage=nvme
           <details class="deep-dive">
             <summary>Pod affinity: co-locating Pods<span class="dd-tag">Optional depth</span></summary>
 
-
-
           <p>While node affinity controls which <em>nodes</em> a Pod can land on, <strong>pod affinity</strong> controls
             which <em>other Pods</em> a Pod wants to be near. You use pod affinity when two services communicate so
             frequently that placing them on the same node reduces network latency significantly, for example an
@@ -3319,8 +3291,6 @@ kubectl label nodes node-ssd-1 storage=nvme
 
           <details class="deep-dive">
             <summary>Pod anti-affinity: spreading replicas<span class="dd-tag">Optional depth</span></summary>
-
-
 
           <p>Pod anti-affinity is the opposite of pod affinity. It tells the scheduler "do not place this Pod near other
             Pods that match this selector." The most common use case is spreading Deployment replicas across different
@@ -3439,7 +3409,7 @@ kubectl label nodes node-ssd-1 storage=nvme
           </blockquote>
           </details>
 
-<h3 id="26-multi-container-pods">2.6 Multi-Container Pods: Init Containers and Sidecars</h3>
+          <h3 id="26-multi-container-pods">2.6 Multi-Container Pods: Init Containers and Sidecars</h3>
 
           <p>Most Pods hold one container. When a Pod holds more, the extras almost always fall into one of two roles,
             and Kubernetes has a separate mechanism for each.</p>
@@ -5773,7 +5743,6 @@ kubectl get service nginx-service
             <figcaption id="fig1-12-cap">Figure 1.12: Recreate vs RollingUpdate deployment strategies.</figcaption>
           </figure>
 
-
           <h3 id="lab2-maxsurge-maxunavailable">Understanding maxSurge and maxUnavailable</h3>
 
           <p>These two parameters control the speed and safety of rolling updates. They can be set as an integer
@@ -6140,7 +6109,6 @@ spec:
             <figcaption id="fig1-13-cap">Figure 1.13: minReadySeconds adds a stability window before a pod is counted as available.</figcaption>
           </figure>
 
-
           <h3 id="lab2-troubleshooting">Troubleshooting Stuck Rollouts</h3>
 
           <blockquote class="danger">A rollout can get stuck with <code>DeadlineExceeded</code> if it does not progress
@@ -6279,7 +6247,8 @@ kubectl delete service nginx-deployment 2>/dev/null || true
 
           <blockquote class="danger"><strong>Critical security reality: base64 is encoding, not encryption.</strong>
             Anyone who can run <code>kubectl get secret</code> can instantly decode the value:
-            <pre>kubectl get secret my-secret -o jsonpath='{.data.MY_KEY}' | base64 -d</pre>
+            <pre class="codehilite"><code class="language-bash">kubectl get secret my-secret -o jsonpath='{.data.MY_KEY}' | base64 -d
+</code></pre>
             Base64 offers zero security. Kubernetes Secrets are only as secure as your cluster's:
             <ol>
               <li><strong>Encryption at rest:</strong> the API server must be configured with an EncryptionConfiguration
@@ -6563,15 +6532,14 @@ data:                    # The actual key-value pairs (all string values)
             <code>data</code> field, always use <code>echo -n</code> (no trailing newline). Without <code>-n</code>, the
             newline character becomes part of the base64-encoded value, and your application will receive the password
             with a <code>\n</code> appended, causing authentication failures that are very hard to diagnose.
-            <pre>
-# WRONG - includes trailing newline in the encoded value
+            <pre class="codehilite"><code class="language-bash"># WRONG - includes trailing newline in the encoded value
 echo "mysecretpassword" | base64
 # bXlzZWNyZXRwYXNzd29yZAo=   &lt;-- the 'o=' at end encodes the newline
 
 # CORRECT - no trailing newline
 echo -n "mysecretpassword" | base64
 # bXlzZWNyZXRwYXNzd29yZA==
-</pre>
+</code></pre>
           </blockquote>
 
           <p>Create <code>app-secret.yaml</code>:</p>
@@ -6798,16 +6766,20 @@ exit
 
           <h3 id="lab3-update-behavior">Update Behavior: A Critical Difference</h3>
 
-          <blockquote class="warning"><strong>Environment variables from ConfigMaps/Secrets do NOT auto-update when the
-              ConfigMap or Secret changes.</strong> The values are injected at container start time and frozen. To pick
-            up changes, you must restart the pods:
-            <pre>kubectl rollout restart deployment/your-deployment</pre>
-            <br>
-            <strong>Volume-mounted files DO update automatically</strong>, but with a delay of approximately 2 minutes
+          <blockquote class="warning"><strong>Environment variables do not auto-update</strong>
+            A value injected from a ConfigMap or Secret as an environment variable is read once, at container start
+            time, and then frozen. Changing the ConfigMap afterwards has no effect on a running Pod. To pick up the new
+            value you must restart the Pods:
+            <pre class="codehilite"><code class="language-bash">kubectl rollout restart deployment/your-deployment
+</code></pre>
+          </blockquote>
+
+          <blockquote><strong>Volume-mounted files do auto-update</strong>
+            A ConfigMap or Secret mounted as a volume is refreshed in place, with a delay of roughly 2 minutes
             (controlled by the kubelet's <code>syncFrequency</code> and
-            <code>configMapAndSecretChangeDetectionStrategy</code> settings). Your application must re-read the file to
-            see the new value. This makes mounted files suitable for configuration that can be reloaded without restart
-            (for example, nginx can reload config with <code>nginx -s reload</code>).
+            <code>configMapAndSecretChangeDetectionStrategy</code> settings). Your application still has to re-read the
+            file to see the new value, so this suits configuration that can be reloaded without a restart. nginx, for
+            example, picks up a changed config with <code>nginx -s reload</code>.
           </blockquote>
 
           <h3 id="lab3-immutable">Immutable ConfigMaps and Secrets</h3>
@@ -6956,7 +6928,6 @@ kubectl delete secret app-secret 2>/dev/null || true
             </svg>
             <figcaption id="fig1-14-cap">Figure 1.14: Kubernetes storage object chain from StorageClass to mounted volume.</figcaption>
           </figure>
-
 
           <h3 id="lab4-storageclass">StorageClass: The Template for Storage</h3>
 
@@ -7573,7 +7544,6 @@ kubectl get pv
             <figcaption id="fig1-15-cap">Figure 1.15: Probe lifecycle: startup gates liveness and readiness; each has distinct failure behaviour.</figcaption>
           </figure>
 
-
           <h3 id="lab5-probe-mechanisms">Three Probe Mechanisms</h3>
 
           <ol class="sec2-indented">
@@ -8185,8 +8155,7 @@ kubectl delete pod load-generator 2>/dev/null || true
           </blockquote>
 
           <hr />
-          <h2 id="9-lab-6-other-workload-types-statefulset-daemonset-job-cronjob">9. Lab 6: Other Workload Types
-            (StatefulSet, DaemonSet, Job, CronJob)</h2>
+          <h2 id="9-lab-6-other-workload-types-statefulset-daemonset-job-cronjob">9. Lab 6: Other Workload Types (StatefulSet, DaemonSet, Job, CronJob)</h2>
 
           <p>
             Kubernetes ships five workload controllers. Section 1 focused on <strong>Deployment</strong> because it covers

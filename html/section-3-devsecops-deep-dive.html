@@ -345,8 +345,7 @@
             be used for application workloads.
           </p>
 
-          <h4 id="baseline-blocks-the-most-dangerous-configurations">Baseline: Blocks the Most Dangerous Configurations
-          </h4>
+          <h4 id="baseline-blocks-the-most-dangerous-configurations">Baseline: Blocks the Most Dangerous Configurations</h4>
           <p>
             The <code>baseline</code> profile prevents the most obviously dangerous configurations while remaining
             compatible
@@ -444,7 +443,7 @@
           <details class="deep-dive">
             <summary>The four RBAC objects and how they combine<span class="dd-tag">Optional depth</span></summary>
 
-<p>
+          <p>
             <strong>Subjects</strong> are the entities that can take actions:
           </p>
           <ol class="sec2-indented">
@@ -482,7 +481,7 @@
           </p>
           </details>
 
-<h3 id="network-security-east-west-traffic">Network Security: East-West Traffic</h3>
+          <h3 id="network-security-east-west-traffic">Network Security: East-West Traffic</h3>
           <p>
             <strong>North-south traffic</strong> is traffic that enters or leaves the cluster (user requests coming in,
             responses going out). This is what people usually think of when they think of firewalls.
@@ -496,7 +495,7 @@
           <details class="deep-dive">
             <summary>How a default-deny policy is built up<span class="dd-tag">Optional depth</span></summary>
 
-<p>
+          <p>
             By default, Kubernetes uses a "default-allow-all" network model: any Pod can reach any other Pod on any
             port.
             This is dangerous. If an attacker compromises one Pod (perhaps by exploiting a web application
@@ -516,7 +515,7 @@
           </p>
           </details>
 
-<h3 id="supply-chain-threats">Supply Chain Threats</h3>
+          <h3 id="supply-chain-threats">Supply Chain Threats</h3>
           <p>
             The supply chain is everything that happens between a developer writing code and that code running in
             production.
@@ -556,8 +555,7 @@
             network connection, every process spawn results in a syscall that Falco can observe and match against rules.
           </p>
 
-          <h3 id="the-security-tool-stack-what-layer-each-tool-operates-at">The Security Tool Stack: What Layer Each
-            Tool Operates At</h3>
+          <h3 id="the-security-tool-stack-what-layer-each-tool-operates-at">The Security Tool Stack: What Layer Each Tool Operates At</h3>
 
           <p><strong>Tool-to-Layer Mapping</strong></p>
 
@@ -819,8 +817,7 @@ kubectl wait --for=condition=Ready pod/posture-demo --timeout=60s
           </blockquote>
 
           <hr />
-          <h2 id="15-lab-11-shift-left-scanning-manifests-images-secrets">15. Lab 11: Shift-Left Scanning (Manifests,
-            Images, Secrets)</h2>
+          <h2 id="15-lab-11-shift-left-scanning-manifests-images-secrets">15. Lab 11: Shift-Left Scanning (Manifests, Images, Secrets)</h2>
 
           <p><strong>What we are doing:</strong> installing Trivy natively, scanning a YAML manifest for
             misconfigurations,
@@ -868,7 +865,7 @@ kubectl wait --for=condition=Ready pod/posture-demo --timeout=60s
           <details class="deep-dive">
             <summary>CVSS severity bands and how teams gate on them<span class="dd-tag">Optional depth</span></summary>
 
-<ol class="sec2-indented">
+          <ol class="sec2-indented">
             <li><strong>Critical (9.0 - 10.0):</strong> remotely exploitable with no authentication, often resulting in
               full system compromise. Fix immediately. Example: Log4Shell (CVSS 10.0).</li>
             <li><strong>High (7.0 - 8.9):</strong> serious vulnerabilities, often remotely exploitable. Prioritize
@@ -893,7 +890,7 @@ kubectl wait --for=condition=Ready pod/posture-demo --timeout=60s
           </blockquote>
           </details>
 
-<h3 id="installing-trivy-natively">Installing Trivy Natively</h3>
+          <h3 id="installing-trivy-natively">Installing Trivy Natively</h3>
           <p>
             While you can run Trivy via <code>docker run aquasec/trivy</code>, installing it as a native binary gives
             better performance (no container startup overhead), easier CI integration, and access to Trivy's local
@@ -1166,8 +1163,7 @@ cat results.json | python3 -m json.tool | head -50
 </code></pre>
           </div>
 
-          <h3 id="step-6-using-a-trivyignore-file-for-false-positives">Step 6: Using a .trivyignore File for False
-            Positives</h3>
+          <h3 id="step-6-using-a-trivyignore-file-for-false-positives">Step 6: Using a .trivyignore File for False Positives</h3>
           <p>
             A false positive is a finding that Trivy reports as a vulnerability but that does not actually affect your
             application (for example, a vulnerable library that is included in the base image but never called by your
@@ -1328,8 +1324,7 @@ report:
 
           <h3 id="troubleshooting-trivy">Troubleshooting Trivy</h3>
 
-          <h4 id="problem-trivy-fails-with-db-download-failed-or-error-updating-db">Problem: Trivy fails with "DB
-            download failed" or "Error updating DB"</h4>
+          <h4 id="problem-trivy-fails-with-db-download-failed-or-error-updating-db">Problem: Trivy fails with "DB download failed" or "Error updating DB"</h4>
           <p>
             Trivy downloads its vulnerability database from GitHub Releases. If your CI environment has no internet
             access
@@ -1356,8 +1351,7 @@ report:
             cached. In CI, cache the <code>~/.cache/trivy/</code> directory between runs to avoid re-downloading.
           </p>
 
-          <h4 id="problem-too-many-findings-hard-to-know-where-to-start">Problem: Too many findings, hard to know where
-            to start</h4>
+          <h4 id="problem-too-many-findings-hard-to-know-where-to-start">Problem: Too many findings, hard to know where to start</h4>
           <p>
             Use <code>--severity HIGH,CRITICAL</code> to filter. Then sort by whether a Fixed Version exists: findings
             with no fixed version cannot be patched by updating and may need other mitigations (disabling the feature,
@@ -1482,7 +1476,7 @@ kubectl label namespace my-namespace \
           <details class="deep-dive">
             <summary>Every securityContext field, one by one<span class="dd-tag">Optional depth</span></summary>
 
-<ol class="sec2-indented">
+          <ol class="sec2-indented">
             <li>
               <strong>runAsNonRoot: true</strong> - Kubernetes checks that the container's effective user ID is not 0
               (root)
@@ -1553,8 +1547,7 @@ kubectl label namespace my-namespace \
             Treat it as the layer beyond <code>runAsNonRoot</code> once your runtime supports it.</blockquote>
           </details>
 
-<h3 id="step-1-create-and-label-a-namespace-in-warn-mode-first">Step 1: Create and Label a Namespace in Warn
-            Mode First</h3>
+          <h3 id="step-1-create-and-label-a-namespace-in-warn-mode-first">Step 1: Create and Label a Namespace in Warn Mode First</h3>
           <p>
             Best practice: always apply the <code>warn</code> mode first to observe the impact without breaking
             anything.
@@ -1739,8 +1732,7 @@ kubectl get pods -n secure-apps     # hardened-pod should be Running
 </code></pre>
           </div>
 
-          <h3 id="step-5-understanding-the-readonlyrootfilesystem-emptydir-pattern">Step 5: Understanding the
-            readOnlyRootFilesystem + emptyDir Pattern</h3>
+          <h3 id="step-5-understanding-the-readonlyrootfilesystem-emptydir-pattern">Step 5: Understanding the readOnlyRootFilesystem + emptyDir Pattern</h3>
           <p>
             A common misconception is that <code>readOnlyRootFilesystem: true</code> breaks any application that writes
             files. In practice, most applications write to a small number of known directories (temp files, caches, PID
@@ -1777,7 +1769,6 @@ kubectl get pods -n secure-apps     # hardened-pod should be Running
             </svg>
             <figcaption id="fig3-4-cap">Figure 3.4: readOnlyRootFilesystem separates immutable binary paths from writable emptyDir mounts.</figcaption>
           </figure>
-
 
           <h3 id="psa-exemptions">PSA Exemptions</h3>
           <p>
@@ -1817,11 +1808,9 @@ plugins:
             </li>
           </ol>
 
-          <h3 id="troubleshooting-figuring-out-which-field-is-causing-rejection">Troubleshooting: Figuring Out Which
-            Field is Causing Rejection</h3>
+          <h3 id="troubleshooting-figuring-out-which-field-is-causing-rejection">Troubleshooting: Figuring Out Which Field is Causing Rejection</h3>
 
-          <h4 id="problem-pod-is-rejected-but-the-error-message-is-confusing">Problem: Pod is rejected but the error
-            message is confusing</h4>
+          <h4 id="problem-pod-is-rejected-but-the-error-message-is-confusing">Problem: Pod is rejected but the error message is confusing</h4>
           <p>
             Read each line of the error message. Each line is a separate violation. Add the required field to the Pod
             spec,
@@ -1829,8 +1818,7 @@ plugins:
             required.
           </p>
 
-          <h4 id="problem-i-set-runasnonroot-true-but-the-pod-is-still-rejected-for-it">Problem: I set runAsNonRoot:
-            true but the Pod is still rejected for it</h4>
+          <h4 id="problem-i-set-runasnonroot-true-but-the-pod-is-still-rejected-for-it">Problem: I set runAsNonRoot: true but the Pod is still rejected for it</h4>
           <p>
             Check the image. If the image's <code>Dockerfile</code> does not have a <code>USER</code> instruction and
             defaults to root, you must also specify <code>runAsUser</code> with a non-zero UID. Without an explicit
@@ -1849,8 +1837,7 @@ plugins:
 </code></pre>
           </div>
 
-          <h4 id="problem-deployment-creates-pods-but-they-are-rejected-deployment-shows-0-1">Problem: Deployment
-            creates Pods but they are rejected - Deployment shows 0/1</h4>
+          <h4 id="problem-deployment-creates-pods-but-they-are-rejected-deployment-shows-0-1">Problem: Deployment creates Pods but they are rejected - Deployment shows 0/1</h4>
           <p>
             When a Deployment's Pod template violates PSA, the Deployment is created (Deployments are not Pods) but
             every attempt to create a Pod from it is rejected. Check Deployment events:
@@ -1960,7 +1947,6 @@ kubectl get namespace secure-apps
             <figcaption id="fig3-5-cap">Figure 3.5: RBAC chain. Subject binds to a Role via RoleBinding; the Role lists allowed verbs per resource.</figcaption>
           </figure>
 
-
           <p>The flow is one-directional: the API server receives a request, looks up all RoleBindings and
             ClusterRoleBindings that reference the requesting subject, collects the rules from the referenced Roles and
             ClusterRoles, and checks whether any rule permits the requested verb on the requested resource. If no rule
@@ -1977,14 +1963,12 @@ kubectl get namespace secure-apps
             Built-in ClusterRoles like <code>view</code>, <code>edit</code>, and <code>admin</code> are defined by
             Kubernetes itself.</p>
 
-          <h4 id="rolebinding-binds-a-role-or-clusterrole-to-subjects-in-one-namespace">RoleBinding (binds a Role or
-            ClusterRole to subjects in one namespace)</h4>
+          <h4 id="rolebinding-binds-a-role-or-clusterrole-to-subjects-in-one-namespace">RoleBinding (binds a Role or ClusterRole to subjects in one namespace)</h4>
           <p>A RoleBinding says: "In namespace X, subject S has the permissions defined in Role R." A RoleBinding can
             reference either a Role (namespace-scoped) or a ClusterRole (the ClusterRole's rules are then scoped down to
             just that namespace).</p>
 
-          <h4 id="clusterrolebinding-binds-a-clusterrole-cluster-wide">ClusterRoleBinding (binds a ClusterRole
-            cluster-wide)</h4>
+          <h4 id="clusterrolebinding-binds-a-clusterrole-cluster-wide">ClusterRoleBinding (binds a ClusterRole cluster-wide)</h4>
           <p>A ClusterRoleBinding says: "Everywhere in the cluster, subject S has the permissions defined in ClusterRole
             R." Use only when cluster-wide access is truly required (e.g., a cluster monitoring agent that must read
             nodes in all namespaces).</p>
@@ -2153,8 +2137,7 @@ spec:
 
           <h3 id="step-by-step-lab">Step-by-Step Lab</h3>
 
-          <h4 id="step-1-create-a-dedicated-namespace-and-serviceaccount">Step 1: Create a Dedicated Namespace and
-            ServiceAccount</h4>
+          <h4 id="step-1-create-a-dedicated-namespace-and-serviceaccount">Step 1: Create a Dedicated Namespace and ServiceAccount</h4>
 
           <p>These commands set up an isolated namespace and a ServiceAccount that will receive least-privilege
             permissions.</p>
@@ -2209,8 +2192,7 @@ rules:
 kubectl describe role pod-reader -n rbac-lab   # confirm rules look correct
 </code></pre>
 
-          <h4 id="step-3-create-a-rolebinding-connecting-the-role-to-the-serviceaccount">Step 3: Create a RoleBinding
-            Connecting the Role to the ServiceAccount</h4>
+          <h4 id="step-3-create-a-rolebinding-connecting-the-role-to-the-serviceaccount">Step 3: Create a RoleBinding Connecting the Role to the ServiceAccount</h4>
 
           <p>The manifest below binds the Role to the ServiceAccount, granting it those permissions in the namespace.
           </p>
@@ -2235,8 +2217,7 @@ roleRef:
 kubectl describe rolebinding pod-reader-binding -n rbac-lab
 </code></pre>
 
-          <h4 id="step-4-verify-the-permission-boundary-with-kubectl-auth-can-i">Step 4: Verify the Permission Boundary
-            with kubectl auth can-i</h4>
+          <h4 id="step-4-verify-the-permission-boundary-with-kubectl-auth-can-i">Step 4: Verify the Permission Boundary with kubectl auth can-i</h4>
 
           <p>These commands probe what the ServiceAccount can and cannot do, confirming the boundary is exactly as
             intended.</p>
@@ -2289,8 +2270,7 @@ kubectl describe rolebinding pod-reader-binding -n rbac-lab
             least-privilege principle in action.
           </blockquote>
 
-          <h4 id="step-5-list-all-permissions-for-the-serviceaccount">Step 5: List All Permissions for the
-            ServiceAccount</h4>
+          <h4 id="step-5-list-all-permissions-for-the-serviceaccount">Step 5: List All Permissions for the ServiceAccount</h4>
 
           <p>This command enumerates every verb and resource the ServiceAccount is allowed, giving a full picture of its
             access.</p>
@@ -2305,8 +2285,7 @@ kubectl auth can-i --list \
           <p>The output will show two non-system rows: <code>pods [] [get list]</code> and self-subject access review
             entries. Everything else is absent, confirming minimal permissions.</p>
 
-          <h4 id="step-6-deploy-a-pod-that-uses-the-serviceaccount">Step 6: Deploy a Pod That Uses the ServiceAccount
-          </h4>
+          <h4 id="step-6-deploy-a-pod-that-uses-the-serviceaccount">Step 6: Deploy a Pod That Uses the ServiceAccount</h4>
 
           <p>The manifest below runs a Pod under the restricted ServiceAccount so you can test its API access from
             inside the cluster.</p>
@@ -2665,8 +2644,7 @@ spec:
 </code></pre>
           </div>
 
-          <h4 id="step-2-create-a-lab-namespace-and-deploy-frontend-and-database-pods">Step 2: Create a Lab Namespace
-            and Deploy Frontend and Database Pods</h4>
+          <h4 id="step-2-create-a-lab-namespace-and-deploy-frontend-and-database-pods">Step 2: Create a Lab Namespace and Deploy Frontend and Database Pods</h4>
 
           <p>These commands create the namespace and deploy a frontend and a database Pod to act as traffic source and
             target.</p>
@@ -2731,8 +2709,7 @@ kubectl wait --for=condition=Ready pod/frontend pod/database -n netpol-lab --tim
 </code></pre>
           </div>
 
-          <h4 id="step-3-test-baseline-open-connectivity-before-any-policy">Step 3: Test Baseline Open Connectivity
-            (Before Any Policy)</h4>
+          <h4 id="step-3-test-baseline-open-connectivity-before-any-policy">Step 3: Test Baseline Open Connectivity (Before Any Policy)</h4>
 
           <p>This command proves that, with no policy in place, the frontend can reach the database freely.</p>
 
@@ -2787,8 +2764,7 @@ echo &quot;Blocked as expected&quot;
             <code>kubectl get pods -n kube-system | grep calico</code>.
           </blockquote>
 
-          <h4 id="step-5-allow-only-frontend-to-database-on-port-6379">Step 5: Allow Only Frontend to Database on Port
-            6379</h4>
+          <h4 id="step-5-allow-only-frontend-to-database-on-port-6379">Step 5: Allow Only Frontend to Database on Port 6379</h4>
 
           <p>The manifest below adds a targeted allow rule so only the frontend can reach the database, and only on port
             6379.</p>
@@ -3064,8 +3040,7 @@ spec:
           <p>Create new resources when other resources are created. Example: when a new namespace is created,
             automatically create a default-deny NetworkPolicy, a LimitRange, and a ResourceQuota in that namespace.</p>
 
-          <h4 id="4-verify-images-block-unsigned-container-images">4. Verify Images: Block Unsigned Container Images
-          </h4>
+          <h4 id="4-verify-images-block-unsigned-container-images">4. Verify Images: Block Unsigned Container Images</h4>
           <p>At admission time, verify that a container image has a valid cryptographic signature from a trusted signer.
             Block any unsigned or improperly signed image before it runs. Integrates with Cosign/Sigstore (see Lab 16).
           </p>
@@ -3117,7 +3092,6 @@ spec:
             <figcaption id="fig3-6-cap">Figure 3.6: Kyverno webhook flow. Mutating runs first, then validating in audit or enforce mode.</figcaption>
           </figure>
 
-
           <h3 id="audit-versus-enforce-mode">Audit versus Enforce Mode</h3>
 
           <blockquote class="warning">Always deploy new policies in Audit mode first. Enforce mode will immediately
@@ -3165,8 +3139,7 @@ kubectl get mutatingwebhookconfigurations | grep kyverno
             (exclude specific resources from a policy).
           </blockquote>
 
-          <h4 id="step-2-write-a-validate-policy-to-disallow-the-latest-tag-audit-mode">Step 2: Write a Validate Policy
-            to Disallow the :latest Tag (Audit Mode)</h4>
+          <h4 id="step-2-write-a-validate-policy-to-disallow-the-latest-tag-audit-mode">Step 2: Write a Validate Policy to Disallow the :latest Tag (Audit Mode)</h4>
 
           <p>The ClusterPolicy below flags any Pod using the <code>:latest</code> image tag, running in audit mode so
             violations are reported but not blocked.</p>
@@ -3227,8 +3200,7 @@ kubectl describe policyreport -n default | grep -A 5 &quot;fail\|FAIL&quot;  # l
 </code></pre>
           </div>
 
-          <h4 id="step-3-background-scanning-of-existing-resources">Step 3: Background Scanning of Existing Resources
-          </h4>
+          <h4 id="step-3-background-scanning-of-existing-resources">Step 3: Background Scanning of Existing Resources</h4>
 
           <p>These commands carry out this step.</p>
           <pre class="codehilite"><code class="language-bash"># Because background: true is set, Kyverno scans existing Pods for compliance
@@ -3237,8 +3209,7 @@ kubectl get policyreport -A
 # Pods using :latest in any namespace will appear as failures in the report
 </code></pre>
 
-          <h4 id="step-4-switch-to-enforce-mode-and-block-violations">Step 4: Switch to Enforce Mode and Block
-            Violations</h4>
+          <h4 id="step-4-switch-to-enforce-mode-and-block-violations">Step 4: Switch to Enforce Mode and Block Violations</h4>
 
           <p>These commands carry out this step.</p>
           <div class="cmd-step">
@@ -3270,8 +3241,7 @@ kubectl delete pod good-pod
 </code></pre>
           </div>
 
-          <h4 id="step-5-write-a-mutation-policy-to-auto-add-labels">Step 5: Write a Mutation Policy to Auto-Add Labels
-          </h4>
+          <h4 id="step-5-write-a-mutation-policy-to-auto-add-labels">Step 5: Write a Mutation Policy to Auto-Add Labels</h4>
 
           <p>The ClusterPolicy below mutates incoming Pods to automatically add standard labels.</p>
           <pre class="codehilite"><code class="language-yaml"># mutate-add-managed-by.yaml
@@ -3318,8 +3288,7 @@ spec:
 </code></pre>
           </div>
 
-          <h4 id="step-6-write-a-validate-policy-to-require-resource-limits">Step 6: Write a Validate Policy to Require
-            Resource Limits</h4>
+          <h4 id="step-6-write-a-validate-policy-to-require-resource-limits">Step 6: Write a Validate Policy to Require Resource Limits</h4>
 
           <p>The ClusterPolicy below validates that every container declares CPU and memory limits.</p>
           <pre class="codehilite"><code class="language-yaml"># require-resource-limits.yaml
@@ -3377,8 +3346,7 @@ spec:
 </code></pre>
           </div>
 
-          <h3 id="kyverno-exceptions-excluding-specific-resources-from-a-policy">Kyverno Exceptions: Excluding Specific
-            Resources from a Policy</h3>
+          <h3 id="kyverno-exceptions-excluding-specific-resources-from-a-policy">Kyverno Exceptions: Excluding Specific Resources from a Policy</h3>
 
           <p>The manifest below defines a PolicyException that exempts specific resources from a policy.</p>
           <pre class="codehilite"><code class="language-yaml"># exception-kube-system.yaml
@@ -3504,8 +3472,7 @@ kubectl delete namespace kyverno
           </blockquote>
 
           <hr />
-          <h2 id="20-lab-16-supply-chain-security-signing-sboms-verification">20. Lab 16: Supply-Chain Security
-            (Signing, SBOMs, Verification)</h2>
+          <h2 id="20-lab-16-supply-chain-security-signing-sboms-verification">20. Lab 16: Supply-Chain Security (Signing, SBOMs, Verification)</h2>
 
           <p><strong>What we are doing:</strong> installing Cosign, signing a container image keylessly using OIDC,
             generating a CycloneDX SBOM with Trivy, attaching the SBOM as a signed attestation, verifying both the
@@ -3631,7 +3598,6 @@ kubectl delete namespace kyverno
             </svg>
             <figcaption id="fig3-7-cap">Figure 3.7: Keyless signing flow using Cosign, Fulcio, and Rekor, with no long-lived keys needed.</figcaption>
           </figure>
-
 
           <h3 id="what-an-sbom-is">What an SBOM Is</h3>
 
@@ -3818,8 +3784,7 @@ cosign verify-attestation \
 # Confirms the attestation is valid and shows the component count from the SBOM
 </code></pre>
 
-          <h4 id="step-9-enforce-signed-images-at-admission-with-kyverno">Step 9: Enforce Signed Images at Admission
-            with Kyverno</h4>
+          <h4 id="step-9-enforce-signed-images-at-admission-with-kyverno">Step 9: Enforce Signed Images at Admission with Kyverno</h4>
 
           <p>The policy below makes Kyverno verify image signatures at admission and reject unsigned images.</p>
           <pre class="codehilite"><code class="language-yaml"># require-signed-images.yaml
@@ -3874,8 +3839,7 @@ kubectl delete pod signed-test
 </code></pre>
           </div>
 
-          <h3 id="github-actions-integration-for-keyless-signing-in-ci">GitHub Actions Integration for Keyless Signing
-            in CI</h3>
+          <h3 id="github-actions-integration-for-keyless-signing-in-ci">GitHub Actions Integration for Keyless Signing in CI</h3>
 
           <p>The workflow below signs images keylessly from CI using the GitHub Actions OIDC identity.</p>
           <pre class="codehilite"><code class="language-yaml"># .github/workflows/build-and-sign.yml
@@ -4013,8 +3977,7 @@ rm -f sbom.json cosign-linux-amd64
               detects the shell, even if the RBAC allows it.</li>
           </ol>
 
-          <h3 id="ebpf-the-technology-behind-modern-runtime-security">eBPF: The Technology Behind Modern Runtime
-            Security</h3>
+          <h3 id="ebpf-the-technology-behind-modern-runtime-security">eBPF: The Technology Behind Modern Runtime Security</h3>
 
           <p>eBPF (Extended Berkeley Packet Filter) is a Linux kernel feature that allows small, sandboxed programs to
             run inside the kernel in response to events. These programs are verified by the kernel before running: they
@@ -4126,7 +4089,6 @@ rm -f sbom.json cosign-linux-amd64
             <figcaption id="fig3-8-cap">Figure 3.8: Falco architecture. An eBPF probe taps kernel syscalls; Falco daemon evaluates rules and fans out alerts.</figcaption>
           </figure>
 
-
           <h3 id="falco-rule-structure">Falco Rule Structure</h3>
 
           <p>The annotated rule below breaks down the fields that make up a Falco detection rule.</p>
@@ -4235,8 +4197,7 @@ kubectl wait --for=condition=Ready pod/victim --timeout=60s
 kubectl get pod victim
 </code></pre>
 
-          <h4 id="step-3-trigger-detection-1-terminal-shell-in-container">Step 3: Trigger Detection 1 - Terminal Shell
-            in Container</h4>
+          <h4 id="step-3-trigger-detection-1-terminal-shell-in-container">Step 3: Trigger Detection 1 - Terminal Shell in Container</h4>
 
           <p>These commands exercise the behavior described in this step.</p>
           <div class="cmd-step">
@@ -4258,8 +4219,7 @@ kubectl logs -n falco ${FALCO_POD} --tail=20 | grep -i &quot;shell\|Terminal&quo
 </code></pre>
           </div>
 
-          <h4 id="step-4-trigger-detection-2-read-a-sensitive-file">Step 4: Trigger Detection 2 - Read a Sensitive File
-          </h4>
+          <h4 id="step-4-trigger-detection-2-read-a-sensitive-file">Step 4: Trigger Detection 2 - Read a Sensitive File</h4>
 
           <p>These commands inspect the result of the previous step.</p>
           <div class="cmd-step">
@@ -4273,8 +4233,7 @@ kubectl logs -n falco ${FALCO_POD} --tail=20 | grep -i &quot;shell\|Terminal&quo
 </code></pre>
           </div>
 
-          <h4 id="step-5-trigger-detection-3-write-a-binary-to-tmp">Step 5: Trigger Detection 3 - Write a Binary to /tmp
-          </h4>
+          <h4 id="step-5-trigger-detection-3-write-a-binary-to-tmp">Step 5: Trigger Detection 3 - Write a Binary to /tmp</h4>
 
           <p>These commands exercise the behavior described in this step.</p>
           <div class="cmd-step">
@@ -4423,8 +4382,7 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i &quot;
 </code></pre>
           </div>
 
-          <h3 id="falcosidekick-routing-alerts-to-your-observability-stack">Falcosidekick: Routing Alerts to Your
-            Observability Stack</h3>
+          <h3 id="falcosidekick-routing-alerts-to-your-observability-stack">Falcosidekick: Routing Alerts to Your Observability Stack</h3>
 
           <p>These commands carry out this step.</p>
           <div class="cmd-step">

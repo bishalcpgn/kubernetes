@@ -189,12 +189,10 @@
             <figcaption id="fig2-1-cap">Figure 2.1: Gateway API object model showing GatewayClass and Gateway owned by infra team, HTTPRoute by the application team.</figcaption>
           </figure>
 
-
-
           <details class="deep-dive">
             <summary>GatewayClass, Gateway, and HTTPRoute in detail<span class="dd-tag">Optional depth</span></summary>
 
-<ol class="sec2-indented">
+          <ol class="sec2-indented">
             <li><strong>GatewayClass:</strong> declares which controller implementation handles gateways of this class.
               Think of it like selecting a printer driver: it says "use Traefik" or "use Istio" without coupling the
               Gateway or Route objects to the specific product. The platform team creates one GatewayClass per
@@ -214,7 +212,7 @@
           </p>
           </details>
 
-<h3 id="lab7-traefik">Traefik as the Gateway Controller</h3>
+          <h3 id="lab7-traefik">Traefik as the Gateway Controller</h3>
           <p>
             <strong>Traefik</strong> is a modern, actively maintained reverse proxy and load balancer with native
             Gateway
@@ -955,8 +953,7 @@ helm pull oci://ghcr.io/argoproj/argo-helm/argo-cd --version 7.3.11
           </blockquote>
 
           <hr />
-          <h2 id="12-lab-9-observability-metrics-prometheus-grafana">12. Lab 9: Observability (Metrics, Prometheus,
-            Grafana)</h2>
+          <h2 id="12-lab-9-observability-metrics-prometheus-grafana">12. Lab 9: Observability (Metrics, Prometheus, Grafana)</h2>
 
           <p>
             You cannot operate a system you cannot see. <strong>Observability</strong> is the practice of understanding
