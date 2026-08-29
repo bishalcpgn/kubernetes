@@ -424,7 +424,10 @@
     }
 
     /* =========================================================
-       Roman numeral command labels — Section 2 only
+       Roman numeral command labels. Used on every content page,
+       not just Section 2. The markup is hand-authored: see rule 3
+       in SECTION-STYLE-RULES.txt. There is no script that builds
+       it, so these rules are the only definition of the layout.
        ========================================================= */
     .cmd-label {
       display: flex;
@@ -490,9 +493,11 @@
       background: #ffffff;
     }
 
-    /* Step title shown next to the i/ii/iii badge — its line box matches the
+    /* Step title shown next to the i/ii/iii badge. Its line box matches the
        1.6rem badge height so the two are perfectly centred on one line, the
-       same way the 1/2/3 circles align with their list text. */
+       same way the 1/2/3 circles align with their list text. Keep the text
+       at or under 60 characters: longer commentary belongs inside the code
+       box as trailing '#' lines (SECTION-STYLE-RULES.txt rule 3a). */
     .cmd-step-title {
       font-family: var(--font-display);
       font-size: 0.95rem;
