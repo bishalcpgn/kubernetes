@@ -308,6 +308,13 @@
      in Section 0): DEFINE the term in the first sentence, state the
      MECHANISM in the second, state the CONSEQUENCE in the third, then stop.
 
+       - SECOND PERSON. Address the reader as "you", never as "we". "You
+         create a Deployment" says whose job it is; "we create a Deployment"
+         is ambiguous about who acts and drifts into a teacherly register.
+         This matches the Kubernetes documentation the reader has open in
+         the next tab. The ONE exception is the lab intro pattern in 6f,
+         "What we are doing:", which frames shared activity rather than
+         issuing an instruction.
        - Every sentence has an explicit subject and a finite verb. No
          verbless fragments. "Five isolated applications on one server." and
          "One binary running dozens of control loops." are both broken.
@@ -427,6 +434,42 @@
     once - sections 14-21 were authored with bare <h3>s and had no menu until
     ids were added.) Keep ids unique across the current HTML file.
   - A scrollspy highlights the active subsection as you scroll.
+  - The label drops a leading "N.N" or "Section X:" prefix but KEEPS
+    "Step N:", because a lab's steps are an ordered sequence.
+
+  LAB STEPS ARE <h3>, NEVER <h4> UNDER A WRAPPER.
+   Do not write a generic "Step-by-Step Lab" <h3> and hang the real steps
+   off it as <h4>. The rail is built from <h3> only, so every step under
+   such a wrapper is unreachable: the reader gets one useless entry and no
+   way to jump to a step. This bit us twice, hiding 52 steps across seven
+   labs. Each step is its own <h3 id="step-N-...">.
+   A framing <h3> is fine ONLY when it carries its own prose, such as the
+   "What we are doing" intro on an embedded mini-lab; its steps are still
+   <h3>.
+
+
+===========================================================================
+ 9a. EVERY CHAPTER ENDS WITH KEY TAKEAWAYS
+===========================================================================
+
+  Every numbered chapter closes with:
+
+      <h3 id="<slug>-key-takeaways">Key Takeaways</h3>
+
+      <blockquote class="success">
+        <ol class="sec2-indented">
+          <li><strong>The claim.</strong> One sentence on why it matters.</li>
+        </ol>
+      </blockquote>
+
+  Rules:
+   - It is the LAST thing in the chapter, after Cleanup.
+   - It needs its own <h3>, or it never reaches the rail (rule 9).
+   - NO leading <strong> inside the blockquote. js/app.js would lift it into
+     a callout title, duplicating the <h3> directly above it.
+   - Four to six items. Each is a claim the reader must still be able to act
+     on a week later ("A Service finds Pods by label, never by IP"), not a
+     topic list ("We covered Services"). Introduce no new concept here.
 
 
 ===========================================================================
