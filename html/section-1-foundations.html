@@ -1009,10 +1009,22 @@ kubectl describe node minikube | grep -A5 Taints
           </div>
 
           <p>Each resource also carries a stability level in its version string, which tells you how much the field
-            layout can still change under you.</p>
+            layout can still change under you. There are three levels. <strong>Alpha</strong> versions such as
+            <code>v1alpha1</code> are experimental and can change or vanish between releases. <strong>Beta</strong>
+            versions such as <code>v1beta1</code> are mostly settled but can still break. <strong>Stable</strong>
+            versions such as <code>v1</code> carry a compatibility promise for the life of the major version. You will
+            meet <code>v1beta1</code> objects in the wild, so it is worth being able to read the label.</p>
+
+          <p>This command lists every API version your own cluster serves:</p>
+
+          <pre class="codehilite"><code class="language-bash">kubectl api-versions
+
+# Output: one group/version per line, such as apps/v1, batch/v1, and
+# networking.k8s.io/v1. The bare "v1" line is the core group.
+</code></pre>
 
           <details class="deep-dive">
-            <summary>API versions: alpha, beta, and stable<span class="dd-tag">Optional depth</span></summary>
+            <summary>What each stability level actually promises<span class="dd-tag">Optional depth</span></summary>
 
           <p>
             Kubernetes uses semantic versioning suffixes to indicate the maturity and stability of an API:
@@ -1036,9 +1048,6 @@ kubectl describe node minikube | grep -A5 Taints
             </li>
           </ol>
 
-          <pre class="codehilite"><code class="language-bash"># See all API versions supported by your cluster
-kubectl api-versions
-</code></pre>
           </details>
 
           <h3 id="18-the-declarative-model">1.8 The Declarative Model: Why YAML + apply Beats Imperative Commands</h3>
@@ -1479,12 +1488,15 @@ spec:
 </code></pre>
           </div>
 
-          <details class="deep-dive">
-            <summary>Headless Services, and why StatefulSets need them<span class="dd-tag">Optional depth</span></summary>
+          <p>One variation is worth naming now, because Lab 6 uses it without ceremony. Setting
+            <code>clusterIP: None</code> on a Service makes it <strong>headless</strong>: it gets no virtual IP and does
+            no load balancing, and its DNS name resolves directly to the IP of every matching Pod instead of to a single
+            front door.</p>
 
-            <p>Setting <code>clusterIP: None</code> makes a Service <strong>headless</strong>. It gets no virtual IP
-              and no load balancing. Instead, the DNS name resolves directly to the IP of every matching Pod.</p>
-            <p>That is the behaviour a StatefulSet needs. With a headless Service, each Pod also gets its own stable
+          <details class="deep-dive">
+            <summary>Why StatefulSets need a headless Service<span class="dd-tag">Optional depth</span></summary>
+
+            <p>Resolving to every Pod is the behavior a StatefulSet needs. With a headless Service, each Pod also gets its own stable
               name of the form <code>&lt;pod-name&gt;.&lt;service-name&gt;.&lt;namespace&gt;.svc.cluster.local</code>,
               so <code>web-0</code> and <code>web-1</code> are individually addressable. A database replica has to know
               which peer it is talking to, and a load-balanced ClusterIP would make that impossible. Lab 6 uses this.</p>
@@ -2631,8 +2643,26 @@ spec:
             directly. It decides who gets killed first when a node runs out of memory, so it is worth knowing which
             class your Pods land in.</p>
 
+          <p>Under memory pressure the kubelet evicts in class order: <strong>BestEffort</strong> Pods first, then
+            <strong>Burstable</strong> Pods worst-offender first, and <strong>Guaranteed</strong> Pods only as a last
+            resort. This command reports the class Kubernetes assigned to a Pod:</p>
+
+          <pre class="codehilite"><code class="language-bash">kubectl get pod my-pod -o jsonpath='{.status.qosClass}'
+
+# Output: Guaranteed, Burstable, or BestEffort.
+</code></pre>
+
+          <blockquote class="warning"><strong>HPA requires CPU requests</strong>
+
+            The Horizontal Pod Autoscaler computes target CPU utilization as a percentage of the CPU
+            <em>request</em>. With no CPU request set there is nothing to take a percentage of, so autoscaling
+            silently does nothing and you get
+            <code>unable to get metrics for resource cpu: unable to fetch metrics from resource metrics API</code>.
+            This is the single most common reason HPA does not work in Lab 5.
+          </blockquote>
+
           <details class="deep-dive">
-            <summary>QoS classes and eviction order<span class="dd-tag">Optional depth</span></summary>
+            <summary>How Kubernetes derives each QoS class<span class="dd-tag">Optional depth</span></summary>
 
           <p>Kubernetes automatically assigns every Pod one of three QoS classes based on the resource requests and
             limits you specify. This class determines the Pod's eviction priority when a node runs low on resources.</p>
@@ -2666,24 +2696,6 @@ spec:
             </table>
           </div>
 
-          <p>Use the following command to check a Pod's assigned QoS class:</p>
-
-          <pre class="codehilite"><code class="language-bash"># Check a Pod's QoS class: returns Guaranteed, Burstable, or BestEffort
-kubectl get pod my-pod -o jsonpath='{.status.qosClass}'
-</code></pre>
-
-          <p>Under memory pressure, Kubernetes evicts in order: <strong>BestEffort</strong> first, then
-            <strong>Burstable</strong> (worst offenders first), and <strong>Guaranteed</strong> only as an absolute last
-            resort.
-          </p>
-
-          <blockquote><strong>HPA Requires CPU Requests</strong>
-
-            The Horizontal Pod Autoscaler computes target CPU utilization as a percentage of the CPU request. If you do
-            not set CPU requests, HPA cannot compute a percentage and will not work. You will see:
-            <code>unable to get metrics for resource cpu: unable to fetch metrics from resource metrics API</code>. This
-            is one of the most common reasons HPA does not work for beginners.
-          </blockquote>
           </details>
 
           <h3 id="24-labels-annotations-and-selectors">2.4 Labels, Annotations, and Selectors</h3>
@@ -2744,13 +2756,12 @@ spec:
     targetPort: 8080
 </code></pre>
 
-          <details class="deep-dive">
-            <summary>Equality-based versus set-based selectors<span class="dd-tag">Optional depth</span></summary>
+          <h4 id="selector-styles">Two Styles of Selector</h4>
 
-          <p>Kubernetes supports two distinct styles of label selectors, and knowing the difference between them matters
-            because different API objects support different styles. Both styles can express "find me all Pods that match
-            these label conditions," but they have different expressiveness and syntax.</p>
-          </details>
+          <p>Kubernetes supports two distinct styles of label selector. Both answer the question "which Pods match
+            these label conditions?", but they differ in how much they can express, and, more importantly, in which API
+            objects accept them. A Service takes only the simpler style; a Deployment takes either. Getting this wrong
+            produces a manifest the API server rejects, so it is worth knowing which is which.</p>
 
           <h4>Equality-Based Selectors</h4>
 
@@ -3172,9 +3183,25 @@ kubectl label nodes node-ssd-1 storage=nvme
           <h4 id="affinity-overview">Affinity: More Expressive Placement Rules</h4>
 
           <p><code>nodeSelector</code> only does exact label matches. <strong>Affinity</strong> rules go further: they
-            can express preferences as well as requirements, match on sets of values, and place Pods relative to
-            <em>other Pods</em> rather than to node labels. None of the labs need them, so treat the three blocks below
-            as reference for when you meet them in a real cluster.</p>
+            can express preferences as well as requirements, match on sets of values, and place a Pod relative to
+            <em>other Pods</em> rather than to node labels. There are three kinds, and each answers a different
+            question.</p>
+
+          <ol class="sec2-indented">
+            <li><strong>Node affinity:</strong> which nodes may this Pod land on? This is
+              <code>nodeSelector</code> with set-based operators and an optional "prefer, but do not require" mode.</li>
+            <li><strong>Pod affinity:</strong> which other Pods does this Pod want to sit beside? Use it when two
+              services talk to each other often enough that a network hop between nodes costs real latency, such as an
+              application and its local cache.</li>
+            <li><strong>Pod anti-affinity:</strong> which other Pods must this Pod stay away from? Use it to spread the
+              replicas of one Deployment across separate nodes or zones, so that losing a single node cannot take all
+              of them out at once.</li>
+          </ol>
+
+          <p>The two Pod rules both need a <code>topologyKey</code>, which is the node label that defines what "near"
+            means. Setting it to <code>kubernetes.io/hostname</code> means the same node, and
+            <code>topology.kubernetes.io/zone</code> means the same availability zone. None of the labs require these
+            rules, so the mechanics of each one sit in the three optional blocks below.</p>
 
           <details class="deep-dive">
             <summary>Node affinity: more expressive node selection<span class="dd-tag">Optional depth</span></summary>
@@ -3329,6 +3356,7 @@ kubectl label nodes node-ssd-1 storage=nvme
   - name: web
     image: my-web-app:latest
 </code></pre>
+          </details>
 
           <figure class="k8s-figure" aria-labelledby="fig1-8-cap">
             <svg viewBox="0 0 540 356" role="img" xmlns="http://www.w3.org/2000/svg"
@@ -3407,7 +3435,6 @@ kubectl label nodes node-ssd-1 storage=nvme
                 over pod anti-affinity.</li>
             </ol>
           </blockquote>
-          </details>
 
           <h3 id="26-multi-container-pods">2.6 Multi-Container Pods: Init Containers and Sidecars</h3>
 
