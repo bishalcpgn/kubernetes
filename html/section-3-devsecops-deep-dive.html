@@ -112,7 +112,9 @@
             <li><strong>Code stage:</strong> linters and static analysis catch insecure patterns in the IDE.</li>
             <li><strong>Build stage:</strong> Trivy scans images for CVEs; secret scanners catch leaked credentials.
             </li>
-            <li><strong>Registry stage:</strong> images are signed with Cosign; SBOMs are attached as attestations.</li>
+            <li><strong>Registry stage:</strong> images are signed with Cosign, and an SBOM (Software Bill of
+              Materials, a machine-readable inventory of every component and version inside the image) is attached as
+              an attestation.</li>
             <li><strong>Deploy stage:</strong> admission controllers (PSA, Kyverno) reject non-compliant workloads
               before they run.</li>
             <li><strong>Runtime stage:</strong> Falco watches kernel syscalls and alerts on suspicious behavior in real
@@ -392,8 +394,20 @@
           <h3 id="rbac-role-based-access-control">RBAC: Role-Based Access Control</h3>
           <p>
             Kubernetes RBAC controls who can do what to which resources via the API server. It is built on four object
-            types:
+            types, which split cleanly into two pairs: two that describe permissions, and two that hand those
+            permissions to somebody.
           </p>
+
+          <ol class="sec2-indented">
+            <li><strong>Role:</strong> a list of allowed verbs on allowed resources, valid inside one namespace.</li>
+            <li><strong>ClusterRole:</strong> the same list, but valid across the whole cluster, and the only kind that
+              can cover cluster-scoped resources such as Nodes.</li>
+            <li><strong>RoleBinding:</strong> grants a Role (or a ClusterRole) to a subject inside one namespace.</li>
+            <li><strong>ClusterRoleBinding:</strong> grants a ClusterRole to a subject across every namespace.</li>
+          </ol>
+
+          <p>A permission object on its own does nothing. Nobody has any access until a binding connects a role to a
+            subject, which is why the two pairs always appear together. Lab 13 builds all four by hand.</p>
           <figure class="k8s-figure" aria-labelledby="fig3-3-cap">
             <svg viewBox="0 0 600 296" role="img" xmlns="http://www.w3.org/2000/svg"
               aria-label="RBAC links subjects (users, groups, service accounts) to roles through a binding. A RoleBinding or ClusterRoleBinding connects subjects to a Role (namespace-scoped) or ClusterRole (cluster-scoped), whose rules list the allowed apiGroups, resources, and verbs.">
@@ -865,8 +879,10 @@ kubectl wait --for=condition=Ready pod/posture-demo --timeout=60s
           </p>
           <p>
             Each CVE is also given a <strong>CVSS score</strong> (Common Vulnerability Scoring System), a number from 0
-            to 10
-            that represents severity:
+            to 10 that represents severity. The number maps onto four named bands: <strong>Critical</strong> from 9.0,
+            <strong>High</strong> from 7.0, <strong>Medium</strong> from 4.0, and <strong>Low</strong> below that.
+            Those band names are what scanners print and what you gate a build on, so they matter more in practice than
+            the underlying number.
           </p>
 
           <details class="deep-dive">
@@ -3138,22 +3154,24 @@ spec:
           <h3 id="kyverno-s-four-capabilities">Kyverno's Four Capabilities</h3>
 
           <h4 id="1-validate-block-bad-resources">1. Validate: Block Bad Resources</h4>
-          <p>Reject resources that violate a rule at admission time. Example: block any Pod using <code>:latest</code>
-            image tag, block Pods without resource limits, block containers running as root.</p>
+          <p>A validate rule rejects any resource that breaks it, at admission time, before the object is ever
+            stored. Use it to block a Pod that carries the <code>:latest</code> image tag, one that sets no resource
+            limits, or one that runs as root.</p>
 
           <h4 id="2-mutate-auto-fix-resources">2. Mutate: Auto-Fix Resources</h4>
-          <p>Modify incoming resources before they are stored. Example: inject a default <code>securityContext</code> if
-            one is missing, add owner labels to all Pods, set <code>imagePullPolicy: IfNotPresent</code> automatically.
-          </p>
+          <p>A mutate rule edits an incoming resource before it is stored, so the object that lands in etcd is not
+            quite the one the author submitted. Use it to fill in a missing <code>securityContext</code>, stamp owner
+            labels onto every Pod, or force <code>imagePullPolicy: IfNotPresent</code>.</p>
 
           <h4 id="3-generate-create-resources-automatically">3. Generate: Create Resources Automatically</h4>
-          <p>Create new resources when other resources are created. Example: when a new namespace is created,
-            automatically create a default-deny NetworkPolicy, a LimitRange, and a ResourceQuota in that namespace.</p>
+          <p>A generate rule creates additional resources in response to one being created. The usual use is
+            bootstrapping a namespace: the moment someone creates one, Kyverno drops in a default-deny NetworkPolicy, a
+            LimitRange, and a ResourceQuota, so no namespace is ever born unprotected.</p>
 
           <h4 id="4-verify-images-block-unsigned-container-images">4. Verify Images: Block Unsigned Container Images</h4>
-          <p>At admission time, verify that a container image has a valid cryptographic signature from a trusted signer.
-            Block any unsigned or improperly signed image before it runs. Integrates with Cosign/Sigstore (see Lab 16).
-          </p>
+          <p>A verifyImages rule checks, at admission time, that a container image carries a valid cryptographic
+            signature from a signer you trust, and blocks anything unsigned or wrongly signed before it runs. It reads
+            the same Cosign and Sigstore signatures that Lab 16 produces.</p>
 
           <h3 id="how-kyverno-runs-as-an-admission-webhook">How Kyverno Runs as an Admission Webhook</h3>
 
@@ -3675,18 +3693,18 @@ kubectl delete namespace kyverno
             for signing software artifacts. Its three components work together:</p>
 
           <h4 id="cosign">Cosign</h4>
-          <p>The CLI tool for signing container images, blobs, and other artifacts. Cosign can sign using a private key
+          <p>Cosign is the command-line tool that signs container images, blobs, and other artifacts. It can sign with a private key
             file, a KMS key (AWS KMS, GCP KMS, HashiCorp Vault), or keylessly using OIDC identity. Signatures are stored
             as OCI artifacts in the same container registry alongside the image.</p>
 
           <h4 id="fulcio">Fulcio</h4>
-          <p>A certificate authority that issues short-lived signing certificates tied to your OIDC identity. You
+          <p>Fulcio is a certificate authority that issues short-lived signing certificates tied to your OIDC identity. You
             authenticate to Fulcio using GitHub, Google, or Microsoft identity. Fulcio issues a certificate that expires
             after 10 minutes: long enough to sign, short enough that a stolen certificate is useless. The certificate
             proves "this signature was made by the holder of this OIDC identity at this time."</p>
 
           <h4 id="rekor">Rekor</h4>
-          <p>A public, tamper-evident transparency log that permanently records every signature. Once recorded, entries
+          <p>Rekor is a public, tamper-evident transparency log that permanently records every signature. Once recorded, entries
             cannot be deleted or modified (it uses a Merkle tree structure similar to certificate transparency logs).
             This means anyone can independently verify that a signature existed and was made by a specific identity at a
             specific time.</p>
