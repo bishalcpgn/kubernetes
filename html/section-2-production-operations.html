@@ -279,18 +279,18 @@ helm repo update
 
 # providers.kubernetesGateway.enabled=true tells Traefik to watch Gateway API objects
 # instead of (or in addition to) Ingress objects.
-# Wait until the Traefik pod is Running
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Watch the Traefik pods until they are Running</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get pods -n traefik -w
-# Check that Traefik registered its GatewayClass (the class name is &quot;traefik&quot;)
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Confirm the Traefik GatewayClass is registered</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get gatewayclass
+
+# The GatewayClass is named "traefik".
 </code></pre>
           </div>
 
@@ -313,14 +313,14 @@ helm repo update
   --image=hashicorp/http-echo:1.0 \
   -- /http-echo -text=&quot;Hello from APP 2&quot;
 # http-echo listens on port 5678 by default
-# kubectl expose creates a ClusterIP Service that routes to the deployment&#x27;s pods
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Expose both apps as ClusterIP Services</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl expose deployment app1 --port=5678 --target-port=5678
 kubectl expose deployment app2 --port=5678 --target-port=5678
-# Verify both pods are Running
+
+# kubectl expose creates a ClusterIP Service in front of each deployment.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -403,14 +403,14 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Apply the demo Gateway and its HTTPRoute</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl apply -f demo-gateway.yaml
-# Check Gateway status. PROGRAMMED=True means Traefik has picked it up and configured the listener.
-# If it shows False or Unknown, check that Traefik is running and the GatewayClass is correct.
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Check the Gateway was accepted and has an address</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get gateway demo-gateway
-# Check HTTPRoute status. Both should show ATTACHED=True.
+
+# PROGRAMMED=True means Traefik picked it up and configured the listener.
+# False or Unknown means Traefik is not running, or the GatewayClass is wrong.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -418,7 +418,6 @@ spec:
             <pre class="codehilite"><code class="language-bash">kubectl get httproute
 
 # If not, verify the parentRefs name matches the Gateway name exactly.
-# Detailed status for debugging:
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -436,27 +435,28 @@ kubectl describe httproute app1-route
             <pre class="codehilite"><code class="language-bash">kubectl port-forward -n traefik svc/traefik 8080:80 &amp;
 
 # Traefik&#x27;s Service in the &quot;traefik&quot; namespace serves traffic on port 80.
-# Test app1 routing: the -H flag sends the Host header that the HTTPRoute matches on
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Send a request to /app1 with the demo.local Host</span></div>
             <pre class="codehilite"><code class="language-bash">curl -H &quot;Host: demo.local&quot; http://localhost:8080/app1
 # Expected output: Hello from APP 1
-# Test app2 routing
+
+# The -H flag supplies the Host header the HTTPRoute matches on.
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Send a request to /app2 with the demo.local Host</span></div>
             <pre class="codehilite"><code class="language-bash">curl -H &quot;Host: demo.local&quot; http://localhost:8080/app2
 # Expected output: Hello from APP 2
-# Without the correct Host header, or with a path that no HTTPRoute matches, you get a 404
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Show that a missing Host header returns 404</span></div>
             <pre class="codehilite"><code class="language-bash">curl http://localhost:8080/app1
 # Expected: 404 Not Found (Host header missing)
+
+# No matching Host header, or a path no HTTPRoute claims, gives a 404.
 </code></pre>
           </div>
 
@@ -520,7 +520,6 @@ kubectl describe httproute app1-route
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Stop the background port-forward</span></div>
             <pre class="codehilite"><code class="language-bash">kill %1 2&gt;/dev/null || pkill -f &quot;port-forward.*traefik&quot;
-# Remove application resources
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -678,7 +677,6 @@ chmod 700 get_helm.sh
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm version (should be v4.x)</span></div>
             <pre class="codehilite"><code class="language-bash">helm version
-# Clean up the installer
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -706,32 +704,31 @@ chmod 700 get_helm.sh
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Add the Traefik Helm chart repository</span></div>
             <pre class="codehilite"><code class="language-bash">helm repo add traefik https://traefik.github.io/charts
 helm repo update
-# Search for available chart versions
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">List the available Traefik chart versions</span></div>
             <pre class="codehilite"><code class="language-bash">helm search repo traefik/traefik --versions | head -10
-# Inspect what values the chart exposes (this is a long output; pipe to less)
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Browse the chart's default values</span></div>
             <pre class="codehilite"><code class="language-bash">helm show values traefik/traefik | less
-# Install the chart. Always pin --version for reproducibility.
-# The release name &quot;my-proxy&quot; is used to name all resources this chart creates.
+
+# The output is long, hence the pipe to less.
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Install Traefik (pinned to chart version 34.4.0)</span></div>
             <pre class="codehilite"><code class="language-bash">helm install my-proxy traefik/traefik --version 34.4.0
-# List installed releases in the default namespace
+
+# Pinning --version keeps the install reproducible.
+# The release name "my-proxy" prefixes every resource the chart creates.
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Confirm the release is deployed</span></div>
             <pre class="codehilite"><code class="language-bash">helm list
-# See the Kubernetes resources the chart created
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -793,12 +790,13 @@ resources:
             <pre class="codehilite"><code class="language-bash">helm upgrade my-proxy traefik/traefik \
   --version 34.4.0 \
   -f my-values.yaml
-# View the effective values for this release (merged defaults + your overrides)
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Show the values currently applied to the release</span></div>
             <pre class="codehilite"><code class="language-bash">helm get values my-proxy
+
+# These are the effective values: chart defaults merged with your overrides.
 </code></pre>
           </div>
 
@@ -807,24 +805,25 @@ resources:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">View the release's revision history</span></div>
             <pre class="codehilite"><code class="language-bash">helm history my-proxy
-# Roll back to revision 1 (the original install)
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Roll back to revision 1 (the original install)</span></div>
             <pre class="codehilite"><code class="language-bash">helm rollback my-proxy 1
-# Confirm the rollback: helm history will show a new revision with DESCRIPTION &quot;Rollback to 1&quot;
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the rollback added a new revision</span></div>
             <pre class="codehilite"><code class="language-bash">helm history my-proxy
-# Uninstall the release entirely (removes all Kubernetes resources the chart created)
+
+# A rollback adds a NEW revision, described as "Rollback to 1".
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Uninstall the release</span></div>
             <pre class="codehilite"><code class="language-bash">helm uninstall my-proxy
+
+# This removes every Kubernetes resource the chart created.
 </code></pre>
           </div>
 
@@ -833,20 +832,18 @@ resources:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Scaffold a new chart with the standard directory structure</span></div>
             <pre class="codehilite"><code class="language-bash">helm create my-app
-# Explore the generated structure
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Inspect the generated chart structure</span></div>
             <pre class="codehilite"><code class="language-bash">ls -R my-app/
-# Validate the chart (checks for syntax errors and missing required fields)
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Lint the chart for errors</span></div>
             <pre class="codehilite"><code class="language-bash">helm lint my-app
-# Render the templates locally WITHOUT applying to the cluster
-# This is the shift-left scanning hook: pipe output to Trivy in CI
+
+# lint checks for syntax errors and missing required fields.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -854,6 +851,9 @@ resources:
             <pre class="codehilite"><code class="language-bash">helm template my-release my-app
 # Pipe rendered templates to Trivy for security scanning (Lab 11)
 # helm template my-release my-app | trivy config --exit-code 1 -
+
+# template renders locally and applies nothing to the cluster.
+# This is the shift-left hook: pipe the output to Trivy in CI.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -886,13 +886,11 @@ readinessProbe: {}
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Preview the rendered manifests before installing</span></div>
             <pre class="codehilite"><code class="language-bash">helm template my-release my-app
-# Install the customized chart
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Install the custom chart</span></div>
             <pre class="codehilite"><code class="language-bash">helm install my-release my-app
-# Verify it works
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -981,7 +979,6 @@ helm pull oci://ghcr.io/argoproj/argo-helm/argo-cd --version 7.3.11
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Uninstall the release</span></div>
             <pre class="codehilite"><code class="language-bash">helm uninstall my-release 2&gt;/dev/null || true
-# Remove generated files
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -1142,7 +1139,6 @@ helm repo update
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Create a dedicated namespace for monitoring</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl create namespace monitoring
-# Install the full stack. Pin the chart version for reproducibility.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -1154,13 +1150,16 @@ helm repo update
 # This installs: Prometheus, Grafana, Alertmanager, node-exporter,
 # kube-state-metrics, and a set of pre-configured alerting rules and
 # Grafana dashboards.
-# Watch pods come up (this takes 2-4 minutes on Minikube)
+
+# --version is pinned so the install is reproducible.
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Watch the monitoring stack pods until they are Running</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get pods -n monitoring -w
 # Once all pods show Running, press Ctrl-C
+
+# Expect 2 to 4 minutes on Minikube before everything is Running.
 </code></pre>
           </div>
 
@@ -1199,7 +1198,6 @@ helm repo update
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Find the Prometheus Service</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get svc -n monitoring | grep prometheus
-# Forward the Prometheus web UI to port 9090
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -1233,7 +1231,6 @@ count(kube_pod_status_phase{phase!~"Running|Succeeded"}) by (namespace, phase)
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Find the Alertmanager Service</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get svc -n monitoring | grep alertmanager
-# Forward Alertmanager UI to port 9093
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -1374,13 +1371,11 @@ http_request_duration_seconds_count 14253
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Stop the background port-forwards</span></div>
             <pre class="codehilite"><code class="language-bash">pkill -f &quot;port-forward.*monitoring&quot; 2&gt;/dev/null || true
-# Uninstall the stack
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Uninstall the monitoring stack</span></div>
             <pre class="codehilite"><code class="language-bash">helm uninstall kps -n monitoring
-# Remove the monitoring namespace and all its resources
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -1553,9 +1548,6 @@ http_request_duration_seconds_count 14253
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create a dedicated namespace for Argo CD</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl create namespace argocd
-# Install Argo CD from the upstream manifests.
-# Substitute the current patch release for the tag below; v3.4.5 was current at
-# the time of writing. Check the releases page linked above.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -1565,14 +1557,16 @@ http_request_duration_seconds_count 14253
 
 # --server-side is required: the Argo CD CRDs exceed the annotation size limit
 # that client-side apply uses to store its last-applied configuration.
-# Wait for all Argo CD deployments to become Available
-# This takes 2-4 minutes; several components start sequentially
+
+# v3.4.5 was current at the time of writing. Check the releases page and
+# substitute the current patch release.
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Wait for every Argo CD deployment to become Available</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl wait --for=condition=Available deployment --all -n argocd --timeout=300s
-# List all Argo CD pods to confirm they are Running
+
+# Expect 2 to 4 minutes: the components start sequentially.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -1587,13 +1581,14 @@ http_request_duration_seconds_count 14253
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Retrieve the Argo CD initial admin password</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get secret argocd-initial-admin-secret -n argocd \
   -o jsonpath=&quot;{.data.password}&quot; | base64 -d; echo
-# Forward the Argo CD API server to localhost port 8080
-# The Argo CD server serves HTTPS by default; accept the self-signed certificate in the browser
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Port-forward to the Argo CD UI</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl port-forward svc/argocd-server -n argocd 8080:443 &amp;
+
+# The server speaks HTTPS with a self-signed certificate, so the browser
+# will warn you once. Accept it.
 </code></pre>
           </div>
 
@@ -1645,14 +1640,14 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create the guestbook Application</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl apply -f argo-app.yaml
-# Watch the Application status. It starts as OutOfSync then transitions to Synced.
-# HEALTH should reach Healthy once pods are Running.
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Watch Argo CD sync the Application</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get application guestbook -n argocd -w
-# The guestbook pods are deployed into the &quot;default&quot; namespace by Argo CD
+
+# STATUS starts OutOfSync and becomes Synced. HEALTH reaches Healthy once
+# the pods are Running.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -1662,6 +1657,8 @@ spec:
 # argocd login localhost:8080 --username admin --password &lt;password&gt; --insecure
 # argocd app get guestbook
 #
+
+# Argo CD deployed these into the default namespace, not into argocd.
 </code></pre>
           </div>
 
@@ -1689,20 +1686,19 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Scale the deployment to zero to simulate config drift</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl scale deployment guestbook-ui --replicas=0
-# Immediately check what Argo CD sees: the Application becomes OutOfSync
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Watch Argo CD flag the Application as OutOfSync</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get application guestbook -n argocd
-# Wait up to 60 seconds. With selfHeal: true, Argo CD detects the drift and reverts it.
-# Watch the replica count return to whatever Git declares (typically 1)
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Watch Argo CD heal the deployment back</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get pods -w
-# After Argo CD self-heals, the Application returns to Synced / Healthy
+
+# With selfHeal: true this takes up to 60 seconds. The replica count returns
+# to whatever Git declares, normally 1.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -1839,19 +1835,18 @@ gitops-repo/
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Stop the background port-forward</span></div>
             <pre class="codehilite"><code class="language-bash">pkill -f &quot;port-forward.*argocd&quot; 2&gt;/dev/null || true
-# Delete the Application (the resources-finalizer will also delete the guestbook pods)
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Delete the guestbook Application</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl delete -f argo-app.yaml
-# Wait for the guestbook resources to be removed from the default namespace
+
+# The resources-finalizer makes this delete the guestbook pods too.
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the app pods are removed</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get pods -w
-# Uninstall Argo CD entirely
 </code></pre>
           </div>
           <div class="cmd-step">
