@@ -11,7 +11,7 @@ runs on a laptop with Minikube and maps to a real production practice.
 
 ## What is inside
 
-The guide is split into a setup page, three main tiers, and a set of appendices:
+The guide is split into four sections, numbered 0 to 3, plus a set of appendices:
 
 - **Section 0: Setup.** Install kubectl and Minikube, and learn how kubeconfig and
   contexts work.
@@ -26,7 +26,8 @@ The guide is split into a setup page, three main tiers, and a set of appendices:
 - **Appendices.** Cleanup cheat sheet, common errors and troubleshooting, where to go
   next, and a glossary.
 
-That is 22 chapters across the three main tiers, with 17 runnable labs.
+That is 22 numbered chapters (0 through 21) with 17 runnable labs. Chapter 0 is Section 0
+on its own; chapters 1 to 21 are spread across Sections 1, 2, and 3.
 
 ## Project structure
 
@@ -39,14 +40,12 @@ html/
   section-3-devsecops-deep-dive.html      Security + Labs 11-17.
   appendices.html                         Cleanup, troubleshooting, glossary.
 css/
-  style.css       Base theme, typography, callouts, tables, code blocks.
+  style.css       Theme tokens (light/dark, via the data-theme attribute),
+                  typography, callouts, tables, code blocks.
   app.css         Section reading layout, SVG figures, command steps, headings.
-  themes.css      Light/dark palette tokens (toggled via the data-theme attribute).
-  cmd-steps.css   Roman-numeral command-step styling.
 js/
   app.js          Builds the sidebar and the "On this page" rail, the prev/next nav,
                   and enhances code blocks and callouts.
-  cmd-steps.js    Generates the numbered command steps.
 SECTION-STYLE-RULES.txt   Formatting conventions that keep every page consistent.
 ```
 

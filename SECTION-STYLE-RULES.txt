@@ -8,10 +8,12 @@
  the style is to find a similar existing section in html/*.html and copy its
  pattern. This file explains the "why" behind those patterns.
 
- Last updated: 2026-07-26
+ Last updated: 2026-08-29
  Origin: finalized on Section 2 (Core Working Concepts), applied to chapters
  0-21, then updated after the guide was split into Section 0-3 pages and
- after the heading-colour, font, and figure refresh.
+ after the heading-colour, font, and figure refresh. Revised again after the
+ writing-and-flow pass that removed the command-step generator script, set a
+ 60-character cap on step titles, and defined the target voice in rule 6h.
 
 
 ===========================================================================
@@ -26,8 +28,10 @@
  4. Callouts are <blockquote class="...">, never hand-written <div>.
  5. Use <ol class="sec2-indented"> for lists; wrap tables in
     <div class="table-wrap">.
- 6. The page adds badges, numbering, copy buttons, and callout styling
-    automatically on load. Author plain HTML and let it do the work.
+ 6. The page adds the A/B/C badges, copy buttons, and callout styling on
+    load. The i/ii/iii command steps are NOT automatic: write the
+    <div class="cmd-step"> markup yourself (rule 3), keep the title under
+    60 characters, and put longer comments inside the box (rule 3a).
 
  Everything below is the detail behind these.
 
@@ -43,15 +47,19 @@
                                 html/section-3-devsecops-deep-dive.html
                                 html/appendices.html
   Layout CSS .................. css/app.css   (the ".styled-section" block)
-  Base theme, tokens, lists ... css/style.css
-  Theme palette ............... css/themes.css
+  Base theme, tokens, lists ... css/style.css  (this is also where the
+                                light/dark palette lives; there is no
+                                separate theme file)
   Page-build JS ............... js/app.js     (builds sections + sidebar,
                                 enhances code blocks, converts <blockquote>
                                 into callouts, builds the right-rail menu and
                                 the prev/next footer)
   Section-styling JS .......... an inline <script> at the bottom of
-                                every HTML page (holds STYLED_IDS; adds the
-                                A/B/C and i/ii badges and indentation)
+                                every HTML page (holds STYLED_IDS; marks
+                                styled sections and adds the sec2-indented
+                                class). The A/B/C badges are pure CSS. The
+                                i/ii/iii command badges are authored by hand
+                                in the HTML: see rule 3.
 
   Hard rules:
    - Keep index.html at the repo root as the entry page.
@@ -141,21 +149,68 @@
 
 
 ===========================================================================
- 3. COMMAND BADGES  (i / ii / iii ...) - automatic
+ 3. COMMAND STEPS  (i / ii / iii ...) - authored by hand
 ===========================================================================
 
-  Inside an <h4> subsection, bash command boxes are numbered i, ii, iii ...
-  with a dotted connector line, to show a sequence of steps.
+  A sequence of bash commands is numbered i, ii, iii ... with a dotted
+  connector line. There WAS a script that generated these; it was removed,
+  because its output had been baked into the HTML and had drifted. You now
+  write the markup yourself:
 
-  When a badge IS added:
-   - Only <pre class="codehilite"> whose <code> is class "language-bash".
-     YAML and text blocks never get one.
-   - Only when the subsection has 2 OR MORE bash boxes (a real sequence).
-     A single bash box gets a clean, unbadged box.
-   - Bash boxes nested inside an <li>/<ol> are skipped.
+      <div class="cmd-step">
+        <div class="cmd-label"><span class="cmd-roman">i</span><span
+          class="cmd-step-title">Watch the rollout until it completes</span></div>
+        <pre class="codehilite"><code class="language-bash">kubectl rollout status deployment/web
 
-  To force-skip a badge on a specific box, add  data-no-roman :
-      <pre class="codehilite" data-no-roman><code class="language-bash">...
+# Output: "deployment web successfully rolled out" when every new
+# replica is Ready.
+</code></pre>
+      </div>
+
+  Rules:
+   - Use a cmd-step only for a real SEQUENCE (2 or more commands). A single
+     command gets a plain unwrapped <pre class="codehilite">.
+   - The roman numeral restarts at i in every <h4> subsection.
+   - THE TITLE IS AT MOST 60 CHARACTERS, and it says WHY the step exists,
+     not what the command is. "Watch the rollout until it completes", never
+     "Run kubectl rollout status". A reader scanning only the badges should
+     be able to follow the flow without reading a single command.
+   - Anything that does not fit in 60 characters is not a title. It is a
+     comment, and it belongs inside the box: see rule 3a.
+   - YAML and text blocks never get a cmd-step. Neither does a bash box
+     nested inside an <li>/<ol>.
+
+
+===========================================================================
+ 3a. WHERE COMMENTS GO IN A CODE BOX  (and why the blank line matters)
+===========================================================================
+
+  Explanatory comments go at the END of the box, after a blank line:
+
+      <pre class="codehilite"><code class="language-bash">kubectl get pods -w
+
+# Output: one line per pod, refreshing as status changes.
+# Ctrl-C to stop watching.
+</code></pre>
+
+  This is not cosmetic. js/app.js splitBashIntoBoxes() splits a bash <pre>
+  on blank lines into one box per group, then merges any group that starts
+  with '#' back into the group ABOVE it. So:
+
+   - A trailing comment group after a blank line MERGES into the command
+     box. A command and its output render as ONE box. This is what you want.
+   - A LEADING comment group has no group above it to merge into, so it
+     becomes its own orphan comment box floating above the command.
+
+  If a comment really must come first (a precondition the reader has to act
+  on before running anything), keep it leading but do NOT put a blank line
+  after it, so it stays glued to the command.
+
+  Column-aligned comment blocks (flag tables) depend on their whitespace.
+  Never reflow one into a paragraph:
+
+      # --ignore-daemonsets      DaemonSet Pods belong on every node
+      # --delete-emptydir-data   acknowledges emptyDir contents are lost
 
 
 ===========================================================================
@@ -248,7 +303,33 @@
          <p><strong>ii.</strong> Apply it and verify ...</p>
          <pre ...language-bash> ... </pre>
 
-  h) Writing style:
+  h) Writing style. The target voice, taken from the strongest passages in
+     the guide (the eBPF explanation in Section 3, the kubectl explanation
+     in Section 0): DEFINE the term in the first sentence, state the
+     MECHANISM in the second, state the CONSEQUENCE in the third, then stop.
+
+       - SECOND PERSON. Address the reader as "you", never as "we". "You
+         create a Deployment" says whose job it is; "we create a Deployment"
+         is ambiguous about who acts and drifts into a teacherly register.
+         This matches the Kubernetes documentation the reader has open in
+         the next tab. The ONE exception is the lab intro pattern in 6f,
+         "What we are doing:", which frames shared activity rather than
+         issuing an instruction.
+       - Every sentence has an explicit subject and a finite verb. No
+         verbless fragments. "Five isolated applications on one server." and
+         "One binary running dozens of control loops." are both broken.
+       - Gloss every new noun on first use, in the same sentence. A reader
+         must never meet a term the guide has not yet defined.
+       - At most one rhetorical question per subsection. A chain of them
+         ("Need more RAM? It crashed.") reads as telegraph, not prose.
+       - A short verdict clause ("That is its whole job.") is good as a
+         paragraph CLOSER and bad as a paragraph OPENER.
+       - In list items use "<strong>Term:</strong> explanation" when the
+         continuation is a clause, and "<strong>Term.</strong> Full
+         sentence." when it is a sentence. Never leave a bold label followed
+         by an orphaned stub.
+       - Brevity is not the goal; a reader finishing the paragraph with the
+         concept is. Do not cut the "why" to save a line.
        - US English spelling.
        - NEVER use em-dashes ("—") anywhere: prose, headings, step titles,
          figure labels, or captions. Use a colon, period, comma, or
@@ -276,9 +357,17 @@
      <ul> listing what the reader will do (one <li> per chapter or lab),
      before the first <h2>. See html/section-0-setup.html for the template.
 
-  l) Every manifest (a language-yaml block) gets a lead-in <p> that names the
-     file and says what it defines, ending with "Save it as <file>.yaml:".
-     Don't drop the reader straight into raw YAML.
+  l) Every language-yaml block gets a lead-in <p>. Never drop the reader
+     straight into raw YAML. There are two cases and they read differently:
+
+      - The block IS a file the reader saves and applies. Name the file and
+        end with "Save it as <code>nginx-deployment.yaml</code>:".
+      - The block is an illustrative fragment with no filename. Do NOT say
+        "save it as"; the reader has nowhere to put it. Say what the snippet
+        shows: "The Service below selects Pods by label rather than by IP:".
+
+     Tell them apart by reading the commands nearby. If something later runs
+     "kubectl apply -f foo.yaml", the block is the file foo.yaml.
 
 
 ===========================================================================
@@ -303,6 +392,13 @@
   Don't use a generic title like "INFO" or "WARNING" - the colour and icon
   already signal the type. A callout with no title is fine (just omit the
   leading <strong>).
+
+  DEPRECATED: html/section-0-setup.html also uses a "gradient-border" family
+  (<blockquote class="gradient-border gc-red">, gc-black, ...). The CSS is
+  real (css/style.css), but Section 0 is the only page with that look, so it
+  reads as an inconsistency rather than a deliberate variant. Do not use it
+  in new content; prefer the four types above. One of those blockquotes also
+  hand-writes class="callout", which js/app.js adds anyway - never do that.
 
 
 ===========================================================================
@@ -338,6 +434,42 @@
     once - sections 14-21 were authored with bare <h3>s and had no menu until
     ids were added.) Keep ids unique across the current HTML file.
   - A scrollspy highlights the active subsection as you scroll.
+  - The label drops a leading "N.N" or "Section X:" prefix but KEEPS
+    "Step N:", because a lab's steps are an ordered sequence.
+
+  LAB STEPS ARE <h3>, NEVER <h4> UNDER A WRAPPER.
+   Do not write a generic "Step-by-Step Lab" <h3> and hang the real steps
+   off it as <h4>. The rail is built from <h3> only, so every step under
+   such a wrapper is unreachable: the reader gets one useless entry and no
+   way to jump to a step. This bit us twice, hiding 52 steps across seven
+   labs. Each step is its own <h3 id="step-N-...">.
+   A framing <h3> is fine ONLY when it carries its own prose, such as the
+   "What we are doing" intro on an embedded mini-lab; its steps are still
+   <h3>.
+
+
+===========================================================================
+ 9a. EVERY CHAPTER ENDS WITH KEY TAKEAWAYS
+===========================================================================
+
+  Every numbered chapter closes with:
+
+      <h3 id="<slug>-key-takeaways">Key Takeaways</h3>
+
+      <blockquote class="success">
+        <ol class="sec2-indented">
+          <li><strong>The claim.</strong> One sentence on why it matters.</li>
+        </ol>
+      </blockquote>
+
+  Rules:
+   - It is the LAST thing in the chapter, after Cleanup.
+   - It needs its own <h3>, or it never reaches the rail (rule 9).
+   - NO leading <strong> inside the blockquote. js/app.js would lift it into
+     a callout title, duplicating the <h3> directly above it.
+   - Four to six items. Each is a claim the reader must still be able to act
+     on a week later ("A Service finds Pods by label, never by IP"), not a
+     topic list ("We covered Services"). Introduce no new concept here.
 
 
 ===========================================================================
@@ -365,10 +497,13 @@
        - callouts as <blockquote class="TYPE"> with a leading <strong> (7)
        - tables stand alone, never inside a <blockquote> (6d)
        - fold OUTPUT boxes into bash as "# Output:" comments (6i)
-       - write informative i/ii step titles, not command echoes (6j)
-       - add a "Save it as ..." lead-in before every YAML block (6l)
-       - fix em-dashes / smart quotes (6h)
-  6. The page auto-applies badges, indentation, and callout styling on load.
+       - write informative i/ii step titles under 60 chars (3, 6j), with
+         longer commentary inside the box after a blank line (3a)
+       - add the right lead-in before every YAML block (6l)
+       - fix em-dashes / smart quotes, and read it against the target
+         voice (6h)
+  6. The page auto-applies the A/B/C badges, indentation, and callout
+     styling on load. Command steps are hand-authored (rule 3).
   7. Preview, review, and fix any alignment edge cases.
 
   VALIDATION before you commit:
@@ -382,6 +517,15 @@
    - no <table> wrapped in a <blockquote>
    - no <h2>/<h3> inside a <details class="deep-dive">, and every
      deep-dive has a visible concept sentence above it
+   - every <span class="cmd-step-title"> is 60 characters or fewer
+   - no bash box that opens with a '#' comment group followed by a blank
+     line (it renders as an orphan comment box; see rule 3a)
+   - no unescaped placeholder inside a <pre>: write &lt;node-name&gt;, not
+     <node-name>, or the browser parses it as a tag and drops it
+   - every <h1>/<h2>/<h3>/<h4> sits on ONE source line (a wrapped heading
+     puts newlines into the right-rail menu label)
+   - read the page start to finish WITHOUT opening a single deep-dive. If
+     any concept is missing, the disclosure is wrong (rule 12)
    - SVG <marker> ids unique within the file and every url(#id) resolves
      (duplicate "arr" ids make all arrows share the first marker)
    - figures: no text baseline below its box; figure pages load Caveat

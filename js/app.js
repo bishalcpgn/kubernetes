@@ -399,8 +399,8 @@
 
     function enhanceCodeBlocks(container) {
       // First pass: split a multi-command bash box into one box per command
-      // group, so the i/ii/iii badges (added later, OUTSIDE the boxes by the
-      // per-page cmd-step pass) number each command on its own terminal.
+      // group, so each command gets its own terminal. The i/ii/iii badges are
+      // authored by hand in the HTML as <div class="cmd-step">, not added here.
       container.querySelectorAll('pre').forEach(pre => {
         if (!pre.closest('.code-block')) splitBashIntoBoxes(pre);
       });
@@ -428,8 +428,13 @@
     }
 
     // Split a multi-command bash <pre> into one sibling <pre> per blank-line-
-    // delimited command group. Each becomes its own terminal box; the page's
-    // cmd-step pass then numbers them i/ii/iii on the left, outside the boxes.
+    // delimited command group. Each becomes its own terminal box.
+    //
+    // Authors rely on the '#' merge below: a trailing comment group placed after
+    // a blank line is folded back into the command box above it, which is how a
+    // command and its "# Output:" lines render as ONE box. The corollary is that
+    // a LEADING comment group has nothing above it to merge into, so it becomes
+    // its own orphan comment box. Keep explanatory comments at the END of a box.
     function splitBashIntoBoxes(pre) {
       const code = pre.querySelector('code');
       if (!code || !code.classList.contains('language-bash')) return;
@@ -532,8 +537,10 @@
 
         const subLinks = [];
         desc.h3s.forEach(h3 => {
-          // Strip a leading "N.N " or "Section X:" number prefix for a clean label.
-          const label = h3.textContent.replace(/^\s*(\d+(\.\d+)*|Section\s+[A-Z]|Step\s+\d+)[:.\s-]+/i, '').trim() || h3.textContent.trim();
+          // Strip a leading "N.N " or "Section X:" prefix for a clean label, but KEEP
+          // "Step N:". A lab's steps are an ordered sequence, and dropping the ordinal
+          // leaves the rail listing them with no indication of what order to run them in.
+          const label = h3.textContent.replace(/^\s*(\d+(\.\d+)*|Section\s+[A-Z])[:.\s-]+/i, '').trim() || h3.textContent.trim();
           const li = document.createElement('li');
           const a = document.createElement('a');
           a.href = '#' + h3.id;

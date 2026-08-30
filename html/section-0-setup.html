@@ -92,7 +92,7 @@
             to set things up, but <em>what is actually running</em> on your machine.
           </p>
 
-          <blockquote class="callout gradient-border"><strong>Why do you need a local cluster at all?</strong>
+          <blockquote><strong>Why do you need a local cluster at all?</strong>
 
             <p>
               Kubernetes runs in data centers, cloud providers, and edge devices. But experimenting directly on a
@@ -106,17 +106,15 @@
 
           <h3 id="00-what-you-are-installing">0.0 What You Are Actually Installing</h3>
 
-          <p>Two tools are required (labelled <strong>A</strong> and <strong>B</strong> below). Understanding what each
+          <p>Two tools are required (labeled <strong>A</strong> and <strong>B</strong> below). Understanding what each
             one does prevents a lot of early confusion.</p>
 
           <h4 id="kubectl-explained">kubectl: The Kubernetes Command-Line Client</h4>
 
           <p>
-            <code>kubectl</code> (pronounced "cube-control", "cube-C-T-L", or "cube-cuttle" ) is
-            the official
-            command-line interface for Kubernetes. It is a single binary that does one job: it translates your commands
-            into HTTPS
-            requests and sends them to a Kubernetes API server.
+            <code>kubectl</code> (pronounced "cube-control", "cube-C-T-L", or "cube-cuttle") is the official
+            command-line interface for Kubernetes. It is a single binary that does one job, translating your commands
+            into HTTPS requests and sending them to a Kubernetes API server.
           </p>
 
           <p>
@@ -189,8 +187,9 @@
             Minikube is a tool that creates a fully functional Kubernetes cluster on your local machine, intended for
             learning and
             development. By default it uses Docker as its "driver", which means it starts a Docker container and runs
-            the entire
-            Kubernetes control plane and a worker node inside that container.
+            the entire Kubernetes control plane and a worker node inside that container. The control plane is the set
+            of processes that store cluster state and decide what runs where, and a worker node is a machine that
+            actually runs your containers.
           </p>
 
           <p>
@@ -271,13 +270,15 @@
           </figure>
 
           <p>
-            Minikube also manages a few extra conveniences: it installs a CNI (Container Network Interface) plugin for
-            pod networking,
-            it can enable add-ons like an Ingress controller or the Kubernetes Dashboard, and it provides the
-            <code>minikube tunnel</code> command to emulate LoadBalancer services on your laptop.
+            Minikube also manages a few extra conveniences. It installs a CNI (Container Network Interface) plugin so
+            that Pods can reach each other, where a Pod is the smallest unit Kubernetes schedules: one or more
+            containers that share a single IP address. It can enable add-ons such as an Ingress controller, the
+            component that routes outside HTTP traffic into the cluster, or the Kubernetes Dashboard. It also provides
+            the <code>minikube tunnel</code> command, which stands in for the cloud load balancer that a
+            <code>LoadBalancer</code> Service would normally be given.
           </p>
 
-          <blockquote class="gradient-border gc-black"><strong>Minikube is for learning and development only</strong>
+          <blockquote class="warning"><strong>Minikube is for learning and development only</strong>
 
             <p>
               Minikube runs a single-node cluster. In production you always have at least three control-plane nodes (for
@@ -330,12 +331,12 @@
 # Expect: "Hello from Docker!"</code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Add your user to the docker group</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Let Minikube use Docker without sudo</span></div>
             <pre class="codehilite"><code class="language-bash">sudo usermod -aG docker $USER
 # Log out and back in, or run: newgrp docker</code></pre>
           </div>
 
-          <blockquote class="gradient-border"><strong>Why does Minikube need Docker without sudo?</strong>
+          <blockquote><strong>Why does Minikube need Docker without sudo?</strong>
 
             <p>
               Minikube runs as your regular user and spawns Docker containers to create the cluster. If Docker requires
@@ -424,7 +425,7 @@ echo "Will install: $KUBECTL_VERSION"</code></pre>
 # Expected: "kubectl: OK". If you see FAILED, re-download both files</code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Install the binary into /usr/local/bin</span></div>
+            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Put kubectl on your PATH</span></div>
             <pre class="codehilite"><code class="language-bash">sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl</code></pre>
           </div>
           <div class="cmd-step">
@@ -432,7 +433,7 @@ echo "Will install: $KUBECTL_VERSION"</code></pre>
             <pre class="codehilite"><code class="language-bash">rm kubectl kubectl.sha256</code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">vii</span><span class="cmd-step-title">Verify the kubectl client version</span></div>
+            <div class="cmd-label"><span class="cmd-roman">vii</span><span class="cmd-step-title">Confirm the kubectl install worked</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl version --client --output=yaml</code></pre>
           </div>
 
@@ -445,7 +446,7 @@ echo "Will install: $KUBECTL_VERSION"</code></pre>
               directory is not in your <code>PATH</code>. Run <code>echo $PATH</code> to check.</p>
           </blockquote>
 
-          <blockquote class="gradient-border gc-red"><strong>Version skew: kubectl vs. API server compatibility</strong>
+          <blockquote class="warning"><strong>Version skew between kubectl and the API server</strong>
 
             <p>
               The official Kubernetes support policy states that <code>kubectl</code> must be within <strong>one minor
@@ -482,7 +483,7 @@ source ~/.zshrc
 
           <h3 id="03-install-minikube">0.3 Install Minikube</h3>
 
-          <p>Like kubectl, Minikube ships as a single static binary: download it, install it into your
+          <p>Like kubectl, Minikube ships as a single static binary. Download it, install it into your
             <code>PATH</code>, and verify the version.</p>
 
           <h4 id="minikube-download-and-install">Download and Install</h4>
@@ -494,7 +495,7 @@ source ~/.zshrc
             <pre class="codehilite"><code class="language-bash">curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64</code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Install the binary to /usr/local/bin</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Put minikube on your PATH</span></div>
             <pre class="codehilite"><code class="language-bash">sudo install minikube-linux-amd64 /usr/local/bin/minikube</code></pre>
           </div>
           <div class="cmd-step">
@@ -515,14 +516,13 @@ source ~/.zshrc
             </p>
             <ol class="sec2-indented">
               <li><strong>docker</strong> (recommended for this guide): runs the cluster node as a Docker container.
-                Fast to start,
-                no VM overhead, works on Linux, macOS, and Windows/WSL2.</li>
-              <li><strong>virtualbox</strong>: creates a real VirtualBox VM. Slower but gives stronger isolation.</li>
-              <li><strong>kvm2</strong>: uses KVM/QEMU virtualization on Linux. Good isolation, faster than VirtualBox.
-              </li>
+                It starts quickly, adds no virtual-machine overhead, and works on Linux, macOS, and Windows/WSL2.</li>
+              <li><strong>virtualbox</strong>: creates a real VirtualBox virtual machine. It is slower to start, but it
+                isolates the cluster from your host more strongly.</li>
+              <li><strong>kvm2</strong>: uses KVM/QEMU, the virtualization stack built into the Linux kernel. It
+                isolates the cluster as well as VirtualBox does and starts faster.</li>
               <li><strong>none</strong>: runs Kubernetes components directly on the host (Linux only, requires root).
-                Used in CI/CD
-                pipelines.</li>
+                CI/CD pipelines use this driver, because a build agent is already disposable.</li>
             </ol>
             <p>For all labs in this guide, use the <code>docker</code> driver unless you have a specific reason not to.
             </p>
@@ -539,10 +539,19 @@ source ~/.zshrc
 
           <h4 id="start-command-explained">The Start Command, Flag by Flag</h4>
 
-          <p>The annotated command below starts Minikube, with each flag explained inline.</p>
+          <p>The two commands below both start Minikube: a minimal start first, then the recommended start
+            for this guide, with each flag explained inline.</p>
 
-          <pre class="codehilite"><code class="language-bash"># Minimal start: Docker containers act as the cluster node substrate.
-minikube start --driver=docker
+          <pre class="codehilite"><code class="language-bash">minikube start --driver=docker
+
+# Minimal start: Docker containers act as the cluster node substrate.
+
+minikube start \
+  --driver=docker \
+  --cpus=4 \
+  --memory=4096 \
+  --disk-size=20g \
+  --kubernetes-version=stable
 
 # Recommended start for this guide. Later labs (Prometheus, Argo CD, Falco)
 # need more headroom than the default, so ask for it up front:
@@ -550,15 +559,9 @@ minikube start --driver=docker
 #   --memory=4096                4096 MB (4 GB) of RAM for the node
 #   --disk-size=20g              20 GB of virtual disk for images and volumes
 #   --kubernetes-version=stable  latest stable Kubernetes version
-minikube start \
-  --driver=docker \
-  --cpus=4 \
-  --memory=4096 \
-  --disk-size=20g \
-  --kubernetes-version=stable
 </code></pre>
 
-          <blockquote class="gradient-border gc-black"><strong>Resource allocation matters a lot</strong>
+          <blockquote class="warning"><strong>Resource allocation matters a lot</strong>
 
             <p>
               If you give Minikube too little memory, pods in later labs (especially Prometheus with its many
@@ -614,8 +617,10 @@ minikube start \
               <code>minikube</code> so that kubectl automatically connects to your new cluster.
             </li>
             <li>
-              <strong>Readiness check:</strong> Minikube polls the API server until all system pods in the
-              <code>kube-system</code> namespace are running, then prints the "Done!" message.
+              <strong>Readiness check:</strong> Minikube polls the API server until all system pods in
+              <code>kube-system</code> are running, then prints the "Done!" message. A namespace such as
+              <code>kube-system</code> is a named partition of the cluster, and this one holds Kubernetes' own
+              components.
             </li>
           </ol>
 
@@ -644,7 +649,7 @@ minikube start \
           <p>These commands confirm the cluster is up and the node and system pods are healthy.</p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Check Minikube status</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm the cluster host and API server are up</span></div>
             <pre class="codehilite"><code class="language-bash">minikube status
 # Expected: host: Running · kubelet: Running · apiserver: Running · kubeconfig: Configured</code></pre>
           </div>
@@ -697,7 +702,8 @@ minikube start \
           <h4 id="kubeconfig-structure">The Structure of kubeconfig</h4>
 
           <p>A kubeconfig file has three main sections: <code>clusters</code>, <code>users</code>, and
-            <code>contexts</code>.
+            <code>contexts</code>. The annotated file below is the one Minikube wrote to
+            <code>~/.kube/config</code>, with a comment on each part:
           </p>
 
           <pre class="codehilite"><code class="language-yaml">apiVersion: v1
@@ -729,7 +735,7 @@ contexts:
 current-context: minikube
 </code></pre>
 
-          <blockquote class="gradient-border"><strong>Why this three-part design?</strong>
+          <blockquote><strong>Why this three-part design?</strong>
 
             <p>
               The cluster/user/context split lets a single kubeconfig file hold credentials for many clusters. You might
@@ -746,26 +752,26 @@ current-context: minikube
           <p>These commands show and switch the active kubeconfig context and set a default namespace.</p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Show the current context</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">See which cluster kubectl is pointing at</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl config current-context
 # Output: minikube</code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">List all available contexts</span></div>
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">See every cluster this kubeconfig knows about</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl config get-contexts
 # The active context is marked with *</code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Switch to the minikube context</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Point kubectl at the local cluster</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl config use-context minikube</code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Show cluster info</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Confirm the API server address kubectl uses</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl cluster-info
 # Kubernetes control plane is running at https://192.168.49.2:8443</code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Set the default namespace</span></div>
+            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Make sure commands land in the default namespace</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl config set-context --current --namespace=default</code></pre>
           </div>
 
@@ -774,7 +780,7 @@ current-context: minikube
           <p>Run these verification commands in order. Each one confirms a different layer of your setup.</p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Check the kubectl client version</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm the kubectl binary runs</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl version --client --output=yaml</code></pre>
           </div>
           <div class="cmd-step">
@@ -794,7 +800,7 @@ current-context: minikube
 # kube-scheduler, coredns, kube-proxy, storage-provisioner</code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Run a smoke test pod</span></div>
+            <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Prove the cluster can schedule and run a pod</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl run smoke-test --image=nginx:alpine --restart=Never
 kubectl get pod smoke-test --watch
 # Watch until STATUS changes from ContainerCreating to Running (Ctrl+C to stop)</code></pre>
@@ -815,8 +821,7 @@ kubectl get pod smoke-test --watch
             </p>
           </blockquote>
 
-          <h3 id="07-cluster-topology-what-minikube-created">0.7 What Just Happened: The Cluster Topology Minikube
-            Created</h3>
+          <h3 id="07-cluster-topology-what-minikube-created">0.7 What Just Happened: The Cluster Topology Minikube Created</h3>
 
           <p>
             When Minikube finishes starting, you have a complete (though single-node) Kubernetes cluster. Here is the
@@ -909,13 +914,13 @@ kubectl get pod smoke-test --watch
 
           <p>
             Notice that in Minikube, the single container serves <em>both</em> the control-plane role and the
-            worker-node role.
-            This is why you will see the node labeled with <code>control-plane</code>: it is doing double duty. In a
-            real cluster,
-            these are separate machines.
+            worker-node role. That double duty is why you will see the node labeled <code>control-plane</code>. In a
+            real cluster, these are separate machines.
           </p>
 
           <h3 id="08-common-beginner-mistakes">0.8 Common Beginner Mistakes and How to Fix Them</h3>
+
+          <p>Each mistake below gives the symptom you will see, the cause behind it, and the commands that fix it.</p>
 
           <h4 id="mistake-permission-denied">Mistake 1: "permission denied" when running Docker commands</h4>
           <p><strong>Symptom:</strong> <code>minikube start</code> fails with "permission denied while trying to connect
@@ -932,9 +937,10 @@ newgrp docker
             <code>kubectl describe pod &lt;name&gt;</code> shows "0/1 nodes are available: Insufficient memory".
           </p>
           <p><strong>Cause:</strong> Minikube was started with too little memory.</p>
-          <pre class="codehilite"><code class="language-bash"># Delete the existing cluster and recreate with more resources
-minikube delete
+          <pre class="codehilite"><code class="language-bash">minikube delete
 minikube start --driver=docker --cpus=4 --memory=6144
+
+# Delete the existing cluster and recreate with more resources
 </code></pre>
 
           <h4 id="mistake-wrong-context">Mistake 3: kubectl commands go to the wrong cluster</h4>
@@ -962,11 +968,11 @@ minikube start
           <p><strong>Cause:</strong> You have an old kubectl installed from a system package manager, and it shadows the
             one you just installed.</p>
           <pre class="codehilite"><code class="language-bash">which -a kubectl
-# Check which one is being used
+# Check which of them your shell actually resolves
 type kubectl
-# If the system version takes precedence, ensure /usr/local/bin comes first in PATH:
+# If the system copy wins, put /usr/local/bin first in PATH.
+# Add this same line to ~/.bashrc to make it survive a new shell.
 export PATH="/usr/local/bin:$PATH"
-# Add this line to ~/.bashrc for permanence.
 </code></pre>
 
           <h3 id="09-useful-minikube-commands">0.9 Useful Minikube Day-to-Day Commands</h3>
@@ -983,6 +989,36 @@ minikube ip                            # get the node IP address
 minikube tunnel                        # expose LoadBalancer services locally
 minikube ssh                           # shell into the Minikube node
 minikube logs --file=minikube.log      # capture startup logs to a file</code></pre>
+
+          <h3 id="chapter-0-key-takeaways">Key Takeaways</h3>
+
+          <blockquote class="success">
+            <ol class="sec2-indented">
+              <li><strong>Docker, Minikube, and kubectl each do one job.</strong> Docker runs the container, Minikube
+                boots the Kubernetes control plane and the node processes inside that container, and kubectl turns the
+                commands you type into HTTPS requests to the API server.</li>
+              <li><strong>Your cluster is one container, not one machine.</strong> That single container plays the
+                control-plane role and the worker-node role at the same time, which is why
+                <code>kubectl get nodes</code> lists exactly one node and labels it <code>control-plane</code>.</li>
+              <li><strong>kubectl finds the cluster through kubeconfig, not through anything you type.</strong>
+                <code>minikube start</code> wrote the API server address and your client certificate into
+                <code>~/.kube/config</code> and set the current context to <code>minikube</code>, so every command in
+                this guide reaches that cluster until you switch contexts.</li>
+              <li><strong>Four checks prove the setup is healthy.</strong> <code>minikube status</code>,
+                <code>kubectl get nodes</code>, <code>kubectl get pods -A</code>, and a throwaway pod that reaches
+                <code>Running</code> test the host container, the node, the system pods, and scheduling, in that
+                order.</li>
+              <li><strong>Stopping the cluster is not the same as deleting it.</strong> <code>minikube stop</code>
+                suspends the node container and preserves its state, while <code>minikube delete</code> destroys the
+                cluster and makes the next start rebuild it from scratch.</li>
+            </ol>
+          </blockquote>
+
+          <p>
+            Section 1 explains the components you just watched start. It covers what the API server, etcd, the
+            scheduler, and the controller manager each do, and how they keep the cluster matching the state you ask
+            for.
+          </p>
 
           <hr /></article>
       </div>
