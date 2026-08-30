@@ -4618,13 +4618,11 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Check kubectl version</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl version --short
-# Confirm Minikube is running and the node is Ready
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm the node is Ready</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get nodes
-# Confirm you are working in the default namespace (or the expected one)
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -5273,12 +5271,13 @@ Events:                   &lt;none&gt;
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Get the Service's external URL from Minikube</span></div>
             <pre class="codehilite"><code class="language-bash">minikube service nginx-service --url
-# Then curl that URL (or copy-paste it into a browser)
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm the Service answers on the Minikube URL</span></div>
             <pre class="codehilite"><code class="language-bash">curl $(minikube service nginx-service --url)
+
+# You can also paste the URL straight into a browser.
 </code></pre>
           </div>
 
@@ -5319,7 +5318,6 @@ Events:                   &lt;none&gt;
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Open a shell inside the nginx container</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec -it nginx-deployment-7c79c4bf97-r2bxn -- sh
 
-# Inside the container, verify Nginx is running and listening.
 # Use &#x27;sh&#x27; for alpine-based images, not &#x27;bash&#x27;.
 </code></pre>
           </div>
@@ -5363,19 +5361,16 @@ curl http://nginx-service.default.svc.cluster.local
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Stream a Pod's logs live (-f)</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl logs -f nginx-deployment-7c79c4bf97-r2bxn
-# Get logs from all Pods with the app=web label at once
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">View logs from every Pod with a label</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl logs -l app=web
-# Get the last 50 lines
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Show only the last 50 log lines (--tail)</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl logs nginx-deployment-7c79c4bf97-r2bxn --tail=50
-# Get logs from a previous container run (if the container crashed and restarted)
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -5401,7 +5396,6 @@ curl http://nginx-service.default.svc.cluster.local
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">In a separate terminal, reach it at localhost:8080</span></div>
             <pre class="codehilite"><code class="language-bash">curl http://localhost:8080
-# Or forward directly to one specific Pod
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -5537,7 +5531,6 @@ kubectl apply -f nginx-deployment.yaml
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Read the previous container's logs (--previous)</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl logs &lt;pod-name&gt; --previous
-# Read the current container&#x27;s logs (if it stays up briefly)
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -6249,13 +6242,13 @@ spec:
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Roll back to the previous revision</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl rollout undo deployment/nginx-deployment
 # deployment.apps/nginx-deployment rolled back
-# Watch the rollback in Terminal 2 (same mechanism as a forward update)
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Watch the rollback complete</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl rollout status deployment/nginx-deployment
-# Roll back to a SPECIFIC revision by number
+
+# A rollback rolls forward: same mechanism, earlier image.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -6363,7 +6356,6 @@ kubectl apply -f nginx-deployment.yaml
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">List the events for the failing Deployment</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get events --field-selector involvedObject.name=nginx-deployment \
   --sort-by=&#x27;.lastTimestamp&#x27;
-# Check pod-level events to find the root cause
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -6720,7 +6712,6 @@ EOF
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Create a ConfigMap from a file</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl create configmap app-config-file \
   --from-file=/tmp/app.properties
-# You can also set a custom key name:
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -6999,13 +6990,11 @@ kubectl logs env-bulk-pod            # Should show all env vars including APP_EN
             <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Deploy pod using volume mounts</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl apply -f volume-mount-pod.yaml
 kubectl wait --for=condition=Ready pod/volume-mount-pod --timeout=60s
-# Exec into the pod and inspect the mounted files
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">v</span><span class="cmd-step-title">Open a shell to inspect the mounted files</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec -it volume-mount-pod -- sh
-# Inside the container:
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -7211,7 +7200,6 @@ kubectl delete secret app-secret 2>/dev/null || true
 # NAME                 PROVISIONER                RECLAIMPOLICY   VOLUMEBINDINGMODE
 
 # standard (default)  k8s.io/minikube-hostpath   Delete          Immediate
-# Inspect the default StorageClass
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -7317,7 +7305,6 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create the PersistentVolumeClaim</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl apply -f my-pvc.yaml
-# Watch the PVC status - it should quickly become Bound
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -7387,13 +7374,11 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Deploy a Pod that mounts the PVC</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl apply -f storage-pod.yaml
-# Wait for the pod to be Ready
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Wait until the Pod is Ready</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl wait --for=condition=Ready pod/storage-pod --timeout=60s
-# Verify the volume is mounted correctly
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -7419,7 +7404,6 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Write a second file interactively</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec -it storage-pod -- sh
-# Inside the container:
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -7521,13 +7505,14 @@ kubectl exec ephemeral-pod -- cat /tmp/data/test.txt
             <pre class="codehilite"><code class="language-bash">kubectl delete pod ephemeral-pod
 kubectl apply -f ephemeral-pod.yaml
 kubectl wait --for=condition=Ready pod/ephemeral-pod --timeout=60s
-# Data is gone - emptyDir was deleted with the pod
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Confirm the emptyDir data is gone</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec ephemeral-pod -- ls /tmp/data/
 # (empty - no test.txt)
+
+# The file is gone: emptyDir was destroyed along with the old Pod.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -7587,7 +7572,6 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Problem: PVC stuck in Pending state</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl describe pvc my-pvc | grep -A10 &quot;Events:&quot;
-# Common causes and fixes:
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -7974,7 +7958,6 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Deploy a Pod with liveness and readiness probes</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl apply -f probe-demo.yaml
-# Watch pods come up - observe they go through ContainerCreating -&gt; Running -&gt; Ready
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -7986,6 +7969,8 @@ spec:
 #
 
 # Verify both pods are in the endpoints
+
+# The Pod passes through ContainerCreating, then Running, then Ready.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -8105,7 +8090,6 @@ Pod uses 80m CPU, CPU request = NONE:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Enable the metrics-server addon</span></div>
             <pre class="codehilite"><code class="language-bash">minikube addons enable metrics-server
-# Wait for metrics-server to be Ready
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -8285,7 +8269,6 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Watch the HPA metrics refresh every 5 seconds</span></div>
             <pre class="codehilite"><code class="language-bash">watch -n5 kubectl get hpa hpa-demo
-# Or watch pods:
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -8378,13 +8361,11 @@ kubectl top pods -l app=hpa-demo   # If this fails, metrics-server is the proble
 # Wait 60-90 seconds and check again
 
 # Problem: HPA not scaling up despite high CPU
-# Check if you have hit maxReplicas:
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Read the HPA's current vs max replica counts</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl describe hpa hpa-demo | grep &quot;Max replicas\|Current replicas&quot;
-# Check if node has capacity for more pods:
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -8408,14 +8389,14 @@ kubectl top pods -l app=hpa-demo   # If this fails, metrics-server is the proble
 
 # Fix: increase initialDelaySeconds and verify the path exists.
 # This is the quick test: run the probe manually.
-
-# Problem: rolling update stuck because readiness probe never passes
-# This is intentional safety behavior (covered in Lab 2)
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">vii</span><span class="cmd-step-title">Diagnose the readiness probe failures on the new pod</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl describe pod -l app=my-app | grep -B2 &quot;Readiness probe failed&quot;
+
+# A rollout that stalls on a failing readiness probe is doing its job:
+# Kubernetes will not send traffic to a Pod that never reports Ready (Lab 2).
 </code></pre>
           </div>
 
@@ -8674,19 +8655,21 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create the StatefulSet</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl apply -f statefulset.yaml
-# Watch pods appear in ORDER: web-0 is created and must reach Running before web-1 starts
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Watch the Pods start in ordered sequence</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get pods -l app=nginx-sts -w
-# Verify stable pod names (web-0, web-1, not random hashes)
+
+# web-0 must reach Running before web-1 is even created.
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the Pods have stable ordinal names</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get pods -l app=nginx-sts
 # Check that each replica has its own PVC (data-web-0 and data-web-1)
+
+# The names are ordinals (web-0, web-1), not the random hashes a Deployment gives.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -8829,13 +8812,14 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">List the system DaemonSets</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get daemonsets -n kube-system
-# Describe the kube-proxy DaemonSet to see its tolerations (runs on control plane too)
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Inspect the kube-proxy DaemonSet</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl describe ds kube-proxy -n kube-system
 # Apply the Fluent Bit example
+
+# Note its tolerations: kube-proxy runs on the control-plane node too.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -9111,26 +9095,27 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create a CronJob</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl apply -f cronjob-hello.yaml
-# Inspect the CronJob: note SCHEDULE, LAST SCHEDULE, and ACTIVE columns
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Check the CronJob's schedule and last run</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get cronjob hello
-# Wait for the first run (up to 2 minutes) then list the spawned Jobs
-# Jobs are named: &lt;cronjob-name&gt;-&lt;unix-timestamp&gt;
+
+# Read the SCHEDULE, LAST SCHEDULE, and ACTIVE columns.
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Watch the CronJob spawn Jobs on schedule</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get jobs
 # View the output of the most recently completed Job
+
+# The first run can take up to 2 minutes. Each Job is named
+# &lt;cronjob-name&gt;-&lt;unix-timestamp&gt;.
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Read the latest Job's output</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl logs -l job-name=$(kubectl get jobs -o name | tail -1 | cut -d/ -f2)
-# Manually trigger a CronJob run immediately (without waiting for the schedule)
 </code></pre>
           </div>
           <div class="cmd-step">
