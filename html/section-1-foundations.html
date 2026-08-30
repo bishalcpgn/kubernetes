@@ -120,7 +120,7 @@
           <h4 id="era-3-containers">Era 3: Containers</h4>
 
           <p>A container is built from two Linux kernel features working together. <strong>Namespaces</strong> provide
-            the isolation: each container sees only its own process tree, its own network interfaces, and its own
+            the isolation, so each container sees only its own process tree, its own network interfaces, and its own
             filesystem mount points. <strong>Cgroups</strong> provide the resource limits: a ceiling on how much CPU and
             memory the container may consume. The decisive difference from a virtual machine is that containers share
             the host's kernel rather than shipping one of their own, and that single change cascades:</p>
@@ -129,8 +129,8 @@
             <li>A container image might be 50-200 MB instead of 2 GB.</li>
             <li>Starting a container takes milliseconds, not seconds.</li>
             <li>You can run hundreds of containers on a single VM that could only host a handful of VMs.</li>
-            <li>Images are portable: build once on your laptop, run identically in any environment that has a container
-              runtime.</li>
+            <li>Images are portable, so you build once on your laptop and run identically in any environment that has
+              a container runtime.</li>
           </ol>
 
           <p>
@@ -204,8 +204,8 @@
             Actual state is what is <em>currently running</em> in the cluster right now. Maybe you asked for 3 replicas,
             but a
             node just failed and one replica was lost. The actual state is 2 running replicas. Or maybe you asked for 3
-            replicas
-            and the cluster has not even started spinning them up yet: the actual state is 0 running replicas.
+            replicas and the cluster has not even started spinning them up yet. The actual state is 0 running
+            replicas.
           </p>
 
           <h4 id="reconciliation-loop">The Reconciliation Loop</h4>
@@ -277,8 +277,8 @@
           </figure>
 
           <p>
-            This loop runs continuously, typically every few seconds. It is why Kubernetes is called "self-healing": it
-            automatically detects that a pod died and creates a replacement without any human intervention.
+            This loop runs continuously, typically every few seconds. Kubernetes is called "self-healing" because the
+            loop automatically detects that a pod died and creates a replacement without any human intervention.
           </p>
 
           <blockquote><strong>This is fundamentally different from scripts</strong>
@@ -714,11 +714,9 @@
               kube-controller-manager) run as
               "static pods". These are pod manifests stored in <code>/etc/kubernetes/manifests/</code> on the node's
               filesystem.
-              The kubelet reads these files directly, without going through the API server, and starts the pods. This is
-              how
-              Kubernetes bootstraps itself: the kubelet starts the API server, and then the API server becomes available
-              for
-              everything else.
+              The kubelet reads these files directly, without going through the API server, and starts the pods. That
+              is how Kubernetes bootstraps itself. The kubelet starts the API server, and the API server then becomes
+              available for everything else.
             </p>
           </blockquote>
 
@@ -964,11 +962,9 @@
           </figure>
 
           <p>
-            This entire sequence typically completes in under 10 seconds for small images on a healthy cluster. The
-            multi-step
-            nature is why Kubernetes can recover from failures at any point: each step is independently tracked in etcd,
-            and
-            the relevant controller will retry if something fails.
+            This entire sequence typically completes in under 10 seconds for small images on a healthy cluster.
+            Kubernetes can recover from failures at any point in this multi-step sequence, because each step is
+            independently tracked in etcd and the relevant controller retries if something fails.
           </p>
 
           <h3 id="17-kubernetes-api-explained">1.7 The Kubernetes API: Resources, Groups, and Versions</h3>
@@ -986,7 +982,7 @@
             Namespaces,
             ConfigMaps) has no group name. Its <code>apiVersion</code> is just a version number like <code>v1</code>.
             All other
-            groups have names. The table below is about where each object lives, not what it does: most of these
+            groups have names. The table below is about where each object lives, not what it does. Most of these
             objects get a full treatment in 1.9 or in a later lab, so read the Resources column as a list of names to
             recognize rather than a list to learn now.
           </p>
@@ -1112,9 +1108,8 @@ kubectl expose deployment nginx --port=80 --type=NodePort
             <li>If you need to recreate the cluster (disaster recovery), you must remember and re-execute every command
               in the
               right order.</li>
-            <li>Drift happens: if someone runs a different command on the cluster and you do not know about it, your
-              mental model
-              is wrong.</li>
+            <li>Drift happens. If someone runs a different command on the cluster and you do not know about it, your
+              mental model is wrong.</li>
           </ol>
 
           <h4 id="declarative-approach">Declarative Approach</h4>
@@ -1154,9 +1149,8 @@ spec:
             to
             <code>replicas: 5</code>), Kubernetes computes the diff and applies only the change. If you run it with the
             same
-            YAML unchanged, nothing happens. This is called <strong>idempotency</strong>: applying the same desired
-            state
-            multiple times has the same result as applying it once.
+            YAML unchanged, nothing happens. This is called <strong>idempotency</strong>, which means applying the
+            same desired state multiple times has the same result as applying it once.
           </p>
 
           <blockquote class="success"><strong>The production rule: always use declarative apply</strong>
@@ -1244,7 +1238,7 @@ spec:
           <h4 id="object-service">Service</h4>
 
           <p>
-            Pods are ephemeral: they come and go, and each time a pod starts it gets a new IP address. If Service A
+            Pods are ephemeral. They come and go, and each time a pod starts it gets a new IP address. If Service A
             needs to
             talk to Service B, it cannot hardcode the IP address of Service B's pods. A Service solves this by providing
             a
@@ -1318,7 +1312,7 @@ spec:
           <h4 id="object-pv-pvc">PersistentVolume and PersistentVolumeClaim</h4>
 
           <p>
-            Containers are ephemeral: when a container is deleted, any data written to its filesystem is lost. For
+            Containers are ephemeral, so when a container is deleted, any data written to its filesystem is lost. For
             workloads
             that need durable storage (databases, file servers), Kubernetes provides a storage abstraction:
           </p>
@@ -1510,7 +1504,7 @@ spec:
           <p>You rarely type the whole thing. A Pod's resolver is configured with search domains, so from inside a Pod
             in the same namespace, <code>nginx-service</code> alone resolves. From a different namespace you need
             <code>nginx-service.other-namespace</code>. This is the single most common cause of "connection refused"
-            between two working services: the name resolved in the wrong namespace, or did not resolve at all.</p>
+            between two working services. The name resolved in the wrong namespace, or did not resolve at all.</p>
 
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Resolve a Service name from inside the cluster</span></div>
@@ -1528,9 +1522,9 @@ spec:
           </div>
 
           <p>One variation is worth naming now, because Lab 6 uses it without ceremony. Setting
-            <code>clusterIP: None</code> on a Service makes it <strong>headless</strong>: it gets no virtual IP and does
-            no load balancing, and its DNS name resolves directly to the IP of every matching Pod instead of to a single
-            front door.</p>
+            <code>clusterIP: None</code> on a Service makes it <strong>headless</strong>. A headless Service gets no
+            virtual IP and does no load balancing, and its DNS name resolves directly to the IP of every matching Pod
+            instead of to a single front door.</p>
 
           <details class="deep-dive">
             <summary>Why StatefulSets need a headless Service<span class="dd-tag">Optional depth</span></summary>
@@ -1673,8 +1667,9 @@ spec:
 
           <p>Those four files are the answer to a chicken-and-egg problem. The API server cannot be scheduled by
             Kubernetes, because scheduling requires an API server. So kubelet watches that directory on disk and starts
-            whatever it finds there directly. These are called <strong>static Pods</strong>: kubelet owns them, not the
-            scheduler. That is why you cannot delete them with <code>kubectl delete</code> and make them stay gone.</p>
+            whatever it finds there directly. These are called <strong>static Pods</strong>, and kubelet owns them
+            rather than the scheduler. That is why you cannot delete them with <code>kubectl delete</code> and make
+            them stay gone.</p>
 
           <h3 id="lab0-ask-api-server">Ask the API Server Whether It Is Healthy</h3>
 
@@ -1710,8 +1705,8 @@ spec:
 
           <h3 id="lab0-watch-scheduler">Watch the Scheduler Make a Decision</h3>
 
-          <p>The scheduler does one job: it picks a node for a Pod that does not have one yet. It records that decision
-            as an Event, so you can read the decision after the fact.</p>
+          <p>The scheduler does one job, which is to pick a node for a Pod that does not have one yet, and it records
+            that decision as an Event so you can read it after the fact.</p>
 
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create a small Deployment to give the scheduler some work</span></div>
@@ -2092,8 +2087,8 @@ kubens -                  # switch back to the previously active namespace</code
             Services, and other objects in that namespace. Any request that would push the total over a quota limit is
             rejected immediately.</p>
 
-          <p>ResourceQuota solves a critical multi-tenant problem: without it, one team can accidentally (or
-            intentionally) consume all cluster CPU and memory, starving every other team. Quotas give platform teams a
+          <p>ResourceQuota solves a critical multi-tenant problem, because without it one team can accidentally, or
+            intentionally, consume all cluster CPU and memory and starve every other team. Quotas give platform teams a
             governance mechanism: "Team Alpha gets exactly 4 CPU cores and 8 GiB of RAM. No more."</p>
 
           <p>There are two categories of things you can quota:</p>
@@ -2290,7 +2285,7 @@ spec:
             </ol>
             With both in place: every Pod gets sensible resource values (from LimitRange defaults if not specified), and
             the namespace as a whole cannot exceed its allocated share of the cluster (enforced by ResourceQuota).
-            Neither object alone is sufficient: a ResourceQuota without a LimitRange breaks Pods that omit resource
+            Neither object alone is sufficient, because a ResourceQuota without a LimitRange breaks Pods that omit resource
             declarations, and a LimitRange without a ResourceQuota does not prevent a team from spinning up 1,000 small
             Pods that collectively exhaust the cluster.
           </blockquote>
@@ -2314,7 +2309,7 @@ spec:
 
           <p>Kubernetes is built around the declarative model. The API server holds the desired state you submitted,
             and controllers work continuously to make reality match it. That is the <strong>reconciliation loop</strong>
-            from 1.2, and it is the mechanism that makes the cluster self-healing: nobody has to notice a failure and
+            from 1.2, and it is the mechanism that makes the cluster self-healing. Nobody has to notice a failure and
             react to it, because the loop is already comparing and correcting.</p>
 
           <h4>Imperative: Telling Kubernetes What to Do Right Now</h4>
@@ -2409,11 +2404,11 @@ spec:
 
           <h4>Why Declarative is Essential for Production</h4>
 
-          <p>Three things follow once your manifests live in Git. The first is <strong>GitOps</strong>: every
-            infrastructure change becomes a pull request, so it gets reviewed before it lands and can be rolled back
-            with a single commit. The second is <strong>auditability</strong>: when something breaks at 2am, the Git log
-            tells you exactly what changed and who changed it. The third is <strong>reproducibility</strong>: you can
-            rebuild an entire staging cluster with <code>kubectl apply -f ./</code>. A cluster built by imperative
+          <p>Three things follow once your manifests live in Git. The first is <strong>GitOps</strong>, where every
+            infrastructure change becomes a pull request that gets reviewed before it lands and can be rolled back with
+            a single commit. The second is <strong>auditability</strong>, where the Git log tells you exactly what
+            changed and who changed it when something breaks at 2am. The third is <strong>reproducibility</strong>,
+            where you can rebuild an entire staging cluster with <code>kubectl apply -f ./</code>. A cluster built by imperative
             commands offers none of these, because all you have when it breaks is the broken cluster and no history of
             how it got that way. Lab 10 turns this into an automated loop.</p>
 
@@ -3033,8 +3028,8 @@ kubectl get pods -l 'app=web,environment in (prod, staging),!canary'
               <li>The Pod template labels in <code>spec.template.metadata.labels</code> must be a superset of the
                 selector. Every label in the selector must appear on the Pod, but the Pod can have additional labels.
               </li>
-              <li>Never use <code>DoesNotExist</code> or <code>NotIn</code> as the only condition in a selector: it
-                could accidentally match unrelated Pods that happen to lack those labels.</li>
+              <li>Never use <code>DoesNotExist</code> or <code>NotIn</code> as the only condition in a selector,
+                because it could accidentally match unrelated Pods that happen to lack those labels.</li>
             </ol>
           </blockquote>
 
@@ -3067,9 +3062,9 @@ kubectl get pods -l 'app=web,environment in (prod, staging),!canary'
           <h3 id="25-node-scheduling-taints-tolerations-and-affinity">2.10 Node Scheduling: Taints and Tolerations</h3>
 
           <p>By default the scheduler drops a Pod on any node with enough free CPU and memory for its requests, and
-            for many workloads that is exactly what you want. Production nodes are not interchangeable, though: some
-            have GPUs, some have fast NVMe disks, some
-            are reserved for system components, some sit in other availability zones. You need to say things like "only
+            for many workloads that is exactly what you want. Production nodes are not interchangeable, though. Some
+            have GPUs, some have fast NVMe disks, some are reserved for system components, and some sit in other
+            availability zones. You need to say things like "only
             run this on GPU nodes" or "never put two replicas on one node." Four tools do that: <strong>taints</strong>,
             <strong>tolerations</strong>, <strong>nodeSelector</strong>, and <strong>affinity/anti-affinity</strong>.</p>
 
@@ -3237,9 +3232,9 @@ kubectl taint nodes node-gpu-1 hardware=gpu:NoSchedule-
             indefinitely until a matching node appears.
           </p>
 
-          <p><code>nodeSelector</code> uses equality matching only: every key-value pair must match exactly. It does not
-            support set-based operators like <code>In</code> or <code>NotIn</code>. For that expressiveness you need
-            node affinity, described next.</p>
+          <p><code>nodeSelector</code> uses equality matching only, so every key-value pair must match exactly. It
+            does not support set-based operators like <code>In</code> or <code>NotIn</code>. For that expressiveness
+            you need node affinity, described next.</p>
 
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Label the nodes you want to target</span></div>
@@ -3283,7 +3278,7 @@ kubectl label nodes node-ssd-1 storage=nvme
 
           <h3 id="affinity-overview">2.11 Affinity: More Expressive Placement Rules</h3>
 
-          <p><code>nodeSelector</code> only does exact label matches. <strong>Affinity</strong> rules go further: they
+          <p><code>nodeSelector</code> only does exact label matches. <strong>Affinity</strong> rules go further. They
             can express preferences as well as requirements, match on sets of values, and place a Pod relative to
             <em>other Pods</em> rather than to node labels. There are three kinds, and each answers a different
             question.</p>
@@ -3387,7 +3382,7 @@ kubectl label nodes node-ssd-1 storage=nvme
             frequently that placing them on the same node reduces network latency significantly, for example an
             application Pod and its local cache.</p>
 
-          <p>The <code>topologyKey</code> field is critical: it defines what "near" means.
+          <p>The <code>topologyKey</code> field is critical, because it defines what "near" means.
             <code>kubernetes.io/hostname</code> means "same node." <code>topology.kubernetes.io/zone</code> means "same
             availability zone." The scheduler groups nodes by the value of that label and tries to place the Pod in the
             same group as the target Pods.
@@ -3424,7 +3419,7 @@ kubectl label nodes node-ssd-1 storage=nvme
           </blockquote>
           </details>
 
-          <p>Anti-affinity is the reverse trade: you accept a worse packing of Pods onto nodes in exchange for
+          <p>Anti-affinity is the reverse trade, where you accept a worse packing of Pods onto nodes in exchange for
             surviving the loss of any one node.</p>
 
           <details class="deep-dive">
@@ -3650,7 +3645,7 @@ kubectl delete pod multi-container-demo
               <li><strong>Jobs that never finished.</strong> A Job is complete when its containers exit. A sidecar that
                 runs forever meant the Job hung forever, which is why service-mesh proxies broke batch workloads.</li>
             </ol>
-            <p>Putting the sidecar in <code>initContainers</code> reuses the init machinery to fix both: Kubernetes
+            <p>Putting the sidecar in <code>initContainers</code> reuses the init machinery to fix both. Kubernetes
               starts it before the app, lets the Pod proceed once it is started rather than finished, and terminates it
               after the app exits so Jobs can complete. The feature was alpha in v1.28, on by default in v1.29, and
               stable in v1.33.</p>
@@ -4523,15 +4518,15 @@ spec:
             </table>
           </div>
 
-          <p>The chain runs one way: you create a Deployment, it creates a ReplicaSet, and the ReplicaSet creates the
-            Pods. The Service sits outside that chain and finds Pods by label instead. That last detail breaks more
+          <p>The chain runs one way, in that you create a Deployment, it creates a ReplicaSet, and the ReplicaSet
+            creates the Pods. The Service sits outside that chain and finds Pods by label instead. That last detail breaks more
             first labs than anything else, so it gets its own subsection below.</p>
 
           <blockquote><strong>Pod IPs are temporary</strong>
 
             <p>Every Pod gets a private address from the cluster's <strong>Pod CIDR</strong>, the block of IPs reserved
               for Pods, so it looks like <code>10.244.0.5</code>. These addresses are reachable only from inside the
-              cluster, and they do not survive a restart: delete a Pod and its replacement comes back on a different
+              cluster, and they do not survive a restart. Delete a Pod and its replacement comes back on a different
               one. Nothing should ever connect to a Pod IP directly, and that is the whole reason Services exist.</p>
           </blockquote>
 
@@ -4553,7 +4548,7 @@ spec:
 
           <p>A label is a key-value pair attached to an object, such as <code>app: web</code> or
             <code>environment: production</code>. A selector is a query against those labels. That is the entire idea,
-            and 2.4 goes deeper into it, but the stakes are worth stating plainly: without labels a Deployment cannot
+            and 2.4 goes deeper into it, but the stakes are worth stating plainly. Without labels a Deployment cannot
             find its Pods, a Service cannot route to them, and an autoscaler cannot find the Deployment to scale. Three
             specific mismatches cause most first-lab failures.</p>
 
@@ -4761,9 +4756,9 @@ spec:                       # Begin the desired-state declaration
 
           <p>If you run the command again without changing the file, you will see
             <code>deployment.apps/nginx-deployment unchanged</code>. This is the <em>idempotent</em> nature of
-            <code>kubectl apply</code>: it compares what you submitted to what already exists and only makes changes if
-            there is a difference. This is safe to run repeatedly and is why <code>apply</code> is always preferred over
-            <code>kubectl create</code> for manifest-driven workflows.
+            <code>kubectl apply</code>, which compares what you submitted to what already exists and only makes
+            changes if there is a difference. This is safe to run repeatedly and is why <code>apply</code> is always
+            preferred over <code>kubectl create</code> for manifest-driven workflows.
           </p>
 
           <h4 id="lab1-step1-inspect">1.3 Inspect the Resources</h4>
@@ -5977,18 +5972,18 @@ kubectl get service nginx-service
           <blockquote class="warning">Percentage values are always rounded in the direction that is
             <strong>safer</strong>:
             <ul>
-              <li><code>maxUnavailable</code> percentages round <strong>down</strong>: fewer pods may be unavailable,
-                ensuring more capacity stays up.</li>
-              <li><code>maxSurge</code> percentages round <strong>up</strong>: more temporary pods are allowed, avoiding
-                a situation where zero new pods can be created.</li>
+              <li><code>maxUnavailable</code> percentages round <strong>down</strong>, so fewer pods may be
+                unavailable and more capacity stays up.</li>
+              <li><code>maxSurge</code> percentages round <strong>up</strong>, so more temporary pods are allowed and
+                you never reach a situation where zero new pods can be created.</li>
             </ul>
           </blockquote>
 
           <p>Take a Deployment with 4 replicas and both values left at their 25% default:</p>
           <ol class="sec2-indented">
-            <li><code>maxUnavailable: 25%</code> rounds down to <strong>1</strong>: at most 1 pod may be unavailable at
-              any time, so you always have at least 3 pods serving traffic.</li>
-            <li><code>maxSurge: 25%</code> rounds up to <strong>1</strong>: at most 1 extra pod may exist above the
+            <li><code>maxUnavailable: 25%</code> rounds down to <strong>1</strong>, which means at most 1 pod may be
+              unavailable at any time, so you always have at least 3 pods serving traffic.</li>
+            <li><code>maxSurge: 25%</code> rounds up to <strong>1</strong>, allowing at most 1 extra pod above the
               desired 4, so the maximum total is 5 pods during the update.</li>
             <li>At default settings (<code>maxUnavailable: 25%</code>, <code>maxSurge: 25%</code>), a 4-replica update
               proceeds one pod at a time, cycling through: create new, wait for ready, delete old, repeat.</li>
@@ -6009,7 +6004,7 @@ kubectl get service nginx-service
               etc.).</li>
             <li>It begins scaling up the new ReplicaSet and simultaneously scaling down the old ReplicaSet, respecting
               maxSurge and maxUnavailable.</li>
-            <li>The old ReplicaSet is never deleted: it is kept with 0 replicas as a rollback target. By default the
+            <li>The old ReplicaSet is never deleted. It is kept with 0 replicas as a rollback target. By default the
               last 10 revisions are retained (controlled by <code>revisionHistoryLimit</code>).</li>
             <li>Each distinct revision is a separate ReplicaSet. <code>kubectl rollout undo</code> simply scales the old
               RS back up and the current one back down.</li>
@@ -6032,7 +6027,7 @@ kubectl get service nginx-service
           <blockquote class="danger">If you do not configure a readiness probe, Kubernetes assumes the pod is ready as
             soon as the container starts. A new pod running a slow-starting application (for example, a Spring Boot app
             that takes 20 seconds to start) will receive traffic while still initializing, causing errors. Lab 5 covers
-            readiness probes in full detail: treat it as a required companion to this lab.
+            readiness probes in full detail, so treat it as a required companion to this lab.
           </blockquote>
 
           <h3 id="lab2-step0">Step 0: Deploy with an Explicit Strategy Block</h3>
@@ -6163,7 +6158,7 @@ spec:
 
           <blockquote>While the rollout runs, watch Terminal 2. You will see new pods appear with a new hash suffix in
             their names (the new ReplicaSet), and old pods transition to <code>Terminating</code>. The ReplicaSet hash
-            is derived from the pod template spec: any change to the spec creates a new hash and therefore a new
+            is derived from the pod template spec, so any change to the spec creates a new hash and therefore a new
             ReplicaSet.
           </blockquote>
 
@@ -6241,7 +6236,7 @@ spec:
 </code></pre>
           </div>
 
-          <blockquote class="success">This is the critical insight: because <code>maxUnavailable: 1</code>, Kubernetes
+          <blockquote class="success">Here is the critical insight. Because <code>maxUnavailable: 1</code>, Kubernetes
             will not terminate more than 1 old pod at a time, and it will not terminate another old pod until the new
             pod becomes Ready. Since the broken pod can never become Ready (it cannot even pull its image), the rollout
             is stuck but your users are unaffected. The old pods continue serving.
@@ -6279,9 +6274,9 @@ spec:
 
           <h3 id="lab2-step3">Step 3: Declarative Updates (Preferred in Production)</h3>
 
-          <p>The <code>kubectl set image</code> command is imperative: it modifies the running object. In production,
-            you should prefer the declarative approach: edit the YAML file and apply it. This keeps your source of truth
-            (the YAML file) synchronized with the cluster state.</p>
+          <p>The <code>kubectl set image</code> command is imperative because it modifies the running object directly.
+            In production, prefer the declarative approach of editing the YAML file and applying it. This keeps your
+            source of truth (the YAML file) synchronized with the cluster state.</p>
 
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Edit the manifest, then apply only the diff</span></div>
@@ -6354,7 +6349,7 @@ kubectl apply -f nginx-deployment.yaml
           <blockquote class="danger">A rollout can get stuck with <code>DeadlineExceeded</code> if it does not progress
             within <code>progressDeadlineSeconds</code> (default: 600 seconds / 10 minutes). The Deployment condition
             <code>Progressing</code> will show <code>reason: ProgressDeadlineExceeded</code>. This does NOT
-            auto-rollback: you must do it manually.
+            auto-rollback, so you must do it manually.
           </blockquote>
 
           <div class="cmd-step">
@@ -6530,7 +6525,7 @@ kubectl delete service nginx-deployment 2>/dev/null || true
               background loop in the kubelet periodically re-syncs this directory against the current ConfigMap/Secret
               in the API server. When a value changes, the kubelet atomically swaps the directory contents (using a
               symlink flip, so the application never sees a half-written file), and the new content appears inside the
-              container without a restart. The refresh is not instant: it is bounded by the kubelet's sync period plus
+              container without a restart. The refresh is not instant. It is bounded by the kubelet's sync period plus
               its cache propagation delay, which in practice is up to roughly one to two minutes.</li>
           </ol>
 
@@ -6673,9 +6668,9 @@ kubectl delete service nginx-deployment 2>/dev/null || true
             <li><strong>External secret managers.</strong> The strongest pattern keeps the source of truth outside the
               cluster entirely. The <strong>External Secrets Operator</strong> syncs values from AWS Secrets Manager,
               HashiCorp Vault, GCP Secret Manager, or Azure Key Vault into Kubernetes Secrets on demand. <strong>Sealed
-                Secrets</strong> takes the opposite approach: it encrypts a Secret so the ciphertext is safe to commit
-              to Git, and a controller in the cluster decrypts it at apply time. Both keep plaintext secrets out of your
-              manifests and version control.</li>
+                Secrets</strong> takes the opposite approach and encrypts a Secret so the ciphertext is safe to
+              commit to Git, with a controller in the cluster decrypting it at apply time. Both keep plaintext secrets
+              out of your manifests and version control.</li>
           </ol>
 
           <blockquote class="danger">Never commit a plaintext <code>Secret</code> manifest (with real <code>data</code>
@@ -6770,7 +6765,7 @@ data:                    # The actual key-value pairs (all string values)
           <ol class="sec2-indented">
             <li><code>data</code>: values must be base64-encoded by you before putting them in the YAML.</li>
             <li><code>stringData</code>: values are plain text; Kubernetes base64-encodes them automatically on write.
-              <code>stringData</code> is write-only: it never appears in the stored object (use <code>data</code> to
+              <code>stringData</code> is write-only, so it never appears in the stored object (use <code>data</code> to
               read back).
             </li>
           </ol>
@@ -7150,9 +7145,9 @@ kubectl delete secret app-secret 2>/dev/null || true
             because the pod was deleted), all data written inside the container's filesystem is permanently lost. The
             next time the container starts, it gets a fresh copy of the image's filesystem.</p>
 
-          <p>This is actually a feature for stateless applications: every start is clean. But for a database, this is
-            catastrophic. You need storage that exists independently of any individual container and that can be
-            re-attached when the pod is recreated, possibly on a different node.</p>
+          <p>This is actually a feature for stateless applications, because every start is clean. But for a database,
+            this is catastrophic. You need storage that exists independently of any individual container and that can
+            be re-attached when the pod is recreated, possibly on a different node.</p>
 
           <h3 id="lab4-storage-hierarchy">The Storage Hierarchy</h3>
 
@@ -7202,7 +7197,7 @@ kubectl delete secret app-secret 2>/dev/null || true
 
           <h3 id="lab4-storageclass">StorageClass: The Template for Storage</h3>
 
-          <p>A StorageClass defines how storage is provisioned. It acts as a template: when a PVC requests a specific
+          <p>A StorageClass defines how storage is provisioned. It acts as a template, so when a PVC requests a specific
             StorageClass, the cluster's provisioner creates a PV that matches. Minikube ships with a built-in
             <code>standard</code> StorageClass that uses <code>hostPath</code> (data is stored in a directory on the
             Minikube VM's filesystem).
@@ -7291,7 +7286,7 @@ kubectl delete secret app-secret 2>/dev/null || true
 
           <p>Now put it into practice. You will claim a piece of storage, mount it into a Pod, write a file, then delete
             the Pod entirely and bring it back to prove the file survived. That last step is the whole point of the
-            lab: it is the difference between a volume and a container's own filesystem.</p>
+            lab, since it is the difference between a volume and a container's own filesystem.</p>
 
           <h3 id="lab4-step1">Step 1: Create the PersistentVolumeClaim</h3>
 
@@ -7474,7 +7469,7 @@ kubectl wait --for=condition=Ready pod/storage-pod --timeout=60s
           </div>
 
           <blockquote class="success">The data survived complete pod deletion and recreation. This is the fundamental
-            guarantee of PersistentVolumes: the data lifecycle is decoupled from the pod lifecycle. The storage persists
+            guarantee of PersistentVolumes, in that the data lifecycle is decoupled from the pod lifecycle. The storage persists
             until you explicitly delete the PVC.
           </blockquote>
 
@@ -7542,8 +7537,8 @@ kubectl wait --for=condition=Ready pod/ephemeral-pod --timeout=60s
           <h3 id="lab4-statefulsets-preview">StatefulSets and volumeClaimTemplates Preview</h3>
 
           <p>When running multiple database replicas, each replica needs its own separate PVC. StatefulSets solve this
-            with <code>volumeClaimTemplates</code>: each pod in the StatefulSet gets its own PVC automatically created
-            from the template.</p>
+            with <code>volumeClaimTemplates</code>, which give each pod in the StatefulSet its own PVC created
+            automatically from the template.</p>
 
           <p>The StatefulSet below gives each of three PostgreSQL replicas its own 10Gi claim:</p>
 
@@ -7729,8 +7724,8 @@ kubectl get pv
             <li>A service that is temporarily overwhelmed and returning 503 errors but has not crashed.</li>
           </ol>
 
-          <p>Without probes, Kubernetes handles all three cases the same way: the container is "running," so traffic is
-            sent to it and it is not restarted. With probes, Kubernetes can detect and respond to each condition
+          <p>Without probes, Kubernetes handles all three cases the same way, because all it knows is that the
+            container is "running," so traffic is sent to it and it is never restarted. With probes, Kubernetes can detect and respond to each condition
             automatically.</p>
 
           <h3 id="lab5-three-probe-types">The Three Probe Types</h3>
@@ -7771,7 +7766,7 @@ kubectl get pv
           <h4 id="lab5-startup">Startup Probe: Give Slow-Starting Apps Time</h4>
 
           <p>A startup probe disables liveness and readiness probes until the startup probe first succeeds. This solves
-            the slow-starting application problem: without a startup probe, you must set
+            the slow-starting application problem. Without a startup probe, you must set
             <code>initialDelaySeconds</code> high enough for the slowest possible startup, which means liveness probes
             are also delayed that long on every subsequent check.
           </p>
@@ -8337,8 +8332,8 @@ spec:
           <ol class="sec2-indented">
             <li><strong>VPA (Vertical Pod Autoscaler):</strong> Instead of adding pods (horizontal), VPA makes existing
               pods bigger by adjusting their CPU and memory requests. Useful when adding pods does not help
-              (single-threaded apps, tight state). Do NOT run VPA in Auto mode alongside HPA on the same Deployment:
-              they fight over pod sizing and can cause restart loops.</li>
+              (single-threaded apps, tight state). Do NOT run VPA in Auto mode alongside HPA on the same Deployment,
+              because they fight over pod sizing and can cause restart loops.</li>
             <li><strong>KEDA (Kubernetes Event-Driven Autoscaling):</strong> extends HPA to scale based on any external
               metric: message queue depth (RabbitMQ, Kafka, SQS), HTTP request rate, Prometheus metrics, cron schedules,
               and more. KEDA can scale to zero (HPA cannot). Essential for event-driven architectures and batch
@@ -8587,10 +8582,10 @@ web-1.nginx.default.svc.cluster.local
 
           <h4 id="lab6-sts-ordering">Ordered Startup and Termination</h4>
           <p>
-            StatefulSet enforces a strict ordering rule: <code>web-0</code> must be in <code>Running</code> and
+            StatefulSet enforces a strict ordering rule, so <code>web-0</code> must be in <code>Running</code> and
             <code>Ready</code> state before <code>web-1</code> is created. <code>web-1</code> must be Running and Ready
-            before <code>web-2</code> is created, and so on. During scale-down and deletion, the order reverses:
-            <code>web-2</code> is terminated before <code>web-1</code>, and <code>web-1</code> before
+            before <code>web-2</code> is created, and so on. During scale-down and deletion, the order reverses, with
+            <code>web-2</code> terminated before <code>web-1</code>, and <code>web-1</code> before
             <code>web-0</code>.
           </p>
           <p>
@@ -8988,8 +8983,8 @@ spec:
             A <strong>CronJob</strong> is a controller that creates a new <strong>Job</strong> on a repeating schedule
             defined
             in standard Unix cron syntax. Every time the CronJob fires, it spawns a Job, which in turn spawns pods. The
-            CronJob
-            itself is just a schedule wrapper: all the actual execution logic lives in the Job template inside it.
+            CronJob itself is just a schedule wrapper, since all the actual execution logic lives in the Job template
+            inside it.
           </p>
 
           <h4 id="lab6-cron-syntax">Cron Schedule Syntax</h4>

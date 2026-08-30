@@ -107,8 +107,8 @@
 
           <h3 id="lab7-history">History: From Ingress to Gateway API</h3>
           <p>Kubernetes' first answer to L7 routing was the <code>Ingress</code> object, added around 2016. It was
-            always partial: the spec was so minimal that every controller (nginx, Traefik, HAProxy) read it differently
-            and filled the gaps with proprietary annotations. The most popular one, <strong>community
+            always partial, because the spec was so minimal that every controller (nginx, Traefik, HAProxy) read it
+            differently and filled the gaps with proprietary annotations. The most popular one, <strong>community
               ingress-nginx</strong>, reached <strong>end of life in March 2026</strong> and gets no further releases,
             bug fixes, or patches for CVEs (publicly catalogued security vulnerabilities). The Kubernetes Security
             Response Committee has said plainly that running it now leaves clusters exposed. The <code>Ingress</code>
@@ -550,7 +550,7 @@ kubectl delete namespace traefik
                 built into Kubernetes reads a URL path, which is why this lab put Traefik in the cluster before any
                 route existed.</li>
               <li><strong>GatewayClass names the controller, Gateway opens the port, HTTPRoute maps the path.</strong>
-                That split is the point of the API: the platform team owns the <code>traefik</code> GatewayClass and
+                That split is the point of the API, since the platform team owns the <code>traefik</code> GatewayClass and
                 <code>demo-gateway</code>, while an application team writes <code>app1-route</code> in its own
                 namespace without cluster-admin access.</li>
               <li><strong>An HTTPRoute joins a Gateway through <code>parentRefs</code>, not by sitting near
@@ -665,8 +665,8 @@ image:
           <p>
             <code>helm template my-release ./mychart</code> renders the final YAML locally without applying it to the
             cluster.
-            This is the foundation of shift-left scanning: pipe the rendered output to Trivy (Lab 11) in CI before any
-            manifest reaches the cluster.
+            This is the foundation of shift-left scanning, so pipe the rendered output to Trivy (Lab 11) in CI before
+            any manifest reaches the cluster.
           </p>
 
           <p>Enough templating theory. From here you will use Helm as both a consumer and an author: first installing and
@@ -1050,7 +1050,7 @@ helm pull oci://ghcr.io/argoproj/argo-helm/argo-cd --version 7.3.11
 
           <p>
             <strong>Prometheus</strong> is the de facto metrics database for Kubernetes and a CNCF graduated project.
-            One thing sets it apart from older monitoring systems: it <strong>pulls</strong> rather than receives.
+            What sets it apart from older monitoring systems is that it <strong>pulls</strong> rather than receives.
             Prometheus calls an HTTP <code>/metrics</code> endpoint on each target every 15 or 30 seconds and stores
             what comes back. Targets never push. That also makes it obvious when a target has gone silent.
           </p>
@@ -1065,7 +1065,7 @@ http_requests_total{method="POST", status="500", namespace="default"} 7
 container_cpu_usage_seconds_total{pod="web-0", container="nginx", namespace="default"} 0.045
 </code></pre>
 
-          <p>Labels are what make Prometheus powerful: you can filter, aggregate, and group metrics by any label
+          <p>Labels are what make Prometheus powerful, letting you filter, aggregate, and group metrics by any label
             combination using PromQL.</p>
 
           <h4 id="lab9-promql">Basic PromQL Examples</h4>
@@ -1119,7 +1119,7 @@ count(kube_pod_status_phase{phase!="Running"}) by (namespace)
 
           <p>Now stand the stack up. You will install Prometheus, Grafana, and Alertmanager together in one chart, open
             each UI in turn, and run your first PromQL query against metrics coming from your own cluster. Give it a
-            few minutes: this is the heaviest thing you will install in the whole guide.</p>
+            few minutes, because this is the heaviest thing you will install in the whole guide.</p>
 
           <h3 id="lab9-step1">Step 1: Verify metrics-server</h3>
           <p>These commands confirm metrics-server is running and serving node and pod resource metrics.</p>
@@ -1130,7 +1130,7 @@ kubectl top pods -A
 </code></pre>
 
           <h3 id="lab9-step2">Step 2: Install kube-prometheus-stack</h3>
-          <p>Check how much memory Minikube has before you install anything: this stack is the heaviest workload in
+          <p>Check how much memory Minikube has before you install anything. This stack is the heaviest workload in
             the whole guide.</p>
 
           <blockquote class="warning"><strong>Memory Requirements</strong>
@@ -1513,8 +1513,8 @@ http_request_duration_seconds_count 14253
               Application objects and runs a reconciliation loop for each one.</li>
             <li><strong>Project:</strong> an Argo CD object that restricts which Git repositories and destination
               clusters
-              an Application is allowed to use. It is the RBAC layer for GitOps: the platform team can grant developers
-              permission to deploy to <code>dev</code> but not <code>prod</code>.</li>
+              an Application is allowed to use. It is the RBAC layer for GitOps, so the platform team can grant
+              developers permission to deploy to <code>dev</code> but not <code>prod</code>.</li>
             <li><strong>Sync:</strong> the act of making the live cluster match the Git state. Can be triggered manually
               or set to automatic. A sync runs <code>kubectl apply</code> (or
               <code>kustomize build | kubectl apply</code>,
@@ -1768,7 +1768,7 @@ gitops-repo/
           <h3 id="lab10-app-of-apps">App of Apps Pattern</h3>
           <p>
             When a cluster runs dozens of applications, managing dozens of Argo CD Application objects becomes its own
-            problem. The <strong>App of Apps</strong> pattern solves this: create one root Application whose source is a
+            problem. The <strong>App of Apps</strong> pattern solves this with one root Application whose source is a
             Git directory containing the Application YAML files for all other applications. Argo CD recursively manages
             everything. Adding a new application to the cluster becomes a Git commit to the root app directory.
           </p>

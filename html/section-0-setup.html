@@ -112,11 +112,9 @@
           <h4 id="kubectl-explained">kubectl: The Kubernetes Command-Line Client</h4>
 
           <p>
-            <code>kubectl</code> (pronounced "cube-control", "cube-C-T-L", or "cube-cuttle") is
-            the official
-            command-line interface for Kubernetes. It is a single binary that does one job: it translates your commands
-            into HTTPS
-            requests and sends them to a Kubernetes API server.
+            <code>kubectl</code> (pronounced "cube-control", "cube-C-T-L", or "cube-cuttle") is the official
+            command-line interface for Kubernetes. It is a single binary that does one job, translating your commands
+            into HTTPS requests and sending them to a Kubernetes API server.
           </p>
 
           <p>
@@ -485,7 +483,7 @@ source ~/.zshrc
 
           <h3 id="03-install-minikube">0.3 Install Minikube</h3>
 
-          <p>Like kubectl, Minikube ships as a single static binary: download it, install it into your
+          <p>Like kubectl, Minikube ships as a single static binary. Download it, install it into your
             <code>PATH</code>, and verify the version.</p>
 
           <h4 id="minikube-download-and-install">Download and Install</h4>
@@ -916,10 +914,8 @@ kubectl get pod smoke-test --watch
 
           <p>
             Notice that in Minikube, the single container serves <em>both</em> the control-plane role and the
-            worker-node role.
-            This is why you will see the node labeled with <code>control-plane</code>: it is doing double duty. In a
-            real cluster,
-            these are separate machines.
+            worker-node role. That double duty is why you will see the node labeled <code>control-plane</code>. In a
+            real cluster, these are separate machines.
           </p>
 
           <h3 id="08-common-beginner-mistakes">0.8 Common Beginner Mistakes and How to Fix Them</h3>

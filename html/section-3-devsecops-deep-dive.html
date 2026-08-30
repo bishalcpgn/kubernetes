@@ -98,8 +98,8 @@
           <p>
             The word is a contraction of <strong>Dev</strong>elopment, <strong>Sec</strong>urity, and
             <strong>Op</strong>erations.
-            The idea is simple: the three groups that used to work in silos now share responsibility for security
-            outcomes.
+            The idea is simple, in that the three groups that used to work in silos now share responsibility for
+            security outcomes.
             Developers write secure code and scan their own pull requests. Platform engineers configure admission
             controls
             and RBAC. Operations teams monitor runtime behavior. No single team "owns" security; every team contributes
@@ -225,10 +225,9 @@
 
           <h3 id="defense-in-depth-why-you-need-every-layer">Defense in Depth: Why You Need Every Layer</h3>
           <p>
-            No single security control is sufficient. This is called the principle of <strong>defense in depth</strong>:
-            you
-            layer multiple independent controls so that if one fails, another catches the threat. Here is why each layer
-            alone is not enough:
+            No single security control is sufficient. This is called the principle of <strong>defense in depth</strong>,
+            which means you layer multiple independent controls so that if one fails, another catches the threat. Here
+            is why each layer alone is not enough:
           </p>
           <ol class="sec2-indented">
             <li><strong>Scanning alone.</strong> Trivy only knows about published CVEs. A zero-day will not appear, and
@@ -241,7 +240,7 @@
               still reach every other service.</li>
           </ol>
           <p>
-            This is why this training tier has seven labs: you need all the layers working together.
+            This training tier has seven labs because you need all the layers working together.
           </p>
 
           <blockquote><strong>The Attack Surface of a Kubernetes Cluster</strong>
@@ -503,17 +502,17 @@
             responses going out). This is what people usually think of when they think of firewalls.
           </p>
           <p>
-            <strong>East-west traffic</strong> is traffic between services inside the cluster: Service A calls Service
-            B, and a frontend calls its database. This traffic matters just as much as north-south traffic, and teams
-            overlook it far more often.
+            <strong>East-west traffic</strong> is traffic between services inside the cluster, such as Service A
+            calling Service B or a frontend calling its database. This traffic matters just as much as north-south
+            traffic, and teams overlook it far more often.
           </p>
 
           <details class="deep-dive">
             <summary>How a default-deny policy is built up<span class="dd-tag">Optional depth</span></summary>
 
           <p>
-            By default, Kubernetes uses a "default-allow-all" network model: any Pod can reach any other Pod on any
-            port.
+            By default, Kubernetes uses a "default-allow-all" network model, which lets any Pod reach any other Pod
+            on any port.
             This is dangerous. If an attacker compromises one Pod (perhaps by exploiting a web application
             vulnerability),
             they can immediately begin scanning every other Pod in the cluster, reaching databases, internal APIs, and
@@ -666,8 +665,8 @@
 
           <p>That short list is misleading in a useful way. Roughly twenty admission plugins are compiled into the API
             server and enabled by default, so this flag only shows the extras a cluster installer added on top. What matters for this section is that
-            <code>ValidatingAdmissionWebhook</code> and <code>MutatingAdmissionWebhook</code> are among the defaults:
-            they are the hooks Kyverno registers itself into in Lab 15.</p>
+            <code>ValidatingAdmissionWebhook</code> and <code>MutatingAdmissionWebhook</code> are among the defaults,
+            because they are the hooks Kyverno registers itself into in Lab 15.</p>
 
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Check whether any webhooks are currently registered</span></div>
@@ -1285,7 +1284,8 @@ trivy image nginx:1.20
               <code>@master</code>, an attacker who compromises the action's repository can replace it with malicious
               code
               and your pipeline will run that code silently on your next build. Always pin third-party GitHub Actions to
-              a full 40-character commit SHA. The SHA is immutable: it cannot be moved to point at a different commit.
+              a full 40-character commit SHA. The SHA is immutable, so it cannot be moved to point at a different
+              commit.
             </p>
           </blockquote>
 
@@ -1347,15 +1347,15 @@ jobs:
 
           <h3 id="the-trivy-operator-continuous-cluster-scanning">The Trivy Operator: Continuous Cluster Scanning</h3>
           <p>
-            Scanning at build time is important, but images also age: a vulnerability may be disclosed after an image is
-            already running in production. The Trivy Operator runs inside the cluster and continuously scans all running
+            Scanning at build time is important, but images also age. A vulnerability may be disclosed after an image
+            is already running in production. The Trivy Operator runs inside the cluster and continuously scans all running
             workloads, producing <code>VulnerabilityReport</code> custom resources that you can query with kubectl.
           </p>
           <p>
-            An <strong>Operator</strong> is a Kubernetes pattern, not a Trivy invention: it is a controller that runs in
-            the cluster, watches objects through the API server, and manages one piece of software on your behalf. It
-            publishes its results as custom resources of its own, so you read them with <code>kubectl get</code> exactly
-            as you read a Pod or a Deployment.
+            An <strong>Operator</strong> is a Kubernetes pattern rather than a Trivy invention, and it is a controller
+            that runs in the cluster, watches objects through the API server, and manages one piece of software on your
+            behalf. An Operator publishes its results as custom resources of its own, so you read them with
+            <code>kubectl get</code> exactly as you read a Pod or a Deployment.
           </p>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Install the Trivy Operator for continuous scanning</span></div>
@@ -1443,9 +1443,9 @@ report:
 
           <h4 id="problem-too-many-findings-hard-to-know-where-to-start">Problem: Too many findings, hard to know where to start</h4>
           <p>
-            Use <code>--severity HIGH,CRITICAL</code> to filter. Then sort by whether a Fixed Version exists: findings
-            with no fixed version cannot be patched by updating and may need other mitigations (disabling the feature,
-            network isolation, or accepting the risk with documentation).
+            Use <code>--severity HIGH,CRITICAL</code> to filter. Then sort by whether a Fixed Version exists, because
+            findings with no fixed version cannot be patched by updating and may need other mitigations (disabling the
+            feature, network isolation, or accepting the risk with documentation).
           </p>
 
           <h3 id="lab11-cleanup">Cleanup</h3>
@@ -1635,7 +1635,7 @@ report:
           <blockquote><strong>The next level of isolation: user namespaces.</strong> Running as non-root
             (<code>runAsNonRoot</code>) means the container is not UID 0 <em>inside</em> the container, but by default
             it still shares the host's user-ID space, so a container UID can still map to a privileged host UID after an
-            escape. Kubernetes <strong>user namespaces</strong> close that gap: with <code>spec.hostUsers: false</code>,
+            escape. Kubernetes <strong>user namespaces</strong> close that gap. With <code>spec.hostUsers: false</code>,
             the Pod's UIDs are remapped to an unprivileged range on the host, so even root inside the container is a
             harmless, unprivileged user on the node. It needs a container runtime that supports it (containerd/CRI-O
             with the right config) and is the strongest built-in defence against container-escape privilege escalation.
@@ -2056,7 +2056,7 @@ kubectl get namespace secure-apps
             <figcaption id="fig3-5-cap">Figure 3.5: RBAC chain. Subject binds to a Role via RoleBinding; the Role lists allowed verbs per resource.</figcaption>
           </figure>
 
-          <p>The flow is one-directional: the API server receives a request, looks up all RoleBindings and
+          <p>The flow is one-directional, in that the API server receives a request, looks up all RoleBindings and
             ClusterRoleBindings that reference the requesting subject, collects the rules from the referenced Roles and
             ClusterRoles, and checks whether any rule permits the requested verb on the requested resource. If no rule
             matches, access is denied (default-deny).</p>
@@ -2086,8 +2086,8 @@ kubectl get namespace secure-apps
 
           <ol class="sec2-indented">
             <li><strong>User:</strong> a human identity, authenticated via a client certificate (the CN field becomes
-              the username) or an OIDC token. Kubernetes has no built-in user database: it trusts external identity
-              providers.</li>
+              the username) or an OIDC token. Kubernetes has no built-in user database, so it trusts external
+              identity providers.</li>
             <li><strong>Group:</strong> a set of users. Membership is determined by the OIDC provider or the
               certificate's O (organization) field. The built-in group <code>system:authenticated</code> contains every
               authenticated user.</li>
@@ -2759,7 +2759,7 @@ spec:
 
           <p>Now close it. You will deploy a frontend and a database, confirm they can reach each other freely, cut all
             traffic with a default-deny policy, and then reopen exactly one path. Read the warning below before you
-            start: this lab replaces your cluster.</p>
+            start, because this lab replaces your cluster.</p>
 
           <h3 id="step-1-start-minikube-with-calico-cni">Step 1: Start Minikube with Calico CNI</h3>
 
@@ -3224,7 +3224,7 @@ spec:
 
           <h4 id="3-generate-create-resources-automatically">3. Generate: Create Resources Automatically</h4>
           <p>A generate rule creates additional resources in response to one being created. The usual use is
-            bootstrapping a namespace: the moment someone creates one, Kyverno drops in a default-deny NetworkPolicy, a
+            bootstrapping a namespace. The moment someone creates one, Kyverno drops in a default-deny NetworkPolicy, a
             LimitRange, and a ResourceQuota, so no namespace is ever born unprotected.</p>
 
           <h4 id="4-verify-images-block-unsigned-container-images">4. Verify Images: Block Unsigned Container Images</h4>
@@ -3701,7 +3701,7 @@ kubectl delete namespace kyverno
           <p><strong>Real-world mapping: Prove What You Run.</strong> Anyone with registry push access can push a
             malicious image under your namespace. Signing proves the image was produced by your CI pipeline and was not
             tampered with in transit. An SBOM inventories exactly what is inside it. Together they enable rapid incident
-            response: when Log4Shell was announced, teams with SBOMs could immediately query which images contained the
+            response. When Log4Shell was announced, teams with SBOMs could immediately query which images contained the
             vulnerable library.</p>
 
           <h3 id="the-supply-chain-threat-landscape">The Supply Chain Threat Landscape</h3>
@@ -3769,7 +3769,7 @@ kubectl delete namespace kyverno
 
             <p>You will still find "SLSA 1 to 4" in older articles. That was the v0.1 model, a single ladder that mixed
               source, build, and provenance requirements together. v1.0 replaced it with tracks, and the Build track
-              stops at L3: the old Level 4, with its hermetic-build requirement, has never returned to it. A level
+              stops at L3. The old Level 4, with its hermetic-build requirement, has never returned to it. A level
               number is only meaningful with its track attached, so read "Build L3", not "SLSA 3".</p>
           </blockquote>
 
@@ -3813,7 +3813,7 @@ kubectl delete namespace kyverno
             </table>
           </div>
 
-          <p>The two tracks are independent, and that is the point of the split: you can be Build L3 and Source L1 at
+          <p>The two tracks are independent, which is the point of the split. You can be Build L3 and Source L1 at
             the same time. Together they map onto the two attacks at the top of this chapter. SolarWinds was a build
             compromise, so the Build track answers it. XZ Utils was a trusted maintainer committing a backdoor over
             years, which is exactly what Source L4 is for, and it is placed highest because two-party review is the
@@ -3824,7 +3824,7 @@ kubectl delete namespace kyverno
             evidence from a TPM or confidential computing. The <strong>Dependencies track</strong> covers what your
             build consumes rather than what it produces.</p>
 
-          <p>This lab puts you at the bottom of the Build track and shows you the mechanism: you sign an image with
+          <p>This lab puts you at the bottom of the Build track and shows you the mechanism. You sign an image with
             Cosign and attach an SBOM as an attestation. A real Build L2 or L3 comes from the build platform generating
             that provenance for you, which is what GitHub Actions does with its own SLSA generator, covered at the end
             of this lab.</p>
@@ -4285,7 +4285,7 @@ rm -f sbom.json cosign-linux-amd64
             admission control (Labs 12, 15), RBAC (Lab 13), and network policy (Lab 14) are all preventive controls.
             They stop known bad configurations and unsigned images. But zero-day vulnerabilities, misconfigurations that
             pass all checks, insider threats, and attacks on running infrastructure cannot be caught before deployment.
-            Runtime security is the last line of defense: it detects what is actually happening inside running
+            Runtime security is the last line of defense, detecting what is actually happening inside running
             containers.</p>
 
           <h3 id="why-runtime-detection-is-necessary">Why Runtime Detection Is Necessary</h3>
@@ -4307,14 +4307,14 @@ rm -f sbom.json cosign-linux-amd64
           <h3 id="ebpf-the-technology-behind-modern-runtime-security">eBPF: The Technology Behind Modern Runtime Security</h3>
 
           <p>eBPF (Extended Berkeley Packet Filter) is a Linux kernel feature that allows small, sandboxed programs to
-            run inside the kernel in response to events. These programs are verified by the kernel before running: they
-            cannot crash the kernel, cannot loop forever, and cannot access arbitrary memory. This makes eBPF ideal for
-            observability and security tooling.</p>
+            run inside the kernel in response to events. These programs are verified by the kernel before running, so
+            they cannot crash the kernel, cannot loop forever, and cannot access arbitrary memory. This makes eBPF ideal
+            for observability and security tooling.</p>
 
           <p>When a container process makes a system call (syscall), the Linux kernel executes it. An eBPF probe
             intercepts the syscall at the kernel level and sends event data to a user-space process (Falco) with
-            near-zero performance overhead. No process inside the container can hide from eBPF-based monitoring: the
-            observation happens below the container's view of the world.</p>
+            near-zero performance overhead. No process inside the container can hide from eBPF-based monitoring,
+            because the observation happens below the container's view of the world.</p>
 
           <h3 id="system-calls-the-lens-into-container-behavior">System Calls: The Lens Into Container Behavior</h3>
 
@@ -4521,7 +4521,7 @@ kubectl get pods -n falco -o wide      # one pod per node
 
           <h3 id="step-2-deploy-a-victim-pod">Step 2: Deploy a Victim Pod</h3>
 
-          <p>The commands below create an ordinary nginx Pod. Nothing about it is special: it is simply the container
+          <p>The commands below create an ordinary nginx Pod. Nothing about it is special. It is simply the container
             you will attack in the next three steps.</p>
           <pre class="codehilite"><code class="language-bash">kubectl run victim --image=nginx:1.29-alpine --restart=Never
 kubectl wait --for=condition=Ready pod/victim --timeout=60s
