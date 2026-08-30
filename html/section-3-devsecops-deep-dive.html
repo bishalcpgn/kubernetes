@@ -973,6 +973,10 @@ sudo apt-get install -y trivy
 </code></pre>
           </div>
 
+          <p>Time to run it. You will point Trivy at three different targets in turn: a manifest, a container image, and a
+            directory of source. Each finds a different class of problem, and the last two steps turn those findings
+            into something a CI pipeline can fail a build on.</p>
+
           <h3 id="step-1-scan-a-manifest-for-misconfigurations">Step 1: Scan a Manifest for Misconfigurations</h3>
           <p>
             You will scan the <code>nginx-deployment.yaml</code> you created in Lab 1. The <code>config</code> scan type
@@ -1638,6 +1642,11 @@ report:
             Treat it as the layer beyond <code>runAsNonRoot</code> once your runtime supports it.</blockquote>
           </details>
 
+          <p>Now enforce it. You will label a namespace with the restricted profile in warn mode first, watch an insecure
+            Pod get admitted with a warning, then switch to enforce and watch the same Pod be rejected outright. The
+            warn-then-enforce order is deliberate, and it is how you would roll this out on a cluster with real
+            workloads on it.</p>
+
           <h3 id="step-1-create-and-label-a-namespace-in-warn-mode-first">Step 1: Create and Label a Namespace in Warn Mode First</h3>
           <p>
             Best practice: always apply the <code>warn</code> mode first to observe the impact without breaking
@@ -2241,6 +2250,10 @@ spec:
           <p>You can also set <code>automountServiceAccountToken: false</code> on the ServiceAccount object itself,
             which applies to all Pods using that ServiceAccount unless overridden per-Pod.</p>
 
+          <p>Now build a least-privilege identity from nothing. You will create a ServiceAccount with no permissions at
+            all, grant it exactly one thing, and then prove the boundary holds by asking the cluster what that identity
+            is and is not allowed to do.</p>
+
           <h3 id="step-1-create-a-dedicated-namespace-and-serviceaccount">Step 1: Create a Dedicated Namespace and ServiceAccount</h3>
 
           <p>These commands set up an isolated namespace and a ServiceAccount that will receive least-privilege
@@ -2743,6 +2756,10 @@ spec:
           <p>A NetworkPolicy with an empty podSelector (<code>{}</code>) matches all Pods in the namespace. A policy
             with no ingress rules but <code>policyTypes: [Ingress]</code> denies all ingress to those Pods. Combining
             these creates the default-deny-all pattern that is the foundation of zero-trust networking.</p>
+
+          <p>Now close it. You will deploy a frontend and a database, confirm they can reach each other freely, cut all
+            traffic with a default-deny policy, and then reopen exactly one path. Read the warning below before you
+            start: this lab replaces your cluster.</p>
 
           <h3 id="step-1-start-minikube-with-calico-cni">Step 1: Start Minikube with Calico CNI</h3>
 
@@ -3271,6 +3288,10 @@ spec:
             block non-compliant resources, including existing workloads that get restarted or updated. Audit mode lets
             you see the blast radius (how many existing resources would fail) before you commit to enforcement.
           </blockquote>
+
+          <p>Now write some policy. You will install Kyverno, write a rule that forbids the <code>:latest</code> tag, watch
+            it record violations in audit mode without blocking anything, and only then switch it to enforce. You will
+            also write a mutation rule, which changes a resource on its way in rather than rejecting it.</p>
 
           <h3 id="step-1-install-kyverno-via-helm">Step 1: Install Kyverno via Helm</h3>
 
@@ -3919,6 +3940,11 @@ kubectl delete namespace kyverno
             </table>
           </div>
 
+          <p>That is the theory. From here you will do it end to end: install Cosign, sign a real image with your own
+            identity rather than a key file, attach an SBOM to that image as a signed attestation, and finally make the
+            cluster refuse to run anything unsigned. You will need the Minikube cluster from Section 0 and a container
+            registry you can push to.</p>
+
           <h3 id="step-1-install-cosign">Step 1: Install Cosign</h3>
 
           <p>These commands download the Cosign binary, install it on your PATH, and confirm the version.</p>
@@ -4436,6 +4462,10 @@ rm -f sbom.json cosign-linux-amd64
             <li><strong>Contact with K8s API from container:</strong> a container directly contacted the Kubernetes API
               server</li>
           </ol>
+
+          <p>Now watch it catch something. You will install Falco, deploy a deliberately vulnerable Pod, and then attack
+            that Pod three different ways: opening a shell in it, reading a sensitive file, and writing a binary into
+            a writable directory. Each one should show up in the Falco log within seconds.</p>
 
           <h3 id="step-1-install-falco-via-helm-ebpf-driver">Step 1: Install Falco via Helm (Modern eBPF Driver)</h3>
 

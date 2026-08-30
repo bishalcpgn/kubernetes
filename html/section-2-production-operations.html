@@ -232,6 +232,10 @@
             Traefik is under active development with regular security updates.
           </p>
 
+          <p>That is the object model. Now build it. You will install the Gateway API CRDs, put a Traefik controller
+            behind them, deploy two small apps, and route to each by URL path through a single Gateway. By the end you
+            will have the platform-team and application-team split running on your own cluster.</p>
+
           <h3 id="lab7-step1">Step 1: Install Gateway API CRDs</h3>
           <p>These commands install the Gateway API custom resource definitions and confirm they are registered with the
             cluster.</p>
@@ -664,6 +668,10 @@ image:
             This is the foundation of shift-left scanning: pipe the rendered output to Trivy (Lab 11) in CI before any
             manifest reaches the cluster.
           </p>
+
+          <p>Enough templating theory. From here you will use Helm as both a consumer and an author: first installing and
+            upgrading somebody else's chart, rolling it back, and then scaffolding a chart of your own and rendering it
+            locally before it ever touches the cluster.</p>
 
           <h3 id="lab8-step1">Step 1: Install Helm</h3>
           <p>These commands download and install the Helm CLI and verify the version.</p>
@@ -1109,6 +1117,10 @@ count(kube_pod_status_phase{phase!="Running"}) by (namespace)
             for common conditions. It is the standard starting point for Kubernetes observability.
           </p>
 
+          <p>Now stand the stack up. You will install Prometheus, Grafana, and Alertmanager together in one chart, open
+            each UI in turn, and run your first PromQL query against metrics coming from your own cluster. Give it a
+            few minutes: this is the heaviest thing you will install in the whole guide.</p>
+
           <h3 id="lab9-step1">Step 1: Verify metrics-server</h3>
           <p>These commands confirm metrics-server is running and serving node and pod resource metrics.</p>
           <pre class="codehilite"><code class="language-bash">kubectl top nodes
@@ -1530,6 +1542,10 @@ http_request_duration_seconds_count 14253
             suits teams that want the smallest possible control plane. Both are production-grade, and this lab uses
             Argo CD because its UI makes the GitOps concepts inspectable.
           </p>
+
+          <p>Now watch the loop run for real. You will install Argo CD, point it at a public Git repository, and let it
+            deploy an application you never applied by hand. Then you will break the cluster on purpose, scaling a
+            Deployment to zero, and watch Argo CD notice the drift and put it back.</p>
 
           <h3 id="lab10-step1">Step 1: Install Argo CD</h3>
           <p>Argo CD installs from a single upstream manifest, but the version tag inside that URL decides whether you

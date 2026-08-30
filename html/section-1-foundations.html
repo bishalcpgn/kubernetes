@@ -4669,6 +4669,11 @@ kubectl get services
 
           <hr />
 
+          <p>That is the whole object model. From here on you build it. Over the next six steps you will create a
+            Deployment, watch Kubernetes rebuild a Pod you deliberately destroy, scale the whole thing up and down, and
+            put a Service in front of it so it has a stable address. Every command runs against the Minikube cluster
+            from Section 0.</p>
+
           <h3 id="step-1-create-the-deployment">Step 1: Create the Deployment</h3>
 
           <p>You will write a Deployment manifest line by line and see exactly what every field means and why it
@@ -6108,6 +6113,11 @@ spec:
 </code></pre>
           </div>
 
+          <p>Theory done. Now you will drive a real rolling update and watch it happen live. You will need two terminals:
+            one running a watch so you can see Pods being replaced, and one to issue the commands. The lab
+            deliberately breaks a rollout part way through, so you also see what a stuck update looks like before you
+            roll it back.</p>
+
           <h3 id="lab2-step1">Step 1: Roll Out a New Image Version</h3>
 
           <p>Open two terminals side by side. You will start a live watch in <strong>Terminal 2</strong>, then
@@ -7278,6 +7288,10 @@ kubectl delete secret app-secret 2>/dev/null || true
               the pod. Data survives pod deletion and can follow the pod to another node (cloud storage is
               network-attached).</li>
           </ol>
+
+          <p>Now put it into practice. You will claim a piece of storage, mount it into a Pod, write a file, then delete
+            the Pod entirely and bring it back to prove the file survived. That last step is the whole point of the
+            lab: it is the difference between a volume and a container's own filesystem.</p>
 
           <h3 id="lab4-step1">Step 1: Create the PersistentVolumeClaim</h3>
 
