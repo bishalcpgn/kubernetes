@@ -1717,6 +1717,8 @@ spec:
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create a small Deployment to give the scheduler some work</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl create deployment arch-demo --image=nginx:1.27-alpine --replicas=2
 # Output: deployment.apps/arch-demo created
+
+# Confirm both replicas exist before going further
 kubectl get pods -l app=arch-demo
 </code></pre>
           </div>
@@ -3631,6 +3633,8 @@ kubectl get pod multi-container-demo -w
             <pre class="codehilite"><code class="language-bash">kubectl logs multi-container-demo -c log-shipper --tail=5
 # Output: the "hello ..." lines the app container is writing.
 # -c selects a container; without it kubectl asks you to pick one.
+
+# Remove the demo Pod once you have seen the shared log stream
 kubectl delete pod multi-container-demo
 </code></pre>
           </div>

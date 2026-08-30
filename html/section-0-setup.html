@@ -972,11 +972,11 @@ minikube start
           <p><strong>Cause:</strong> You have an old kubectl installed from a system package manager, and it shadows the
             one you just installed.</p>
           <pre class="codehilite"><code class="language-bash">which -a kubectl
-# Check which one is being used
+# Check which of them your shell actually resolves
 type kubectl
-# If the system version takes precedence, ensure /usr/local/bin comes first in PATH:
+# If the system copy wins, put /usr/local/bin first in PATH.
+# Add this same line to ~/.bashrc to make it survive a new shell.
 export PATH="/usr/local/bin:$PATH"
-# Add this line to ~/.bashrc for permanence.
 </code></pre>
 
           <h3 id="09-useful-minikube-commands">0.9 Useful Minikube Day-to-Day Commands</h3>

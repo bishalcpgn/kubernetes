@@ -2903,6 +2903,8 @@ kubectl get networkpolicy -n netpol-lab    # verify it was created
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Watch the same connection fail now</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec -n netpol-lab frontend -- nc -zv -w 3 database 6379
 # Expected: nc: database (10.x.x.x:6379): Operation timed out
+
+# Print a marker so the timeout is easy to spot in scrollback
 echo &quot;Blocked as expected&quot;
 
 # The connection should now fail, either as a timeout or as a refusal.
