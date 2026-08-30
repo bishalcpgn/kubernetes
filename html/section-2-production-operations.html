@@ -236,6 +236,32 @@
             behind them, deploy two small apps, and route to each by URL path through a single Gateway. By the end you
             will have the platform-team and application-team split running on your own cluster.</p>
 
+          <h3 id="lab7-step0">Step 0: Prerequisites Check</h3>
+
+          <p>This lab installs Traefik from a Helm chart, so it needs the Helm CLI one chapter before Lab 8 formally introduces it. It also adds CRDs to the cluster, which needs a context with admin rights.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm the cluster is up and the node is Ready</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get nodes
+
+# Not Ready, or an error? Run: minikube start
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm the Helm CLI is installed</span></div>
+            <pre class="codehilite"><code class="language-bash">helm version --short
+
+# Missing? Lab 8 Step 1 installs it, or see https://helm.sh/docs/intro/install/
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm you can install CRDs into this cluster</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl auth can-i create customresourcedefinitions
+
+# Expect: yes. Step 1 installs the Gateway API CRDs cluster-wide.
+</code></pre>
+          </div>
+
           <h3 id="lab7-step1">Step 1: Install Gateway API CRDs</h3>
           <p>These commands install the Gateway API custom resource definitions and confirm they are registered with the
             cluster.</p>
@@ -672,6 +698,25 @@ image:
           <p>Enough templating theory. From here you will use Helm as both a consumer and an author: first installing and
             upgrading somebody else's chart, rolling it back, and then scaffolding a chart of your own and rendering it
             locally before it ever touches the cluster.</p>
+
+          <h3 id="lab8-step0">Step 0: Prerequisites Check</h3>
+
+          <p>Helm itself is what Step 1 installs, so the only real prerequisite is a cluster for it to talk to. Helm reads the same kubeconfig kubectl does, so if kubectl works, Helm will too.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm the cluster is up and the node is Ready</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get nodes
+
+# Not Ready, or an error? Run: minikube start
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">See whether Helm is already installed</span></div>
+            <pre class="codehilite"><code class="language-bash">helm version --short 2&gt;/dev/null || echo "helm not installed yet"
+
+# Either answer is fine. Step 1 installs it if it is missing.
+</code></pre>
+          </div>
 
           <h3 id="lab8-step1">Step 1: Install Helm</h3>
           <p>These commands download and install the Helm CLI and verify the version.</p>
@@ -1121,6 +1166,33 @@ count(kube_pod_status_phase{phase!="Running"}) by (namespace)
             each UI in turn, and run your first PromQL query against metrics coming from your own cluster. Give it a
             few minutes, because this is the heaviest thing you will install in the whole guide.</p>
 
+          <h3 id="lab9-step0">Step 0: Prerequisites Check</h3>
+
+          <p>This is the heaviest install in the guide. kube-prometheus-stack brings up Prometheus, Grafana, Alertmanager, node-exporter, and kube-state-metrics together, and on a cluster without enough memory the pods will sit in Pending rather than fail with a clear error.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm the cluster is up and the node is Ready</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get nodes
+
+# Not Ready, or an error? Run: minikube start
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm the Helm CLI is installed</span></div>
+            <pre class="codehilite"><code class="language-bash">helm version --short
+
+# Missing? Lab 8 Step 1 installs it.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the node has enough CPU and memory to spare</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl describe node minikube | grep -A6 "Allocatable:"
+
+# You want roughly 4 CPUs and 4096 MB. If the cluster was started smaller,
+# rebuild it: minikube delete &amp;&amp; minikube start --cpus=4 --memory=4096
+</code></pre>
+          </div>
+
           <h3 id="lab9-step1">Step 1: Verify metrics-server</h3>
           <p>These commands confirm metrics-server is running and serving node and pod resource metrics.</p>
           <pre class="codehilite"><code class="language-bash">kubectl top nodes
@@ -1546,6 +1618,34 @@ http_request_duration_seconds_count 14253
           <p>Now watch the loop run for real. You will install Argo CD, point it at a public Git repository, and let it
             deploy an application you never applied by hand. Then you will break the cluster on purpose, scaling a
             Deployment to zero, and watch Argo CD notice the drift and put it back.</p>
+
+          <h3 id="lab10-step0">Step 0: Prerequisites Check</h3>
+
+          <p>Argo CD installs several controllers into their own namespace and needs to reach GitHub to pull the sample application, so both cluster headroom and outbound network access matter here.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm the cluster is up and the node is Ready</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get nodes
+
+# Not Ready, or an error? Run: minikube start
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm the node has capacity for the Argo CD components</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl describe node minikube | grep -A6 "Allocatable:"
+
+# Argo CD runs several controllers. 4 CPUs and 4096 MB is the target.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the cluster can reach GitHub for the manifests</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl run net-test --rm -it --restart=Never --image=busybox:1.36 -- \
+  wget -q --spider https://github.com &amp;&amp; echo "github reachable"
+
+# Argo CD pulls the guestbook app from a public GitHub repository.
+# Behind a proxy or an air-gapped network, Step 3 will not sync.
+</code></pre>
+          </div>
 
           <h3 id="lab10-step1">Step 1: Install Argo CD</h3>
           <p>Argo CD installs from a single upstream manifest, but the version tag inside that URL decides whether you

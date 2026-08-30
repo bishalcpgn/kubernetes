@@ -976,6 +976,25 @@ sudo apt-get install -y trivy
             directory of source. Each finds a different class of problem, and the last two steps turn those findings
             into something a CI pipeline can fail a build on.</p>
 
+          <h3 id="lab11-step0">Step 0: Prerequisites Check</h3>
+
+          <p>The first four steps of this lab run entirely on your laptop and need only the Trivy CLI, which the previous section installed. The cluster is not needed until Step 8, where the Trivy Operator is deployed, so a stopped Minikube will not stop you starting.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm Trivy is installed and on your PATH</span></div>
+            <pre class="codehilite"><code class="language-bash">trivy --version
+
+# If this is not found, go back to "Installing Trivy Natively" above.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm the cluster is up, needed from Step 8 on</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get nodes
+
+# Not Ready, or an error? Run: minikube start
+</code></pre>
+          </div>
+
           <h3 id="step-1-scan-a-manifest-for-misconfigurations">Step 1: Scan a Manifest for Misconfigurations</h3>
           <p>
             You will scan the <code>nginx-deployment.yaml</code> you created in Lab 1. The <code>config</code> scan type
@@ -1647,6 +1666,26 @@ report:
             warn-then-enforce order is deliberate, and it is how you would roll this out on a cluster with real
             workloads on it.</p>
 
+          <h3 id="lab12-step0">Step 0: Prerequisites Check</h3>
+
+          <p>Pod Security Admission is built into the API server, so there is nothing to install. It does need Kubernetes 1.25 or newer, which is where PSA went stable.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm the cluster is up and the node is Ready</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get nodes
+
+# Not Ready, or an error? Run: minikube start
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm the server is Kubernetes 1.25 or newer</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl version -o json | grep gitVersion
+
+# PSA is only enforced from 1.25 on. On older servers the labels below
+# are accepted and then silently ignored, which looks like a broken lab.
+</code></pre>
+          </div>
+
           <h3 id="step-1-create-and-label-a-namespace-in-warn-mode-first">Step 1: Create and Label a Namespace in Warn Mode First</h3>
           <p>
             Best practice: always apply the <code>warn</code> mode first to observe the impact without breaking
@@ -2254,6 +2293,26 @@ spec:
             all, grant it exactly one thing, and then prove the boundary holds by asking the cluster what that identity
             is and is not allowed to do.</p>
 
+          <h3 id="lab13-step0">Step 0: Prerequisites Check</h3>
+
+          <p>RBAC needs nothing beyond a running cluster. This check also confirms that your own kubectl context still has admin rights, because the whole lab is about creating an identity that does not.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm the cluster is up and the node is Ready</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get nodes
+
+# Not Ready, or an error? Run: minikube start
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm your own context can still create RBAC objects</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl auth can-i create rolebindings
+
+# Expect: yes. If this says no, you are already using a restricted
+# context and cannot complete the lab from it.
+</code></pre>
+          </div>
+
           <h3 id="step-1-create-a-dedicated-namespace-and-serviceaccount">Step 1: Create a Dedicated Namespace and ServiceAccount</h3>
 
           <p>These commands set up an isolated namespace and a ServiceAccount that will receive least-privilege
@@ -2760,6 +2819,34 @@ spec:
           <p>Now close it. You will deploy a frontend and a database, confirm they can reach each other freely, cut all
             traffic with a default-deny policy, and then reopen exactly one path. Read the warning below before you
             start, because this lab replaces your cluster.</p>
+
+          <h3 id="lab14-step0">Step 0: Prerequisites Check</h3>
+
+          <p>This lab is different from every other one in the guide. NetworkPolicy is enforced by the CNI plugin, and Minikube default CNI does not enforce it at all, so Step 1 deletes your cluster and rebuilds it with Calico. Read the warning below before you run anything.</p>
+
+          <blockquote class="danger"><strong>Step 1 destroys your cluster</strong>
+
+            This lab runs <code>minikube delete</code> and then starts a fresh cluster with
+            <code>--cni=calico</code>. The CNI plugin cannot be swapped on a running cluster, so there is no
+            way around it. Every Pod, Service, Secret, and PersistentVolumeClaim from earlier labs will be
+            gone. Rebuilding takes 2 to 3 minutes and needs 4 CPUs and 4096 MB of memory.
+          </blockquote>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">See which cluster you are about to destroy</span></div>
+            <pre class="codehilite"><code class="language-bash">minikube profile list
+
+# This lists the clusters that exist. Step 1 deletes the active one.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Save anything you still want from the current cluster</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get all --all-namespaces
+
+# Anything here that you care about will be gone after Step 1.
+# Nothing in Labs 1 to 13 needs to survive, so you can normally skip this.
+</code></pre>
+          </div>
 
           <h3 id="step-1-start-minikube-with-calico-cni">Step 1: Start Minikube with Calico CNI</h3>
 
@@ -3292,6 +3379,33 @@ spec:
           <p>Now write some policy. You will install Kyverno, write a rule that forbids the <code>:latest</code> tag, watch
             it record violations in audit mode without blocking anything, and only then switch it to enforce. You will
             also write a mutation rule, which changes a resource on its way in rather than rejecting it.</p>
+
+          <h3 id="lab15-step0">Step 0: Prerequisites Check</h3>
+
+          <p>Kyverno installs as a Helm chart and runs as an admission webhook inside the cluster, so you need both the Helm CLI and a cluster with enough room to run another controller.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm the cluster is up and the node is Ready</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get nodes
+
+# Not Ready, or an error? Run: minikube start
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm the Helm CLI is installed</span></div>
+            <pre class="codehilite"><code class="language-bash">helm version --short
+
+# Missing? Lab 8 Step 1 installs it, or see https://helm.sh/docs/intro/install/
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Check no earlier admission controller will collide</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get validatingwebhookconfigurations
+
+# A leftover Kyverno install from a previous run shows up here.
+# If you see kyverno entries, run the Cleanup section at the end of this lab first.
+</code></pre>
+          </div>
 
           <h3 id="step-1-install-kyverno-via-helm">Step 1: Install Kyverno via Helm</h3>
 
@@ -3945,6 +4059,33 @@ kubectl delete namespace kyverno
             cluster refuse to run anything unsigned. You will need the Minikube cluster from Section 0 and a container
             registry you can push to.</p>
 
+          <h3 id="lab16-step0">Step 0: Prerequisites Check</h3>
+
+          <p>This lab needs more from your environment than any other. Signing happens on your laptop with Docker, the signature is pushed to a real container registry, and the last step enforces it in the cluster with Kyverno.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm Docker is running, since you will build and push</span></div>
+            <pre class="codehilite"><code class="language-bash">docker info &gt; /dev/null &amp;&amp; echo "docker ok"
+
+# An error here means the Docker daemon is not running.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm you are logged in to a registry you can push to</span></div>
+            <pre class="codehilite"><code class="language-bash">cat ~/.docker/config.json 2&gt;/dev/null | grep -o '"[^"]*": {' | head
+
+# You need push access to somewhere, for example ghcr.io.
+# Log in with: docker login ghcr.io
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the cluster is up, needed from Step 9 on</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get nodes
+
+# Steps 1 to 8 run without a cluster. Step 9 enforces signatures with Kyverno.
+</code></pre>
+          </div>
+
           <h3 id="step-1-install-cosign">Step 1: Install Cosign</h3>
 
           <p>These commands download the Cosign binary, install it on your PATH, and confirm the version.</p>
@@ -4466,6 +4607,34 @@ rm -f sbom.json cosign-linux-amd64
           <p>Now watch it catch something. You will install Falco, deploy a deliberately vulnerable Pod, and then attack
             that Pod three different ways: opening a shell in it, reading a sensitive file, and writing a binary into
             a writable directory. Each one should show up in the Falco log within seconds.</p>
+
+          <h3 id="lab17-step0">Step 0: Prerequisites Check</h3>
+
+          <p>Falco watches system calls, so it runs as a DaemonSet with privileged access to the node kernel. That means a running cluster, the Helm CLI, and a kernel new enough for the modern eBPF probe.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm the cluster is up and the node is Ready</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get nodes
+
+# Not Ready, or an error? Run: minikube start
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm the Helm CLI is installed</span></div>
+            <pre class="codehilite"><code class="language-bash">helm version --short
+
+# Missing? Lab 8 Step 1 installs it, or see https://helm.sh/docs/intro/install/
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the node kernel supports the modern eBPF probe</span></div>
+            <pre class="codehilite"><code class="language-bash">minikube ssh -- uname -r
+
+# The CO-RE eBPF driver needs kernel 5.8 or newer, which every current
+# Minikube node image satisfies. On an older kernel, install Falco with
+# driver.kind=ebpf instead of modern_ebpf.
+</code></pre>
+          </div>
 
           <h3 id="step-1-install-falco-via-helm-ebpf-driver">Step 1: Install Falco via Helm (Modern eBPF Driver)</h3>
 

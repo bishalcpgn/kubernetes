@@ -4627,7 +4627,6 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm you are in the expected namespace</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl config view --minify | grep namespace
-# Check for any leftover resources from previous runs
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -6446,6 +6445,26 @@ kubectl delete service nginx-deployment 2>/dev/null || true
             promote through environments unchanged and one that has environment-specific values baked into it. Proper
             secret handling is a foundational security requirement for any production workload.</p>
 
+          <h3 id="lab3-step0">Step 0: Prerequisites Check</h3>
+
+          <p>ConfigMaps and Secrets are core API objects, so this lab needs nothing beyond a running cluster. The check below also clears any objects left over from an earlier attempt, which is the usual cause of a confusing "already exists" error part way through.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm the cluster is up and the node is Ready</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get nodes
+
+# Not Ready, or an error? Run: minikube start
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Check for leftovers from a previous run of this lab</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get configmap,secret -l app=demo
+
+# Anything listed here is from an earlier attempt. Remove it with:
+# kubectl delete configmap,secret -l app=demo
+</code></pre>
+          </div>
+
           <h3 id="lab3-why-not-hardcode">Why Hardcoding Configuration in Images is Wrong</h3>
 
           <p>Consider what happens if you bake your database password and environment name into your Docker image:</p>
@@ -7288,6 +7307,33 @@ kubectl delete secret app-secret 2>/dev/null || true
             the Pod entirely and bring it back to prove the file survived. That last step is the whole point of the
             lab, since it is the difference between a volume and a container's own filesystem.</p>
 
+          <h3 id="lab4-step0">Step 0: Prerequisites Check</h3>
+
+          <p>A PersistentVolumeClaim only binds if some StorageClass can satisfy it. Minikube ships a default one called <code>standard</code>, and this lab depends on it existing.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm the cluster is up and the node is Ready</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get nodes
+
+# Not Ready, or an error? Run: minikube start
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm a default StorageClass exists</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get storageclass
+
+# Expect one row marked (default), normally "standard" on Minikube.
+# With no default, the PVC in Step 1 stays Pending forever.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the storage provisioner addon is enabled</span></div>
+            <pre class="codehilite"><code class="language-bash">minikube addons list | grep storage-provisioner
+
+# Expect: enabled. If not: minikube addons enable storage-provisioner
+</code></pre>
+          </div>
+
           <h3 id="lab4-step1">Step 1: Create the PersistentVolumeClaim</h3>
 
           <p>The claim below asks for 1Gi of single-node read-write storage from Minikube's default StorageClass.
@@ -7710,6 +7756,26 @@ kubectl get pv
           <p><strong>Real-world mapping:</strong> Health probes are the foundation of reliable Kubernetes deployments.
             Without them, Kubernetes cannot distinguish a running container from a healthy one. HPA is the primary tool
             for handling traffic spikes without manual intervention.</p>
+
+          <h3 id="lab5-step0">Step 0: Prerequisites Check</h3>
+
+          <p>The probe half of this lab needs only a running cluster. The autoscaling half needs the metrics-server addon, which the lab enables later, so this check only reports whether it is already there.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm the cluster is up and the node is Ready</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get nodes
+
+# Not Ready, or an error? Run: minikube start
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">See whether metrics-server is already enabled</span></div>
+            <pre class="codehilite"><code class="language-bash">minikube addons list | grep metrics-server
+
+# Either answer is fine. The HPA half of this lab enables it if needed,
+# and then waits about 60 seconds for the first metrics to arrive.
+</code></pre>
+          </div>
 
           <h3 id="lab5-why-probes">Why Probes Exist</h3>
 
@@ -8461,6 +8527,34 @@ kubectl delete pod load-generator 2>/dev/null || true
             pods not landing on every node). This lab gives you hands-on experience with all five so you can choose
             confidently.
           </p>
+
+          <h3 id="lab6-step0">Step 0: Prerequisites Check</h3>
+
+          <p>All five workload controllers are built in, so a running cluster is enough. One thing is worth knowing up front: the StatefulSet section creates PersistentVolumeClaims that outlive the StatefulSet itself, and the Cleanup section at the end deletes them explicitly.</p>
+
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Confirm the cluster is up and the node is Ready</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get nodes
+
+# Not Ready, or an error? Run: minikube start
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm a default StorageClass exists for the StatefulSet</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get storageclass
+
+# The StatefulSet section claims storage per replica, so it needs a
+# default class. Without one, web-0 stays Pending.
+</code></pre>
+          </div>
+          <div class="cmd-step">
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Check for PVCs left behind by an earlier run</span></div>
+            <pre class="codehilite"><code class="language-bash">kubectl get pvc
+
+# StatefulSet PVCs survive deleting the StatefulSet, so an earlier
+# attempt can leave them here. Remove with: kubectl delete pvc -l app=nginx-sts
+</code></pre>
+          </div>
 
           <h3 id="lab6-workload-comparison">Workload Controller Comparison</h3>
 
