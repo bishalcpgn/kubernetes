@@ -3744,19 +3744,64 @@ kubectl delete namespace kyverno
             </table>
           </div>
 
-          <blockquote class="warning"><strong>There is no SLSA Level 4</strong>
+          <blockquote class="warning"><strong>A bare "SLSA 4" means nothing now</strong>
 
             <p>You will still find "SLSA 1 to 4" in older articles. That was the v0.1 model, a single ladder that mixed
-              source, build, and provenance requirements together. v1.0 replaced it with tracks and deferred the old
-              Level 4, whose hermetic-build and two-party-review requirements were not stable enough to freeze. The
-              Build track stops at L3. If a tool or vendor claims "SLSA 4", they are quoting a retired specification.</p>
+              source, build, and provenance requirements together. v1.0 replaced it with tracks, and the Build track
+              stops at L3: the old Level 4, with its hermetic-build requirement, has never returned to it. A level
+              number is only meaningful with its track attached, so read "Build L3", not "SLSA 3".</p>
           </blockquote>
 
-          <p>v1.2 added a <strong>Source track</strong> alongside it, covering the other half of the problem: not how
-            the artifact was built, but how the code got into the repository in the first place. Its levels run from
-            plain version control, through immutable retained history with signed source provenance, up to enforced
-            branch controls and review of every change. That is the track that would have caught XZ Utils, and the
-            Build track is the one that would have caught SolarWinds.</p>
+          <p>v1.2 added the <strong>Source track</strong>, which covers the other half of the problem: not how the
+            artifact was built, but how the code got into the repository in the first place. This track does have a
+            Level 4.</p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Level</th>
+                  <th>What it requires</th>
+                  <th>What it defends against</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Source L1</strong></td>
+                  <td>The source is stored and managed in a modern version control system.</td>
+                  <td>Untracked changes, and having no history at all</td>
+                </tr>
+                <tr>
+                  <td><strong>Source L2</strong></td>
+                  <td>Branch history is continuous, immutable, and retained, and the platform issues a signed source
+                    provenance attestation for every revision.</td>
+                  <td>Rewritten or deleted history hiding a change</td>
+                </tr>
+                <tr>
+                  <td><strong>Source L3</strong></td>
+                  <td>The platform continuously enforces the organization's technical controls on protected branches,
+                    rather than relying on people to follow them.</td>
+                  <td>A change that bypassed the required process</td>
+                </tr>
+                <tr>
+                  <td><strong>Source L4</strong></td>
+                  <td>Two trusted people must review every change to a protected branch.</td>
+                  <td>A single compromised or malicious maintainer</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>The two tracks are independent, and that is the point of the split: you can be Build L3 and Source L1 at
+            the same time. Together they map onto the two attacks at the top of this chapter. SolarWinds was a build
+            compromise, so the Build track answers it. XZ Utils was a trusted maintainer committing a backdoor over
+            years, which is exactly what Source L4 is for, and it is placed highest because two-party review is the
+            hardest level for a small project to reach.</p>
+
+          <p>Two more tracks are drafted but not yet released, so you will not see them claimed in production. The
+            <strong>Build Environment track</strong> attests to the machine the build ran on, up to hardware-backed
+            evidence from a TPM or confidential computing. The <strong>Dependencies track</strong> covers what your
+            build consumes rather than what it produces.</p>
 
           <p>This lab puts you at the bottom of the Build track and shows you the mechanism: you sign an image with
             Cosign and attach an SBOM as an attestation. A real Build L2 or L3 comes from the build platform generating
