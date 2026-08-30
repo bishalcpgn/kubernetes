@@ -4015,8 +4015,8 @@ docker push ${IMAGE}
           <pre class="codehilite"><code class="language-bash">cosign tree ${IMAGE}
 # Expected output: a tree showing the image digest and attached signature artifacts
 # Signatures are stored as OCI artifacts with a tag derived from the image digest:
-# sha256-abc123def456...sig  <-- the signature
-# sha256-abc123def456...att  <-- attestations (SBOMs, SLSA provenance, etc.)
+# sha256-abc123def456...sig  &lt;-- the signature
+# sha256-abc123def456...att  &lt;-- attestations (SBOMs, SLSA provenance, etc.)
 </code></pre>
 
           <h3 id="step-5-verify-the-signature">Step 5: Verify the Signature</h3>

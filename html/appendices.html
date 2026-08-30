@@ -64,9 +64,19 @@
     <main class="content">
       <div class="content-inner">
         <article id="md-root" class="md-content page-markdown">
-          <h1 id="appendix-a-cleanup-cheatsheet">Appendix A: Cleanup Cheatsheet</h1>
+          <h1>Appendices</h1>
+
+          <p>Four short references to come back to: a cleanup cheat sheet for when the cluster fills up, a table of
+            the errors you are most likely to hit, a map of what this guide does not cover, and a glossary of every
+            term it uses.</p>
+
+          <h2 id="appendix-a-cleanup-cheatsheet">Appendix A: Cleanup Cheatsheet</h2>
           <p>Run after finishing, or any time the cluster feels cluttered. On a single-node Minikube, leftover
             Prometheus/Argo CD/Falco pods will exhaust resources.</p>
+
+          <h3 id="cleanup-by-namespace">Clean up one namespace</h3>
+
+          <p>Start here. These remove a lab's resources without touching the rest of the cluster.</p>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Empty a namespace but keep the namespace</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl delete all --all -n &lt;namespace&gt;
@@ -91,15 +101,22 @@
 # uninstall one at a time. -r stops xargs running if the list is empty.
 </code></pre>
           </div>
+          <h3 id="cleanup-whole-cluster">Reset the whole cluster</h3>
+
+          <p>When a cluster is too tangled to unpick, rebuilding it takes about two minutes and is often faster than
+            hunting for what is still running.</p>
+
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Nuclear option: wipe the entire cluster and start fresh</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Wipe the cluster and start fresh</span></div>
             <pre class="codehilite"><code class="language-bash">minikube delete
 minikube start --driver=docker --cpus=4 --memory=4096
 </code></pre>
           </div>
 
           <hr />
-          <h1 id="appendix-b-common-errors-and-troubleshooting">Appendix B: Common Errors and Troubleshooting</h1>
+          <h2 id="appendix-b-common-errors-and-troubleshooting">Appendix B: Common Errors and Troubleshooting</h2>
+
+          <h3 id="errors-by-pod-status">Find your error by Pod status</h3>
 
           <p>Nearly every failure in this guide announces itself through a Pod status. Find the status you are seeing
             in the first column, and the table gives you the usual cause and the command that confirms it.</p>
@@ -159,10 +176,14 @@ minikube start --driver=docker --cpus=4 --memory=4096
               </tbody>
             </table>
           </div>
+          <h3 id="errors-universal-workflow">The workflow that works for anything</h3>
+
           <p>General workflow for <em>any</em> failure: <strong><code>get</code> → <code>describe</code> (read Events) →
               <code>logs</code></strong>.</p>
           <hr />
-          <h1 id="appendix-c-what-we-did-not-cover-and-where-to-go-next">Appendix C: What We Did Not Cover (and Where to Go Next)</h1>
+          <h2 id="appendix-c-what-we-did-not-cover-and-where-to-go-next">Appendix C: What We Did Not Cover (and Where to Go Next)</h2>
+          <h3 id="next-topics">Where to go next</h3>
+
           <p>This guide is a complete spine, but "all of Kubernetes" is bigger than any single lab set. Strong next
             topics, roughly in order of usefulness:</p>
           <ol class="sec2-indented">
@@ -193,7 +214,9 @@ minikube start --driver=docker --cpus=4 --memory=4096
               Prometheus/Grafana observe. That end-to-end loop <em>is</em> production DevSecOps.</p>
           </blockquote>
           <hr />
-          <h1 id="appendix-d-glossary">Appendix D: Glossary</h1>
+          <h2 id="appendix-d-glossary">Appendix D: Glossary</h2>
+          <h3 id="glossary-terms">Every term used in this guide</h3>
+
           <p>A quick lookup for every term and tool used in this guide. Where a concept has a full explanation, the
             relevant section is noted.</p>
           <p><strong>Admission controller</strong>: code in the API server that inspects an object before it's saved,

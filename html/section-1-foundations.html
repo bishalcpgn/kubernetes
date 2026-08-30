@@ -3961,7 +3961,7 @@ kubectl logs my-pod -p
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">viii</span><span class="cmd-step-title">Follow all pods matching a label (multi-replica deployments)</span></div>
+            <div class="cmd-label"><span class="cmd-roman">viii</span><span class="cmd-step-title">Follow every pod matching a label at once</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl logs -l app=nginx -f --prefix
 </code></pre>
           </div>
@@ -4349,7 +4349,7 @@ spec:
     matchLabels:
       app: web
 </code></pre>
-            <p>This is why a drain can appear to hang. It is usually not stuck, it is respecting a budget. Check with
+            <p>This is why a drain can appear to hang. It is usually not stuck; it is respecting a budget. Check with
               <code>kubectl get pdb</code>. Note that a PDB only protects against <em>voluntary</em> disruption like a
               drain; it cannot stop a node from crashing.</p>
           </details>
@@ -4469,7 +4469,7 @@ spec:
             </li>
             <li><strong>Pods</strong> each get their own private cluster IP address, which changes every time a Pod is
               deleted and recreated.</li>
-            <li>A <strong>Service</strong> is not nested inside the Deployment hierarchy at all, it is a completely
+            <li>A <strong>Service</strong> is not nested inside the Deployment hierarchy at all. It is a completely
               separate object that finds Pods using <strong>label selectors</strong>.</li>
             <li><strong>Labels</strong> (the key-value pair <code>app: web</code>) are the glue that connects all of
               these objects together.</li>
@@ -4645,7 +4645,7 @@ kubectl get services
               <code>minikube start</code>.
             </li>
             <li><code>kubectl get nodes</code> should show one node (named <code>minikube</code>) with status
-              <code>Ready</code>. If the status is <code>NotReady</code>, the node is still initializing, wait 30
+              <code>Ready</code>. If the status is <code>NotReady</code>, the node is still initializing, so wait 30
               seconds and try again.
             </li>
             <li>The namespace check should show <code>default</code>. All commands in this lab assume the default
@@ -4909,7 +4909,7 @@ nginx-deployment-7c79c4bf97   2         2         2       90s
 
           <h3 id="step-2-test-self-healing">Step 2: Test Self-Healing</h3>
 
-          <p>Self-healing is one of the most important behaviors Kubernetes provides, and it is not magic, it is the
+          <p>Self-healing is one of the most important behaviors Kubernetes provides, and it is not magic. It is the
             Deployment's reconciliation loop responding to a change in actual state. Understanding this loop is the
             mental model that makes Kubernetes make sense.</p>
 
@@ -5596,7 +5596,7 @@ kubectl get pods -l app=web --show-labels
 
           <p><strong>What it means:</strong> the container attempted to allocate more memory than its
             <code>resources.limits.memory</code> allows. The Linux kernel's OOM (Out Of Memory) killer terminated the
-            container process. This is not Kubernetes killing the container, it is the kernel enforcing the cgroup
+            container process. This is not Kubernetes killing the container. It is the kernel enforcing the cgroup
             memory limit.
           </p>
 
@@ -5687,7 +5687,7 @@ kubectl apply -f nginx-deployment.yaml
           <p>These commands remove the Deployment and Service and then confirm nothing is left behind.</p>
 
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Delete both resources in one command (order does not matter)</span></div>
+            <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Delete both resources in one command</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl delete -f nginx-service.yaml -f nginx-deployment.yaml
 </code></pre>
           </div>
@@ -6137,7 +6137,7 @@ spec:
 </code></pre>
           </div>
           <div class="cmd-step">
-            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Terminal 1: trigger the rolling update by changing the image</span></div>
+            <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Terminal 1: change the image to start the rollout</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl set image deployment/nginx-deployment \
   nginx=nginx:1.27-alpine    # format: container-name=new-image:tag
 </code></pre>
@@ -7735,7 +7735,7 @@ kubectl get pv
           <p>A liveness probe failure causes Kubernetes to <strong>restart the container</strong>. Use liveness probes
             to recover from states where the application is stuck and cannot self-recover, such as:</p>
           <ol class="sec2-indented">
-            <li>Deadlock: threads are blocked waiting for each other, the process is running but making no progress.
+            <li>Deadlock, where threads are blocked waiting for each other, so the process is running but making no progress.
             </li>
             <li>Corrupted in-memory state: the app is running but producing incorrect results.</li>
             <li>Resource exhaustion: leaked memory or file descriptors that will never be released without a restart.

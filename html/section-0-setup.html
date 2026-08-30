@@ -92,7 +92,7 @@
             to set things up, but <em>what is actually running</em> on your machine.
           </p>
 
-          <blockquote class="callout gradient-border"><strong>Why do you need a local cluster at all?</strong>
+          <blockquote><strong>Why do you need a local cluster at all?</strong>
 
             <p>
               Kubernetes runs in data centers, cloud providers, and edge devices. But experimenting directly on a
@@ -278,7 +278,7 @@
             <code>LoadBalancer</code> Service would normally be given.
           </p>
 
-          <blockquote class="gradient-border gc-black"><strong>Minikube is for learning and development only</strong>
+          <blockquote class="warning"><strong>Minikube is for learning and development only</strong>
 
             <p>
               Minikube runs a single-node cluster. In production you always have at least three control-plane nodes (for
@@ -336,7 +336,7 @@
 # Log out and back in, or run: newgrp docker</code></pre>
           </div>
 
-          <blockquote class="gradient-border"><strong>Why does Minikube need Docker without sudo?</strong>
+          <blockquote><strong>Why does Minikube need Docker without sudo?</strong>
 
             <p>
               Minikube runs as your regular user and spawns Docker containers to create the cluster. If Docker requires
@@ -446,7 +446,7 @@ echo "Will install: $KUBECTL_VERSION"</code></pre>
               directory is not in your <code>PATH</code>. Run <code>echo $PATH</code> to check.</p>
           </blockquote>
 
-          <blockquote class="gradient-border gc-red"><strong>Version skew: kubectl vs. API server compatibility</strong>
+          <blockquote class="warning"><strong>Version skew between kubectl and the API server</strong>
 
             <p>
               The official Kubernetes support policy states that <code>kubectl</code> must be within <strong>one minor
@@ -561,7 +561,7 @@ minikube start \
 #   --kubernetes-version=stable  latest stable Kubernetes version
 </code></pre>
 
-          <blockquote class="gradient-border gc-black"><strong>Resource allocation matters a lot</strong>
+          <blockquote class="warning"><strong>Resource allocation matters a lot</strong>
 
             <p>
               If you give Minikube too little memory, pods in later labs (especially Prometheus with its many
@@ -735,7 +735,7 @@ contexts:
 current-context: minikube
 </code></pre>
 
-          <blockquote class="gradient-border"><strong>Why this three-part design?</strong>
+          <blockquote><strong>Why this three-part design?</strong>
 
             <p>
               The cluster/user/context split lets a single kubeconfig file hold credentials for many clusters. You might
