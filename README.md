@@ -11,7 +11,7 @@ runs on a laptop with Minikube and maps to a real production practice.
 
 ## What is inside
 
-The guide is split into a setup page, three main tiers, and a set of appendices:
+The guide is split into four sections, numbered 0 to 3, plus a set of appendices:
 
 - **Section 0: Setup.** Install kubectl and Minikube, and learn how kubeconfig and
   contexts work.
@@ -26,8 +26,8 @@ The guide is split into a setup page, three main tiers, and a set of appendices:
 - **Appendices.** Cleanup cheat sheet, common errors and troubleshooting, where to go
   next, and a glossary.
 
-That is 22 numbered chapters (0 through 21) with 17 runnable labs: chapter 0 is
-setup, and chapters 1 to 21 make up the three main tiers.
+That is 22 numbered chapters (0 through 21) with 17 runnable labs. Chapter 0 is Section 0
+on its own; chapters 1 to 21 are spread across Sections 1, 2, and 3.
 
 ## Project structure
 
