@@ -982,7 +982,6 @@ sudo apt-get install -y trivy
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Scan a single manifest for misconfigurations</span></div>
             <pre class="codehilite"><code class="language-bash">trivy config nginx-deployment.yaml
-# To scan an entire directory of manifests at once:
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -1063,13 +1062,13 @@ HIGH: Container 'nginx' of Deployment 'nginx-deployment' should set
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Scan a current alpine-based image for comparison</span></div>
             <pre class="codehilite"><code class="language-bash">trivy image nginx:1.29-alpine
-# Filter to only HIGH and CRITICAL findings:
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Show only HIGH and CRITICAL findings</span></div>
             <pre class="codehilite"><code class="language-bash">trivy image --severity HIGH,CRITICAL nginx:1.20
-# Exit with a non-zero code if any CRITICAL or HIGH findings exist
+
+# --severity limits the output to the two bands most teams gate on.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -1362,12 +1361,13 @@ helm install trivy-operator aqua/trivy-operator \
   --namespace trivy-system \
   --create-namespace \
   --set trivy.ignoreUnfixed=true
-# Wait for it to be ready (it runs as a Deployment):
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm the Trivy Operator pods are Running</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get pods -n trivy-system
+
+# The operator runs as a Deployment, so give its pod a moment to report Running.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -1647,14 +1647,12 @@ report:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Create a namespace to hold the lab Pods</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl create namespace secure-apps --dry-run=client -o yaml | kubectl apply -f -
-# Apply warn mode first - this will NOT reject any Pods, but will print warnings:
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Turn on warn mode for the restricted profile</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl label --overwrite namespace secure-apps \
   pod-security.kubernetes.io/warn=restricted
-# Apply an insecure Pod and watch the warning:
 
 # The label names the restricted Pod Security Standard, in warn mode only.
 # Nothing is rejected yet.
@@ -1821,7 +1819,6 @@ kubectl get pods -n secure-apps     # hardened-pod should be Running
 # Expected: touch: /test-file: Read-only file system
 
 # Good - the attacker cannot write here.
-# But the emptyDir volumes ARE writable:
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -2507,13 +2504,11 @@ kubectl exec -n rbac-lab no-api-access -- ls /var/run/secrets/ 2>&1 || echo "No 
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">List every action the ServiceAccount is allowed to perform</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl auth can-i --list --as=system:serviceaccount:production:my-app -n production
-# List all RoleBindings and ClusterRoleBindings that reference a ServiceAccount
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Find which bindings grant the ServiceAccount access</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get rolebindings,clusterrolebindings -A -o wide | grep my-app
-# Find all subjects bound to cluster-admin (should be an empty or very short list)
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -2526,6 +2521,8 @@ for item in data[&#x27;items&#x27;]:
     if item.get(&#x27;roleRef&#x27;, {}).get(&#x27;name&#x27;) == &#x27;cluster-admin&#x27;:
         print(item[&#x27;metadata&#x27;][&#x27;name&#x27;], &#x27;:&#x27;, [s.get(&#x27;name&#x27;) for s in item.get(&#x27;subjects&#x27;, [])])
 &quot;
+
+# A healthy cluster prints an empty or very short list of cluster-admin subjects.
 </code></pre>
           </div>
 
@@ -2773,7 +2770,6 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Start a new cluster with the Calico CNI</span></div>
             <pre class="codehilite"><code class="language-bash">minikube start --cni=calico --cpus=4 --memory=4096
-# Wait for all Calico DaemonSet pods to be Running before proceeding
 # This can take 2-3 minutes on first start
 
 # Calico requires 4 CPUs and 4GB of RAM, which is why the flags are set above.
@@ -2782,7 +2778,6 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Watch the Calico pods until every one is Running</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get pods -n kube-system -l k8s-app=calico-node -w
-# Verify Calico is ready (should show Running status)
 
 # Calico must be ready before it can enforce any NetworkPolicy.
 </code></pre>
@@ -3004,13 +2999,11 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Apply the egress policy that allows only DNS traffic out</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl apply -f deny-egress-except-dns.yaml
-# Database pod should still resolve DNS names
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Confirm DNS still resolves from the database Pod</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec -n netpol-lab database -- nslookup kubernetes.default || echo &quot;DNS resolution result above&quot;
-# Database pod should NOT be able to reach external services
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -3285,7 +3278,6 @@ spec:
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Add the Kyverno Helm chart repository</span></div>
             <pre class="codehilite"><code class="language-bash">helm repo add kyverno https://kyverno.github.io/kyverno/
 helm repo update
-# Install Kyverno into its own namespace
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -3294,7 +3286,6 @@ helm repo update
   --namespace kyverno \
   --create-namespace \
   --set admissionController.replicas=1    # 1 replica is fine for a lab; use 3 in production for HA
-# Wait for Kyverno pods to be Running (usually 60-90 seconds)
 
 # This deploys the Kyverno controller, the admission webhook, the background
 # scanner, and the CRDs (ClusterPolicy, PolicyReport, and the rest).
@@ -3303,7 +3294,8 @@ helm repo update
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Watch the Kyverno pods until they are Running</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get pods -n kyverno -w
-# Verify the ValidatingWebhookConfiguration is registered
+
+# The pods usually reach Running within 60 to 90 seconds.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -3364,7 +3356,6 @@ kubectl get clusterpolicy disallow-latest-tag    # should show READY=true after 
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Create a violating Pod and watch it be admitted</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl run bad-pod --image=nginx:latest --restart=Never
 kubectl get pod bad-pod                          # pod is running (Audit mode does not block)
-# Check the PolicyReport for this namespace to see the violation recorded
 
 # In Audit mode the Pod IS admitted. Only the PolicyReport records the violation.
 </code></pre>
@@ -3373,12 +3364,13 @@ kubectl get pod bad-pod                          # pod is running (Audit mode do
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">List the PolicyReports Kyverno generated per namespace</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get policyreport -A                      # shows report per namespace
 kubectl describe policyreport -n default | grep -A 5 &quot;fail\|FAIL&quot;  # look for fail entries
-# Clean up the violating pod before switching to Enforce
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Remove the test Pod</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl delete pod bad-pod
+
+# Clearing it out now leaves no violating Pod behind when Enforce turns on.
 </code></pre>
           </div>
 
@@ -3401,7 +3393,6 @@ kubectl get policyreport -A
             <pre class="codehilite"><code class="language-bash">kubectl patch clusterpolicy disallow-latest-tag \
   --type=merge \
   -p &#x27;{&quot;spec&quot;:{&quot;validationFailureAction&quot;:&quot;Enforce&quot;}}&#x27;
-# Verify the change
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -3458,7 +3449,6 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Create a Pod WITHOUT the managed-by label</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl run labeled-pod --image=nginx:1.29-alpine --restart=Never
-# Inspect the pod: Kyverno should have injected the label automatically
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -3636,7 +3626,6 @@ kyverno version
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Remove all Kyverno policies</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl delete clusterpolicy --all
-# Uninstall Kyverno and its namespace
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -3863,7 +3852,6 @@ kubectl delete namespace kyverno
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Install the Cosign binary to /usr/local/bin</span></div>
             <pre class="codehilite"><code class="language-bash">sudo install cosign-linux-amd64 /usr/local/bin/cosign
-# Verify the installation
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -3885,7 +3873,6 @@ kubectl delete namespace kyverno
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Point IMAGE at a registry you can push to</span></div>
             <pre class="codehilite"><code class="language-bash">export IMAGE=&quot;ghcr.io/YOUR_GITHUB_USERNAME/demo-app:v1.0&quot;
-# If you don&#x27;t have an image, tag and push an existing one:
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -3893,13 +3880,15 @@ kubectl delete namespace kyverno
             <pre class="codehilite"><code class="language-bash">docker pull nginx:1.29-alpine
 docker tag nginx:1.29-alpine ${IMAGE}
 docker push ${IMAGE}
-# Cosign works on image digests (not tags) to prevent tag mutation attacks
-# Get the digest of the image:
+
+# Use this path only if you do not already have an image of your own to sign.
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Capture the image's immutable digest</span></div>
             <pre class="codehilite"><code class="language-bash">docker inspect --format=&#x27;{{index .RepoDigests 0}}&#x27; ${IMAGE}
+
+# Cosign signs the digest, not the tag, so a moved tag cannot pass verification.
 </code></pre>
           </div>
 
@@ -3964,7 +3953,6 @@ docker push ${IMAGE}
   --format cyclonedx \
   --output sbom.json \
   ${IMAGE}
-# Inspect the SBOM (it will be a large JSON file)
 
 # --format cyclonedx  emit CycloneDX JSON
 # --output sbom.json  write it to this file
@@ -3974,6 +3962,8 @@ docker push ${IMAGE}
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Summarize the SBOM contents with a short Python script</span></div>
             <pre class="codehilite"><code class="language-bash">python3 -c &quot;import json; d=json.load(open(&#x27;sbom.json&#x27;)); print(f&#x27;Components: {len(d[\&quot;components\&quot;])}&#x27;); [print(c[&#x27;name&#x27;], c.get(&#x27;version&#x27;,&#x27;?&#x27;)) for c in d[&#x27;components&#x27;][:10]]&quot;
 # Shows the first 10 packages found inside the image
+
+# The raw SBOM is a large JSON file, so this prints only a short summary.
 </code></pre>
           </div>
 
@@ -4046,7 +4036,6 @@ spec:
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Apply the policy that requires a valid image signature</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl apply -f require-signed-images.yaml
-# Test with an unsigned image: should be BLOCKED
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -4378,9 +4367,6 @@ rm -f sbom.json cosign-linux-amd64
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Add the Falco Helm chart repository</span></div>
             <pre class="codehilite"><code class="language-bash">helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update
-# Install Falco with the modern eBPF driver.
-# It is preferred over the kernel module: no kernel headers, no compilation,
-# works on managed Kubernetes (GKE, EKS, AKS), and is safer for the host.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -4394,19 +4380,22 @@ helm repo update
 
 # driver.kind=modern_ebpf  CO-RE eBPF probe compiled into the Falco binary
 # tty=true                  flush alerts immediately so kubectl logs shows them
+
+# modern_ebpf is preferred over the kernel module: no kernel headers, no
+# compilation, it runs on GKE, EKS, and AKS, and it is safer for the host.
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iii</span><span class="cmd-step-title">Confirm the Falco DaemonSet is running on every node</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl get daemonset falco -n falco
 kubectl get pods -n falco -o wide      # one pod per node
-# Wait for Falco to initialize (usually under a minute; the CO-RE probe needs no compilation)
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">iv</span><span class="cmd-step-title">Wait until every Falco pod is rolled out</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl rollout status daemonset/falco -n falco --timeout=300s
-# Verify Falco initialized successfully
+
+# This usually returns in under a minute: the CO-RE probe needs no compilation.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -4440,14 +4429,15 @@ kubectl get pod victim
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Simulate an attacker opening a shell in a Pod</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec -it victim -- sh -c &quot;echo &#x27;simulated-intrusion&#x27;; id; whoami; hostname&quot;
-# Immediately check Falco logs on the node running the victim pod
-# Get the Falco pod name (use the one on the same node as victim)
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Capture the Falco pod name into a variable</span></div>
             <pre class="codehilite"><code class="language-bash">FALCO_POD=$(kubectl get pod -n falco -o wide | grep $(kubectl get pod victim -o jsonpath=&#x27;{.spec.nodeName}&#x27;) | awk &#x27;{print $1}&#x27;)
 kubectl logs -n falco ${FALCO_POD} --tail=20 | grep -i &quot;shell\|Terminal&quot;
+
+# Only the Falco pod on the same node as victim records the alert, which is why
+# the node name selects it. Read the logs right away.
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -4483,7 +4473,6 @@ kubectl logs -n falco ${FALCO_POD} --tail=20 | grep -i &quot;shell\|Terminal&quo
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Copy and run a shell from a writable directory</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl exec victim -- cp /bin/sh /tmp/sh
 kubectl exec victim -- /tmp/sh -c &quot;id&quot;
-# Check Falco logs for binary-related alerts
 </code></pre>
           </div>
           <div class="cmd-step">
@@ -4641,7 +4630,6 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i &quot;
   --set falcosidekick.webui.enabled=true \
   --set &quot;falcosidekick.config.slack.webhookurl=https://hooks.slack.com/services/YOUR/WEBHOOK/URL&quot; \
   --set &quot;falcosidekick.config.slack.minimumpriority=warning&quot;
-# Access the Falcosidekick web UI
 
 # falcosidekick.enabled        deploy the Falcosidekick router
 # falcosidekick.webui.enabled   deploy the Falcosidekick web UI
@@ -4768,14 +4756,12 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i &quot;
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">i</span><span class="cmd-step-title">Remove the test Pod</span></div>
             <pre class="codehilite"><code class="language-bash">kubectl delete pod victim --ignore-not-found
-# Uninstall Falco and remove the namespace
 </code></pre>
           </div>
           <div class="cmd-step">
             <div class="cmd-label"><span class="cmd-roman">ii</span><span class="cmd-step-title">Uninstall Falco from the cluster</span></div>
             <pre class="codehilite"><code class="language-bash">helm uninstall falco -n falco
 kubectl delete namespace falco
-# Remove any custom rule files
 </code></pre>
           </div>
           <div class="cmd-step">
